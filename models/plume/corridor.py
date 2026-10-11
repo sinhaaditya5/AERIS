@@ -278,14 +278,15 @@ def main(argv: list[str] | None = None) -> None:
         sources = json.loads(sources_path.read_text(encoding="utf-8"))
         wind = json.loads(wind_path.read_text(encoding="utf-8"))
         params = json.loads(args.params.read_text(encoding="utf-8")) if args.params else None
-        if isinstance(params, dict) and "schema_version" in params:
-            from models.plume.parameters import validate_document
-            params = validate_document(params)
         loaded = None
+        if isinstance(params, dict) and "schema_version" in params:
+            from models.plume.parameters import load_parameters
+            loaded = load_parameters(path=args.params)
+            params = loaded.params
         if args.provenance_output is not None:
             from models.plume.parameters import load_parameters
 
-            loaded = load_parameters(params)
+            loaded = loaded or load_parameters(params)
             params = loaded.params
         result = predict_corridor(sources, wind, hours=args.hours, params=params,
                                   start=parse_time(args.start, "start") if args.start else None)

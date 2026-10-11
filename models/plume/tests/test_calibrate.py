@@ -379,6 +379,7 @@ def test_loading_precedence_and_provenance_with_isolated_validator_stub(tmp_path
     path.write_text('{"test_kind":"MATHEMATICAL_LOADER_STUB"}', encoding="utf-8")
     selected = replace(PlumeParams(), tau_hours=36)
     monkeypatch.setattr(parameters, "validate_document", lambda document: selected)
+    monkeypatch.setattr(parameters, "validate_runtime_approval", lambda document: None)
     loaded = parameters.load_parameters(path=path)
     assert loaded.provenance == "CALIBRATED" and loaded.params == selected
     explicit = parameters.load_parameters({"tau_hours": 18}, path=path)
