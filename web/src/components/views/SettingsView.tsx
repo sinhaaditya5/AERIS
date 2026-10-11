@@ -4,6 +4,7 @@ import { useAeris, type BasemapMode } from '@/services/dataContext'
 import { DATA_MODE, getFeedFreshness } from '@/services/api'
 import { clearActionChecklist } from '@/components/agent/actionChecklist'
 import { useClock } from '@/components/status/useClock'
+import ModelProvenanceNotice from '@/components/status/ModelProvenanceNotice'
 import './SettingsView.css'
 
 const OPTIONS: { id: BasemapMode; title: string; desc: string; provider: string }[] = [
@@ -39,6 +40,7 @@ export default function SettingsView() {
         })}</div></section>
         <section className="settings-card"><div className="card-header"><Database size={18} /><h2>Data mode &amp; local state</h2></div><div className="config-box"><div className="config-row"><span>Data mode:</span><strong>{DATA_MODE === 'snapshot' ? 'Captured snapshots' : 'Configured API'}</strong></div><p>Snapshot files are served as captured. A successful load does not certify freshness, model calibration, or observed human exposure.</p><p>API configuration: {DATA_MODE === 'api' ? 'Configured at build time' : 'Not configured; using local public/data files'}</p><p>No authenticated officer session or dispatch service is implemented.</p></div><div className="settings-actions"><button type="button" className="btn-secondary" onClick={refreshData} disabled={loading || refreshing}><RefreshCw size={14} />Reload data</button><button type="button" className="btn-danger-outline" onClick={() => { clearActionChecklist(); setMessage('Local action checklist cleared. No source data changed.') }}><Trash2 size={14} />Clear local checklist</button></div>{message && <p className="clear-feedback" role="status">{message}</p>}</section>
       </div>
+      <ModelProvenanceNotice />
     </div>
   )
 }

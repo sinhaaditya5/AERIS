@@ -4,3 +4,4 @@
 .model-provenance-notice h2 { font-size: 14px; }
 .model-provenance-notice pre { max-height: 280px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; }
 @media (max-width: 640px) { .model-provenance-notice { margin: 8px 12px; } }
+.settings-view .model-provenance-notice { margin: 0; border-radius: 12px; }
