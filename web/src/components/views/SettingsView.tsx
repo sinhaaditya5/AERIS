@@ -16,6 +16,14 @@ import {
   Clock,
   Activity,
   Check,
+  Wind,
+  Thermometer,
+  Flame,
+  Layers,
+  Sparkles,
+  Crosshair,
+  ShieldCheck,
+  Compass,
 } from 'lucide-react'
 import { useAeris, type BasemapMode } from '@/services/dataContext'
 import { DATA_MODE, getFeedFreshness } from '@/services/api'
@@ -36,13 +44,23 @@ import './SettingsView.css'
 
 type SettingsTab = 'all' | 'general' | 'thresholds' | 'feeds' | 'storage' | 'provenance'
 
-const BASEMAP_OPTIONS: { id: BasemapMode; title: string; desc: string; provider: string; tag: string }[] = [
+const BASEMAP_OPTIONS: {
+  id: BasemapMode
+  title: string
+  desc: string
+  provider: string
+  tag: string
+  previewClass: string
+  previewLabel: string
+}[] = [
   {
     id: 'satellite',
     title: 'Satellite imagery',
     desc: 'Raster background imagery. Image dates and resolution vary; this is not a current fire measurement.',
     provider: 'Esri World Imagery & reference tiles',
     tag: 'High Resolution',
+    previewClass: 'preview-satellite',
+    previewLabel: 'Orbital Multispectral',
   },
   {
     id: 'globe',
@@ -50,6 +68,8 @@ const BASEMAP_OPTIONS: { id: BasemapMode; title: string; desc: string; provider:
     desc: 'Mercator map with 32° camera pitch and −6° bearing. Perspective atmospheric observation angle.',
     provider: 'Esri raster / MapLibre camera',
     tag: '3D Angle',
+    previewClass: 'preview-globe',
+    previewLabel: '32° Pitch Horizon',
   },
   {
     id: 'dark',
@@ -57,6 +77,8 @@ const BASEMAP_OPTIONS: { id: BasemapMode; title: string; desc: string; provider:
     desc: 'High contrast dark canvas highlighting active thermal anomalies and plume dispersion corridors.',
     provider: 'CARTO Dark Matter',
     tag: 'High Contrast',
+    previewClass: 'preview-dark',
+    previewLabel: 'Obsidian Fire Canvas',
   },
   {
     id: 'topo',
@@ -64,8 +86,19 @@ const BASEMAP_OPTIONS: { id: BasemapMode; title: string; desc: string; provider:
     desc: 'Roads, boundaries, and populated settlements. Ideal for school and hospital corridor verification.',
     provider: 'CARTO Voyager',
     tag: 'Civic Grid',
+    previewClass: 'preview-topo',
+    previewLabel: 'Civic Arterial Grid',
   },
 ]
+
+const FEED_ICONS: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
+  sources: Flame,
+  corridor: Wind,
+  wind: Compass,
+  aqi: Activity,
+  ranked_sites: Layers,
+  actions: ShieldCheck,
+}
 
 export default function SettingsView() {
   const {
@@ -108,6 +141,19 @@ export default function SettingsView() {
 
   // Real-time Local Storage Statistics
   const storageStats = useMemo(() => getLocalStorageStats(), [message])
+
+  // Dynamic risk categorization for PM2.5 alarm threshold
+  const riskTier = useMemo(() => {
+    if (settings.pm25CriticalThreshold <= 100) return { key: 'mod', label: 'Moderate Advisory' }
+    if (settings.pm25CriticalThreshold <= 200) return { key: 'high', label: 'High Alert Tier' }
+    return { key: 'severe', label: 'Emergency Tier' }
+  }, [settings.pm25CriticalThreshold])
+
+  // Contextual FRP fire cluster retention count
+  const retainedFiresCount = useMemo(() => {
+    if (!sources?.sources) return 0
+    return sources.sources.filter(s => (s.frp ?? 0) >= settings.minFrpMw).length
+  }, [sources, settings.minFrpMw])
 
   // Data Feeds specification (strictly preserves all 6 .feed-item elements for tests)
   const feeds = [
@@ -284,19 +330,29 @@ export default function SettingsView() {
                     showToast(`Basemap switched to ${option.title}`)
                   }}
                 >
-                  <div className="basemap-card-top">
-                    <div className="basemap-card-headings">
-                      <div className="basemap-card-title-row">
-                        <strong className="basemap-title">{option.title}</strong>
-                        <span className="basemap-badge">{option.tag}</span>
-                      </div>
-                    </div>
-                    {basemapMode === option.id && <CheckCircle2 size={16} className="selected-check" aria-hidden="true" />}
+                  <div className={`basemap-preview-banner ${option.previewClass}`}>
+                    <span className="banner-label">{option.previewLabel}</span>
+                    {basemapMode === option.id && (
+                      <span className="banner-active-chip">
+                        <Check size={11} /> Active
+                      </span>
+                    )}
                   </div>
-                  <p className="basemap-card-desc">{option.desc}</p>
-                  <div className="basemap-card-meta">
-                    <span className="meta-label">Provider:</span>
-                    <span className="meta-value">{option.provider}</span>
+                  <div className="basemap-card-content">
+                    <div className="basemap-card-top">
+                      <div className="basemap-card-headings">
+                        <div className="basemap-card-title-row">
+                          <strong className="basemap-title">{option.title}</strong>
+                          <span className="basemap-badge">{option.tag}</span>
+                        </div>
+                      </div>
+                      {basemapMode === option.id && <CheckCircle2 size={16} className="selected-check" aria-hidden="true" />}
+                    </div>
+                    <p className="basemap-card-desc">{option.desc}</p>
+                    <div className="basemap-card-meta">
+                      <span className="meta-label">Provider:</span>
+                      <span className="meta-value">{option.provider}</span>
+                    </div>
                   </div>
                 </button>
               ))}
@@ -317,7 +373,15 @@ export default function SettingsView() {
             <div className="preferences-grid">
               {/* Wind Speed Units */}
               <div className="pref-item">
-                <label className="pref-label" htmlFor="pref-wind-unit">Wind Speed Unit</label>
+                <div className="pref-header-row">
+                  <div className="pref-icon-squircle icon-cyan">
+                    <Wind size={15} />
+                  </div>
+                  <div className="pref-header-text">
+                    <label className="pref-label" htmlFor="pref-wind-unit">Wind Speed Unit</label>
+                    <span className="pref-help">Used in Wind &amp; Weather telemetry view.</span>
+                  </div>
+                </div>
                 <div className="pref-segmented-control" id="pref-wind-unit">
                   {(['kmh', 'ms', 'knots'] as WindUnit[]).map(unit => (
                     <button
@@ -333,12 +397,19 @@ export default function SettingsView() {
                     </button>
                   ))}
                 </div>
-                <span className="pref-help">Used in Wind &amp; Weather telemetry view.</span>
               </div>
 
               {/* Temperature Unit */}
               <div className="pref-item">
-                <label className="pref-label" htmlFor="pref-temp-unit">Temperature Unit</label>
+                <div className="pref-header-row">
+                  <div className="pref-icon-squircle icon-orange">
+                    <Thermometer size={15} />
+                  </div>
+                  <div className="pref-header-text">
+                    <label className="pref-label" htmlFor="pref-temp-unit">Temperature Unit</label>
+                    <span className="pref-help">Station meteorology temperature format.</span>
+                  </div>
+                </div>
                 <div className="pref-segmented-control" id="pref-temp-unit">
                   {(['celsius', 'fahrenheit'] as TempUnit[]).map(unit => (
                     <button
@@ -354,12 +425,19 @@ export default function SettingsView() {
                     </button>
                   ))}
                 </div>
-                <span className="pref-help">Station meteorology temperature format.</span>
               </div>
 
               {/* Default Startup View */}
               <div className="pref-item">
-                <label className="pref-label" htmlFor="pref-default-tab">Default Startup Screen</label>
+                <div className="pref-header-row">
+                  <div className="pref-icon-squircle icon-green">
+                    <Layers size={15} />
+                  </div>
+                  <div className="pref-header-text">
+                    <label className="pref-label" htmlFor="pref-default-tab">Default Startup Screen</label>
+                    <span className="pref-help">Initial active tab when AERIS launches.</span>
+                  </div>
+                </div>
                 <select
                   id="pref-default-tab"
                   className="pref-select"
@@ -377,12 +455,19 @@ export default function SettingsView() {
                   <option value="population">Population Risk</option>
                   <option value="shield">Protective Actions</option>
                 </select>
-                <span className="pref-help">Initial active tab when AERIS launches.</span>
               </div>
 
               {/* Default Lookahead Horizon */}
               <div className="pref-item">
-                <label className="pref-label" htmlFor="pref-default-horizon">Default Lookahead Horizon</label>
+                <div className="pref-header-row">
+                  <div className="pref-icon-squircle icon-purple">
+                    <Clock size={15} />
+                  </div>
+                  <div className="pref-header-text">
+                    <label className="pref-label" htmlFor="pref-default-horizon">Default Lookahead Horizon</label>
+                    <span className="pref-help">Default forecast lookahead slider value.</span>
+                  </div>
+                </div>
                 <div className="pref-segmented-control" id="pref-default-horizon">
                   {([0, 2, 4, 8, 24] as const).map(h => (
                     <button
@@ -398,12 +483,19 @@ export default function SettingsView() {
                     </button>
                   ))}
                 </div>
-                <span className="pref-help">Default forecast lookahead slider value.</span>
               </div>
 
               {/* Particle Quality */}
               <div className="pref-item">
-                <label className="pref-label" htmlFor="pref-particle-density">Plume Vector Rendering</label>
+                <div className="pref-header-row">
+                  <div className="pref-icon-squircle icon-blue">
+                    <Sparkles size={15} />
+                  </div>
+                  <div className="pref-header-text">
+                    <label className="pref-label" htmlFor="pref-particle-density">Plume Vector Rendering</label>
+                    <span className="pref-help">Balance 60 FPS animation vs hardware battery.</span>
+                  </div>
+                </div>
                 <div className="pref-segmented-control" id="pref-particle-density">
                   {(['standard', 'high', 'eco'] as const).map(density => (
                     <button
@@ -419,12 +511,19 @@ export default function SettingsView() {
                     </button>
                   ))}
                 </div>
-                <span className="pref-help">Balance 60 FPS animation vs hardware battery usage.</span>
               </div>
 
               {/* Auto Fly-to Toggle */}
               <div className="pref-item">
-                <label className="pref-label" htmlFor="pref-auto-fly">Map Navigation Interaction</label>
+                <div className="pref-header-row">
+                  <div className="pref-icon-squircle icon-teal">
+                    <Crosshair size={15} />
+                  </div>
+                  <div className="pref-header-text">
+                    <label className="pref-label" htmlFor="pref-auto-fly">Map Navigation Interaction</label>
+                    <span className="pref-help">Automatically centers camera when site is clicked.</span>
+                  </div>
+                </div>
                 <button
                   type="button"
                   id="pref-auto-fly"
@@ -441,7 +540,6 @@ export default function SettingsView() {
                     {settings.autoFlyToSelection ? 'Auto-zoom to facility on selection' : 'Manual pan & zoom'}
                   </span>
                 </button>
-                <span className="pref-help">Automatically centers camera when site is clicked.</span>
               </div>
             </div>
           </section>
@@ -464,10 +562,17 @@ export default function SettingsView() {
           <div className="thresholds-grid">
             {/* Air Quality Standard Framework */}
             <div className="threshold-card">
-              <strong className="threshold-title">Air Quality Standard Framework</strong>
-              <p className="threshold-desc">
-                Select the regulatory index standard used to classify PM2.5 concentrations and health advisory tiers.
-              </p>
+              <div className="threshold-header-row">
+                <div className="threshold-icon-squircle icon-emerald">
+                  <ShieldCheck size={16} />
+                </div>
+                <div>
+                  <strong className="threshold-title">Air Quality Standard Framework</strong>
+                  <p className="threshold-desc">
+                    Select the regulatory index standard used to classify PM2.5 concentrations and health advisory tiers.
+                  </p>
+                </div>
+              </div>
               <div className="pref-segmented-control full">
                 {(['cpcb', 'who', 'epa'] as AqiStandard[]).map(std => (
                   <button
@@ -494,14 +599,30 @@ export default function SettingsView() {
                   <span>US EPA Standard: Standard AQI equation based on 24-hr truncated PM2.5 breakpoints.</span>
                 )}
               </div>
+              {/* Visual AQI Spectrum Bar */}
+              <div className="aqi-spectrum-bar" role="img" aria-label="National AQI Classification Spectrum">
+                <span className="aqi-pill aqi-good">Good 0-50</span>
+                <span className="aqi-pill aqi-sat">Satisfactory 51-100</span>
+                <span className="aqi-pill aqi-mod">Moderate 101-200</span>
+                <span className="aqi-pill aqi-poor">Poor 201-300</span>
+                <span className="aqi-pill aqi-vpoor">Very Poor 301-400</span>
+                <span className="aqi-pill aqi-sev">Severe &gt;400</span>
+              </div>
             </div>
 
             {/* Fire Radiative Power (FRP) Minimum Filter */}
             <div className="threshold-card">
-              <strong className="threshold-title">Thermal Anomaly Sensitivity Filter</strong>
-              <p className="threshold-desc">
-                Filter out low-intensity satellite agricultural burns to focus incident response on major fire complexes.
-              </p>
+              <div className="threshold-header-row">
+                <div className="threshold-icon-squircle icon-orange">
+                  <Flame size={16} />
+                </div>
+                <div>
+                  <strong className="threshold-title">Thermal Anomaly Sensitivity Filter</strong>
+                  <p className="threshold-desc">
+                    Filter out low-intensity satellite agricultural burns to focus incident response on major fire complexes.
+                  </p>
+                </div>
+              </div>
               <div className="pref-segmented-control full">
                 {[
                   { val: 0, label: 'All Fires (≥0 MW)' },
@@ -523,44 +644,64 @@ export default function SettingsView() {
                 ))}
               </div>
               <div className="threshold-info-box">
-                <span>Active telemetry currently includes {sources?.sources.length ?? 0} thermal source clusters across the airshed.</span>
+                <span>Active airshed telemetry: {retainedFiresCount} of {sources?.sources.length ?? 0} thermal source clusters retained ({sources?.sources.length ? Math.round((retainedFiresCount / sources.sources.length) * 100) : 0}% coverage).</span>
               </div>
             </div>
 
             {/* Facility Exposure Alarm Level */}
             <div className="threshold-card">
-              <strong className="threshold-title">High-Risk Facility Alarm Trigger</strong>
-              <p className="threshold-desc">
-                Threshold for triggering high-priority emergency checklists for schools and medical centers.
-              </p>
+              <div className="threshold-header-row">
+                <div className="threshold-icon-squircle icon-red">
+                  <ShieldAlert size={16} />
+                </div>
+                <div>
+                  <strong className="threshold-title">High-Risk Facility Alarm Trigger</strong>
+                  <p className="threshold-desc">
+                    Threshold for triggering high-priority emergency checklists for schools and medical centers.
+                  </p>
+                </div>
+              </div>
               <div className="slider-control-group">
                 <div className="slider-header">
                   <span className="slider-label">PM2.5 Delta Trigger:</span>
-                  <strong className="slider-val">+{settings.pm25CriticalThreshold} µg/m³</strong>
+                  <div className="slider-val-wrap">
+                    <strong className="slider-val">+{settings.pm25CriticalThreshold} µg/m³</strong>
+                    <span className={`risk-tier-badge tier-${riskTier.key}`}>{riskTier.label}</span>
+                  </div>
                 </div>
-                <input
-                  type="range"
-                  min="50"
-                  max="300"
-                  step="25"
-                  className="threshold-range-slider"
-                  value={settings.pm25CriticalThreshold}
-                  onChange={e => updateSettings({ pm25CriticalThreshold: Number(e.target.value) })}
-                />
+                <div className="slider-track-wrap">
+                  <input
+                    type="range"
+                    min="50"
+                    max="300"
+                    step="25"
+                    className="threshold-range-slider"
+                    value={settings.pm25CriticalThreshold}
+                    onChange={e => updateSettings({ pm25CriticalThreshold: Number(e.target.value) })}
+                  />
+                  <div className="slider-gradient-bar" />
+                </div>
                 <div className="slider-ticks">
-                  <span>50 µg/m³</span>
-                  <span>150 µg/m³</span>
-                  <span>300 µg/m³</span>
+                  <span>50 µg/m³ (Advisory)</span>
+                  <span>150 µg/m³ (Warning)</span>
+                  <span>300 µg/m³ (Severe)</span>
                 </div>
               </div>
             </div>
 
             {/* Facility Sensitivity Prioritization */}
             <div className="threshold-card">
-              <strong className="threshold-title">Facility Sensitivity Prioritization</strong>
-              <p className="threshold-desc">
-                Weight emergency advisory sorting based on institution type vulnerability.
-              </p>
+              <div className="threshold-header-row">
+                <div className="threshold-icon-squircle icon-blue">
+                  <Layers size={16} />
+                </div>
+                <div>
+                  <strong className="threshold-title">Facility Sensitivity Prioritization</strong>
+                  <p className="threshold-desc">
+                    Weight emergency advisory sorting based on institution type vulnerability.
+                  </p>
+                </div>
+              </div>
               <div className="pref-segmented-control full">
                 {[
                   { key: 'all' as const, label: 'All Sites Equal' },
@@ -635,8 +776,12 @@ export default function SettingsView() {
                   !!feedErrors[feed.key] || staleFeeds.some(value => value.label === feed.key)
                 )
                 const isStale = status.status === 'stale'
+                const FeedIcon = FEED_ICONS[feed.key] || Activity
                 return (
                   <div className="feed-item" key={feed.key}>
+                    <div className={`feed-icon-squircle icon-${feed.key}`}>
+                      <FeedIcon size={16} />
+                    </div>
                     <div className="feed-info">
                       <div className="feed-title-line">
                         <strong>{feed.name}</strong>
