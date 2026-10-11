@@ -35,6 +35,27 @@ export default function MapContainer() {
   const [scopeFilter, setScopeFilter]       = useState<'all' | 'india'>('all')
   const [isLayerMenuOpen, setIsLayerMenuOpen] = useState(false)
   const [showMapGuide, setShowMapGuide]       = useState(false)
+  const [isTelemetryOpen, setIsTelemetryOpen] = useState(false)
+
+  // Close telemetry modal on outside click or Escape
+  useEffect(() => {
+    if (!isTelemetryOpen) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setIsTelemetryOpen(false)
+    }
+    const onClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement | null
+      if (target && !target.closest('.storyline-node.flow')) {
+        setIsTelemetryOpen(false)
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    window.addEventListener('click', onClick)
+    return () => {
+      window.removeEventListener('keydown', onKey)
+      window.removeEventListener('click', onClick)
+    }
+  }, [isTelemetryOpen])
 
   const {
     sources,
@@ -362,13 +383,16 @@ export default function MapContainer() {
       <div className="map-header">
         <div className="map-title-group">
           <div className="map-icon">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22734F" strokeWidth="2.2">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#22734F" strokeWidth="2.2">
               <path d="M3 7l6-3 6 3 6-3v13l-6 3-6-3-6 3V7z"/>
             </svg>
           </div>
-          <div>
-            <div className="map-title">Modelled plume corridors</div>
-            <div className="map-subtitle">Uncalibrated baseline · not an observed concentration field</div>
+          <div className="map-title-wrapper">
+            <div className="map-title-row">
+              <span className="map-title">Modelled plume corridors</span>
+              <span className="map-baseline-badge">Uncalibrated baseline</span>
+            </div>
+            <div className="map-subtitle">Atmospheric forward trajectory · not an observed concentration field</div>
           </div>
         </div>
 
@@ -441,19 +465,74 @@ export default function MapContainer() {
         <div className="storyline-node flow" role="region" aria-label="Wind forecast sample">
           <span className="story-step-badge">2. Flow</span>
           <div className="story-step-text">
-            <span className="story-sub" role="status" aria-label="Wind data status">
-              {loading && 'Loading wind data… '}{windStatus}
-              {feedErrors.wind && ` Wind feed unavailable: ${feedErrors.wind}.${sample && windSpeedKmh != null ? ' Retained forecast sample shown.' : ''}`}
-            </span>
-            {sample && samplePoint && windSpeedKmh != null && (
-              <>
-                <strong className="story-headline">{windSpeedKmh} km/h</strong>
-                <span className="story-sub">{sample.speed_ms === 0 ? 'Calm; direction undefined' : `Wind from ${compass} (${sample.dir_from_deg}°)`}</span>
-                <span className="story-sub">{Date.parse(sample.t) < now ? 'Past forecast sample' : 'Forecast sample'}: <time dateTime={sample.t}>{sample.t}</time> at {samplePoint.lat}, {samplePoint.lon} (lat, lon). Source: {windData!.source}.</span>
-                <span className="story-sub">Capture: <time dateTime={windData!.generated_at}>{windData!.generated_at}</time>.</span>
-              </>
-            )}
-            {windData && <span className="story-sub">{windCoverage}</span>}
+            <div className="story-flow-summary">
+              {sample && samplePoint && windSpeedKmh != null ? (
+                <>
+                  <strong className="story-headline">{windSpeedKmh} km/h</strong>
+                  <span className="story-sub flow-direction">
+                    {sample.speed_ms === 0 ? 'Calm; direction undefined' : `Wind from ${compass} (${sample.dir_from_deg}°)`}
+                  </span>
+                  <button
+                    type="button"
+                    className={`flow-telemetry-toggle-btn ${isTelemetryOpen ? 'active' : ''}`}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setIsTelemetryOpen(prev => !prev)
+                    }}
+                    title="Toggle meteorological grid telemetry and forecast metadata"
+                    aria-label="Toggle wind forecast telemetry details"
+                    aria-expanded={isTelemetryOpen}
+                  >
+                    <Info size={10} />
+                    <span>Telemetry</span>
+                    <span className={`telemetry-dot ${windFreshness.stale ? 'stale' : 'live'}`} />
+                  </button>
+                </>
+              ) : (
+                <strong className="story-headline story-status-headline">
+                  {loading ? 'Loading wind data…' : windStatus}
+                </strong>
+              )}
+            </div>
+
+            {/* Accessible & Collapsible Telemetry Popover */}
+            <div
+              className={`story-flow-telemetry-popover ${isTelemetryOpen ? 'open' : 'closed'}`}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="telemetry-popover-header">
+                <span className="telemetry-title">📡 Wind Forecast Model Telemetry</span>
+                <button
+                  type="button"
+                  className="telemetry-close-btn"
+                  onClick={() => setIsTelemetryOpen(false)}
+                  title="Close telemetry"
+                  aria-label="Close telemetry details"
+                >
+                  <X size={11} />
+                </button>
+              </div>
+
+              <div className="telemetry-details-body">
+                <span className="story-sub" role="status" aria-label="Wind data status">
+                  {loading && 'Loading wind data… '}{windStatus}
+                  {feedErrors.wind && ` Wind feed unavailable: ${feedErrors.wind}.${sample && windSpeedKmh != null ? ' Retained forecast sample shown.' : ''}`}
+                </span>
+
+                {sample && samplePoint && windSpeedKmh != null && (
+                  <>
+                    <span className="story-sub">
+                      {Date.parse(sample.t) < now ? 'Past forecast sample' : 'Forecast sample'}: <time dateTime={sample.t}>{sample.t}</time> at {samplePoint.lat}, {samplePoint.lon} (lat, lon). Source: {windData!.source}.
+                    </span>
+                    <span className="story-sub">
+                      Capture: <time dateTime={windData!.generated_at}>{windData!.generated_at}</time>.
+                    </span>
+                  </>
+                )}
+
+                {windData && <span className="story-sub">{windCoverage}</span>}
+              </div>
+            </div>
           </div>
         </div>
 
@@ -463,7 +542,7 @@ export default function MapContainer() {
           <span className="story-step-badge">3. Impact</span>
           <div className="story-step-text">
             <strong className="story-headline">{earliestEta == null ? 'ETA unavailable' : `~${earliestEta}h ETA`}</strong>
-            <span className="story-sub">Ranked receptor · uncalibrated · forecast-relative</span>
+            <span className="story-sub" title="Ranked receptor · uncalibrated · forecast-relative">Receptor arrival</span>
           </div>
         </div>
       </div>

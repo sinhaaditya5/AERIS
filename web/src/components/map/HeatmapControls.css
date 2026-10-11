@@ -1,12 +1,23 @@
 /* HeatmapControls.css — Sleek & Compact Map Intelligence Ribbon */
 
 .heatmap-controls {
-  padding: 6px 14px;
   background: var(--surface-card, #ffffff);
-  border-bottom: 1px solid var(--border-subtle, rgba(0, 0, 0, 0.08));
+  border-bottom: 1px solid var(--border-subtle, rgba(0, 0, 0, 0.06));
   flex: 0 0 auto;
-  font-size: 11.5px;
+  font-size: 11px;
   color: var(--text-secondary, #4a5e56);
+  transition: all 0.15s ease;
+}
+
+.heatmap-controls.is-idle {
+  padding: 3px 14px;
+  background: #fbfdfc;
+  min-height: 24px;
+}
+
+.heatmap-controls.is-enabled {
+  padding: 6px 14px;
+  background: #ffffff;
 }
 
 .heatmap-control-row {
@@ -14,22 +25,22 @@
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: 8px 12px;
+  gap: 6px 12px;
 }
 
 .heatmap-toggle-group {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   min-width: 0;
 }
 
 .heatmap-checkbox-label {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  font-weight: 700;
-  font-size: 12px;
+  gap: 5px;
+  font-weight: 600;
+  font-size: 11px;
   color: var(--text-primary, #1e2924);
   cursor: pointer;
   white-space: nowrap;
@@ -38,6 +49,17 @@
 .heatmap-checkbox-label input[type="checkbox"] {
   accent-color: var(--brand-dark, #22734f);
   cursor: pointer;
+  width: 13px;
+  height: 13px;
+}
+
+.heatmap-idle-tag {
+  font-size: 9.5px;
+  color: var(--text-tertiary, #738a80);
+  font-weight: 500;
+  padding: 1px 6px;
+  background: rgba(0, 0, 0, 0.03);
+  border-radius: 8px;
 }
 
 .heatmap-unit-badge {
