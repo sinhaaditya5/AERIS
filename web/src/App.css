@@ -42,8 +42,8 @@
   grid-template-columns: repeat(3, 1fr);
   grid-template-rows: 1fr;
   gap: 10px;
-  height: 190px;
-  min-height: 180px;
+  height: 204px;
+  min-height: 196px;
   flex-shrink: 0;
   position: relative;
   z-index: 2;
