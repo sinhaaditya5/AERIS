@@ -1,5 +1,30 @@
 # Lagrangian plume corridor baseline
 
+The 2026-10-10 risk hardening adds optional companion provenance without changing
+the puff equations, peak statistic or GeoJSON schema. See
+[the remediation report](../../docs/audits/hardcoded-data/2026-10-10/contributor-work-tally/PRITAM_RISK_REMEDIATION.md)
+for the current assessment; earlier verification counts remain historical.
+
+The local CLI accepts `--provenance-output <separate-file.json>`. Use an isolated
+`--output` path and genuinely covered `--start`/`--hours`; this does not relax wind
+coverage or supply missing weather. The companion binds actual source/wind/output
+bytes, code hash, parameters, parameter source, capture times and forecast start.
+It explicitly labels each band's concentration as the source-wide maximum over
+sampled grid cells and hourly frames, including disconnected polygons. This is
+not a uniform or facility-local concentration; `risk` is not a health probability.
+Use `concentration_at()` and eligible independent history for receptor validation.
+
+`python -m models.common.provenance data/live/corridor.geojson --kind corridor`
+labels the exact preserved archive `ARCHIVED_LEGACY`. The
+[hash registry](../ARCHIVED_OUTPUTS.json) discloses the removed floor formulas and
+the absence of a recorded original input/parameter binding. A new calculation
+using archived sources records that lineage in its companion rather than
+silently presenting it as fresh detection output. Other unbound files remain
+unknown. Companions establish byte binding, not external-source authentication,
+calibration or forecast skill. Existing pipeline/API/UI integrations still need
+to consume these disclosures before operational use. Companion and output writes
+are separate; always verify the binding before consuming a pair.
+
 This is a simplified Lagrangian puff/advection baseline.
 It is not WRF-Chem and is not a full atmospheric chemistry model.
 
@@ -413,6 +438,12 @@ returning `CalibrationResult`. Its `to_dict()` and sorted JSON serialization
 are deterministic. `parameters.py` validates and atomically writes/loads
 parameter artifacts. No module makes network requests or downloads data.
 
+The [2026-10-11 frozen protocol](../../docs/calibration/PROTOCOL.md) and
+[session report](../../docs/calibration/REPORT.md) separate eligibility from
+numerical mechanics. A real experiment now requires a content-bound protocol,
+explicit training/validation/protected-test episodes and separate runtime review.
+The current captures still do not authorize fitting.
+
 The current repository still returns `BLOCKED_NO_VALID_HISTORICAL_DATA`, with
 `optimizer_executed=false`, `fitted_parameters=null` and no `params.json`.
 Unavailable metrics are JSON `null`, never zero errors. Results retain dataset
@@ -424,15 +455,17 @@ leakage checks, warnings and sensitivity diagnostics when available.
 python -m models.plume.calibrate
 # Current real repository: deterministic JSON on stdout, exit 1.
 
-python -m models.plume.calibrate --history data/history/calibration.json --report .venv/calibration-report.json
-# Future eligible real manifest: fit, validate, then atomically write params.json.
+python -m models.plume.calibrate --history data/history/calibration.json --report .venv/new-calibration-report.json --params-output .venv/new-calibration-candidate.json
+# Future eligible reviewed manifest: export a candidate pending expert review.
 ```
 
 Default discovery checks `data/history/calibration.json` and
 `data/historical/calibration.json`. Multiple manifests require explicit selection;
 there is no automatic merge. Without a manifest the CLI inventories actual live
 inputs and reports rejection. `--history` selects a local manifest;
-`--params-output` changes the successful artifact destination. `--report` may
+`--params-output` explicitly requests a separate successful candidate artifact;
+without it no parameter file is written. The runtime `models/plume/params.json`
+destination is forbidden for calibration exports. `--report` may
 save blocked metadata. Outputs cannot overwrite consumed history/live inputs
 or each other. Blocked/invalid runs preserve previous parameters and snapshots.
 
@@ -444,11 +477,24 @@ independently reviewed real captures, preserving original observations:
 
 | Level | Required fields |
 | --- | --- |
-| Manifest | `schema_version=1`, `evidence_kind="REAL_CAPTURED_HISTORY"`, `provenance`, aware `calibration_timestamp`, `events`, `observations` |
+| Manifest | `schema_version=1`, `evidence_kind="REAL_CAPTURED_HISTORY"`, `provenance`, aware `calibration_timestamp`, frozen `protocol`, `events`, `observations` |
 | Provenance | `kind="REAL_CAPTURED_HISTORY"`, nonempty `source`, `capture_id`, `archive_reference`, `timing_verified=true` |
 | Event | Unique `capture_id`, persistent physical `event_id`, aware `source_event_time`, `forecast_start`, actual contract-shaped `fires`, `sources`, `wind`, and `provenance` |
-| Event provenance | `event_group_verified=true`; separate `fires`, `sources`, `wind` provenance objects, each with `content_sha256` matching `history.content_hash(payload)` |
-| Observation | Unique `id`, stable `station_id`, WGS84 `lat`/`lon`, aware `period_start`, `observed_at`, `available_at`, finite nonnegative `pm25_ugm3`, `unit="ug/m3"`, `observational=true`, provenance |
+| Event provenance | `event_group_verified=true`, `attribution_verified=true`, independent `attribution_reference`; separate `fires`, `sources`, `wind` provenance objects, each with verified aware `available_at` and `content_sha256` matching `history.content_hash(payload)` |
+| Observation | Unique `id`, stable `station_id`, WGS84 `lat`/`lon`, aware `period_start`, `observed_at`, `available_at`, finite nonnegative `pm25_ugm3`, `unit="ug/m3"`, `observational=true`, `quality_verified=true`, `averaging_period_verified=true`, provenance with payload digest excluding the provenance object |
+| Protocol | Version 1, `id`, `model_version`, receptor-increment `target`, aware `frozen_at`, `code_sha256`, `search_definition`, `search_sha256`, `history_inputs_sha256`, reviewed rules/rationale, station policy, acceptance criteria and explicit `training`/`validation`/`test` event IDs |
+
+Use `models.plume.protocol.code_identity()` and `search_definition(config)` to
+bind actual code/settings. `history_inputs_sha256` hashes the complete manifest
+excluding `protocol`. The search digest hashes `search_definition` using
+`history.content_hash`. Required review strings are `scientific_question`,
+`inclusion_rules`, `exclusion_rules`, `quality_review`, `attribution_review`,
+`uncertainty_plan`, `limitations`, `reviewer` and a `parameter_rationale` entry
+for each axis. `test_previously_used` must be exactly false. Accepted station
+policies are `SAME_STATIONS_NEW_EVENTS` and `DISJOINT_STATIONS`. Acceptance records
+`min_relative_rmse_improvement` in (0,1) and nonnegative
+`max_mae_regression_ugm3`. These declarations must be independently reviewed;
+software cannot establish the truth of a provenance assertion or physical bounds.
 
 `content_hash` hashes sorted finite JSON of the parsed payload, independent of
 file whitespace. Digests check consistency; provenance flags are auditable
@@ -456,7 +502,9 @@ assertions by the archive owner, not authentication of atmospheric truth.
 Review units, quality, timing and physical event grouping before marking them
 verified. Model-generated or mathematical values cannot be relabelled real.
 
-Sources must reproduce exactly from their packet's frozen fires using the
+Packet availability must be independently recorded; fetch-start/generation times
+are not an availability substitute. Availability cannot precede generation and
+must precede prediction. Sources must reproduce exactly from their packet's frozen fires using the
 unchanged detector defaults. `source_event_time` is the earliest contributing
 source detection. Source/wind generation times and latest contributing detection
 must be strictly before `forecast_start`; target intervals must follow it.
@@ -506,19 +554,24 @@ excluded from background references.
 
 ## Chronological protection and minimum history
 
-Automatic adoption requires three physical event groups, two stations in each
-partition, four fitting targets and two holdout targets. These minimums are
+Candidate evaluation requires at least four physical event groups: two training,
+one validation and one protected test group. Each partition requires two stations;
+training requires four targets and validation/test require two each. These minimums are
 engineering gates, not evidence of statistical generalization. Event grouping
 must be independently reviewed; overlapping fire identities assigned different
 event IDs are rejected. Snapshot-ranked `src_*` values are not event IDs.
 
-Groups sort by earliest source-event time. The latest 34%, rounded up while
-retaining at least two training groups, form the protected holdout. All training
-targets must precede the first holdout forecast reference. Target/background IDs
-must be disjoint across partitions. There is no random row split, future input,
-holdout-based selection or event-specific manual tuning. Insufficient groups,
-stations, targets or clean chronology block optimization with holdout unavailable.
-Partial fits also require a protected holdout.
+Explicit event IDs are frozen before fitting. Full 48-hour windows of each earlier
+partition must finish strictly before the next partition's source episode. Check
+every frozen capture before matching, including unmatched captures; those captures
+remain in their predeclared event group and do not increase eligible-target counts.
+Target/background IDs and repeated fire identities must be disjoint across
+partitions. Declared
+station holdouts are enforced; repeated known stations imply only new-event
+evaluation. No random row split, future input, test-based selection or manual
+event tuning is allowed. Insufficient groups, stations, targets or clean chronology
+block optimization. The older two-way `chronological_split` utility remains for
+compatibility/testing and no longer authorizes a calibration experiment.
 
 ## Bounded search, sensitivity and adoption
 
@@ -552,30 +605,47 @@ sensitivity at the retained optimum. Equivalent grid values and fixed-other-
 parameter profiles are reported, not confidence intervals or false precision.
 The known source-radius floor can make sigma0 inactive.
 
-Acceptance requires an identified parameter and strictly lower RMSE on training
-and the untouched chronological holdout. Failure or no holdout improvement
-retains baseline and writes nothing; holdout is never used to retune. A supported
-subset yields `PARTIALLY_CALIBRATED`; other parameters remain `ASSUMED`.
+Evaluate baseline on all partitions before fitting. Acceptance requires an
+identified parameter, training improvement, and the predeclared RMSE improvement
+and MAE tolerance on validation and test, with no event-level RMSE regression.
+Validation failure stops before candidate test evaluation. The selected parameters
+are frozen before test; test is never used to retune. A supported subset yields
+`PARTIALLY_CALIBRATED`; other parameters remain `ASSUMED`. These internal numerical
+statuses describe an unapproved candidate, not scientific certification.
 
 ## Parameter artifacts and precedence
 
-Successful artifacts contain all physical/numerical values, four parameter
+Successful version-2 candidate artifacts contain all physical/numerical values, four parameter
 units/statuses, dataset provenance/hash/counts/time range, explicit calibration
 timestamp, model/schema version, RMSE objective, baseline/fitted/holdout metrics,
-event split, leakage checks and identifiability diagnostics. Serialization forbids
+three-way event split, frozen protocol/code/dataset hashes, per-target predictions,
+recomputed partition/subgroup metrics, leakage checks and identifiability diagnostics.
+They retain `history_inputs` (the complete original manifest excluding `protocol`),
+bound to both the protocol input digest and full dataset digest. Saved-artifact
+acceptance rechecks all capture windows, frozen observation/station identities and
+the actual station sets required by `DISJOINT_STATIONS`. Malformed protocol objects
+and nested structures fail with a clear `ValueError`.
+They carry `PENDING_EXPERT_REVIEW` and `runtime_approved=false`. Serialization forbids
 NaN/infinity; atomic replacement follows validation.
 
 `load_parameters()` returns `LoadedParameters(params, provenance, metadata)`:
 
 1. Explicit `PlumeParams` or dict wins, labelled `EXPLICIT`. Missing fields in
    an explicit dict retain the existing API's baseline defaults.
-2. Otherwise valid local `models/plume/params.json` supplies `CALIBRATED` values.
+2. Otherwise a validated local `models/plume/params.json` requires a separate
+   `runtime_approval` before supplying `CALIBRATED` values for development evaluation.
 3. An absent file supplies documented `BASELINE` values.
 
 Existing corrupt, wrong-version/unit, blocked, mathematical or non-improving
-artifacts fail closed; they do not silently fall back. The existing plume
+artifacts fail closed; they do not silently fall back. Legacy real artifacts without
+the frozen three-way protocol fail closed. The approval requires status
+`APPROVED_FOR_DEVELOPMENT_EVALUATION`, a named `reviewer`, aware `reviewed_at` not
+before calibration, and `candidate_sha256=parameters.candidate_digest(document)`.
+The digest excludes only `runtime_approval`. This is trusted local operator review,
+not supplier authentication or operational certification. The existing plume
 `resolve_params` path and pipeline use this loader. CLI `--params` supports
-flat explicit overrides or a validated calibration artifact. GeoJSON fields
+flat explicit overrides (still labelled `EXPLICIT`) or a reviewed calibration
+artifact through the same loader. GeoJSON fields
 remain unchanged; loader metadata carries provenance outside the shared contract.
 
 Numerical optimizer/artifact tests are labelled `MATHEMATICAL_TEST`. Their optional

@@ -105,10 +105,13 @@ def parse_observation(value: dict[str, Any]) -> Observation:
     pm25 = number(value.get("pm25_ugm3"), "observation.pm25_ugm3")
     if pm25 < 0:
         raise ValueError("Observed PM2.5 must be nonnegative")
+    if value.get("quality_verified") is not True or value.get("averaging_period_verified") is not True:
+        raise ValueError("UNVERIFIED_OBSERVATION: quality and averaging interval require review")
+    payload = {k: v for k, v in value.items() if k != "provenance"}
     return Observation(identity(value.get("id"), "observation.id"),
                        identity(value.get("station_id"), "station_id"), lat, lon,
                        start, end, available, pm25,
-                       provenance(value.get("provenance"), "observation.provenance"))
+                       provenance(value.get("provenance"), "observation.provenance", payload))
 
 
 @dataclass(frozen=True)
@@ -132,6 +135,14 @@ def check_chronology(source_available: datetime, wind_available: datetime,
         raise ValueError("TARGET_PRECEDES_FORECAST: target interval must follow prediction")
 
 
+def input_available_at(metadata: dict[str, Any], generated: datetime, name: str) -> datetime:
+    """Fetch-start/generation times do not establish when a packet became available."""
+    available = parse_time(metadata.get("available_at"), f"{name}.available_at")
+    if available < generated:
+        raise ValueError("INPUT_AVAILABILITY_PRECEDES_GENERATION")
+    return available
+
+
 def parse_event(value: dict[str, Any]) -> Event:
     sources_data, wind, fires = value.get("sources"), value.get("wind"), value.get("fires")
     generated, sources = validate_sources(sources_data)
@@ -149,8 +160,16 @@ def parse_event(value: dict[str, Any]) -> Event:
     metadata = value.get("provenance", {})
     if metadata.get("event_group_verified") is not True:
         raise ValueError("Independent physical event grouping must be reviewed")
+    if metadata.get("attribution_verified") is not True:
+        raise ValueError("Independent event-to-observation attribution must be reviewed")
+    identity(metadata.get("attribution_reference"), "event.attribution_reference")
     checked = {name: provenance(metadata.get(name), f"event.{name}", payload)
                for name, payload in (("fires", fires), ("sources", sources_data), ("wind", wind))}
+    source_available = input_available_at(checked["sources"], generated, "sources")
+    wind_available = input_available_at(checked["wind"], parse_time(wind["generated_at"], "wind.generated_at"), "wind")
+    fire_available = input_available_at(checked["fires"], parse_time(fires["generated_at"], "fires.generated_at"), "fires")
+    check_chronology(max(source_available, fire_available), wind_available,
+                     max(s.last_seen for s in sources), start)
     field = WindField(wind, PlumeParams())
     if start < field.first_time or start >= field.last_time:
         raise ValueError("Forecast reference lacks covered real wind/PBLH")
@@ -327,6 +346,8 @@ def check_history_population(events: list[Event], observations: list[Observation
         if o.available_at > calibration_time:
             raise ValueError("Calibration timestamp precedes an input observation's availability")
     for readings in stations.values():
+        if len({(o.lat, o.lon) for o in readings}) != 1:
+            raise ValueError("INCONSISTENT_STATION_COORDINATES: relocation requires reviewed station identity")
         ordered = sorted(readings, key=lambda o: (o.period_start, o.observed_at))
         if any(a.observed_at > b.period_start for a, b in zip(ordered, ordered[1:])):
             raise ValueError("OVERLAPPING_MEASUREMENTS: background/target intervals are not independent")

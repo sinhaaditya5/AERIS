@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import itertools
 import json
 import math
@@ -14,7 +15,7 @@ from typing import Any, Callable
 from models.plume.advect import PlumeParams, WindField, decay_factor, dispersion_sigma, number, parse_time, simulate_source, utc_string
 from models.plume.corridor import concentration_at
 from models.plume.history import (
-    BackgroundEstimator, EligibilityConfig, Match, check_history_population, chronological_split, content_hash,
+    BackgroundEstimator, EligibilityConfig, Match, check_history_population, content_hash,
     match_observations, parse_event, parse_observation, pre_event_median, provenance,
 )
 from models.plume.parameters import (
@@ -223,11 +224,68 @@ def empty_report(metadata: dict[str, Any] | None = None) -> dict[str, Any]:
             "matches": [], "rejected": [], "optimizer_executed": False, "fitted_parameters": None,
             "parameter_status": {name: "ASSUMED" for name in UNITS},
             "parameter_source": "BASELINE", "baseline_parameters": asdict(PlumeParams()),
-            "metrics": {name: None for name in ("baseline", "calibrated", "baseline_holdout", "calibrated_holdout")},
+            "metrics": {name: None for name in ("baseline", "calibrated", "baseline_validation",
+                                                "calibrated_validation", "baseline_holdout", "calibrated_holdout")},
             "holdout_status": "NOT_AVAILABLE", "identifiability": None,
+            "reviewer_status": "NOT_FITTED", "runtime_approved": False,
             "leakage_checks": {"source_availability": "NOT_AVAILABLE", "background_independence": "NOT_AVAILABLE",
                                "event_split_disjoint": "NOT_AVAILABLE", "holdout_used_for_selection": False},
             "warnings": []}
+
+
+def _fit_partitions(parts: dict[str, list[Match]], config: CalibrationConfig,
+                    protocol: dict[str, Any], report: dict[str, Any]) -> GridSearchResult:
+    """Numerical mechanics after eligibility; fixtures here remain mathematical only."""
+    from models.plume.protocol import acceptance_check, evaluation_rows
+    train = parts["training"]
+    predictors = {p: make_predictor(rows) for p, rows in parts.items()}
+    baseline_predictions = {p: predict(PlumeParams()) for p, predict in predictors.items()}
+    metric_keys = {"training": "baseline", "validation": "baseline_validation", "test": "baseline_holdout"}
+    report["evaluation"] = {}
+    report["group_metrics"] = {}
+    # Record the unchanged baseline before any parameter fitting.
+    for part, rows in parts.items():
+        predicted = baseline_predictions[part]
+        label = metric_keys[part]
+        report["metrics"][label] = error_metrics(predicted, [m.observed_delta for m in rows])
+        report["evaluation"][label] = evaluation_rows(rows, predicted)
+        report["group_metrics"][label] = {"events": grouped_metrics(rows, predicted, "event"),
+                                           "stations": grouped_metrics(rows, predicted, "station")}
+    predictor = predictors["training"]
+    targets = [m.observed_delta for m in train]
+    report["optimizer_executed"] = True
+    search = grid_search(predictor, targets, config)
+    report["metrics"].update(baseline=search.baseline_metrics, calibrated=search.selected_metrics)
+    report["parameter_status"] = search.parameter_status
+    report["identifiability"] = search.identifiability
+    report["search"] = {"candidates": search.candidates, "axes": {k: asdict(v) for k, v in config.axes.items()}}
+    if not any(v == "CALIBRATED" for v in search.parameter_status.values()):
+        raise ValueError("UNIDENTIFIABLE: no independently supported physical parameter")
+    if search.selected_metrics["rmse"] >= search.baseline_metrics["rmse"]:
+        raise ValueError("NO_TRAINING_IMPROVEMENT: baseline retained")
+    report["candidate_parameters_sha256"] = content_hash(asdict(search.selected))
+    report["candidate_frozen_before_test"] = True
+    report["reviewer_status"] = "PENDING_EXPERT_REVIEW"
+    for part, label in (("training", "calibrated"), ("validation", "calibrated_validation"),
+                        ("test", "calibrated_holdout")):
+        rows = parts[part]
+        predicted = predictors[part](search.selected)
+        report["metrics"][label] = error_metrics(predicted, [m.observed_delta for m in rows])
+        report["evaluation"][label] = evaluation_rows(rows, predicted)
+        report["group_metrics"][label] = {"events": grouped_metrics(rows, predicted, "event"),
+                                           "stations": grouped_metrics(rows, predicted, "station")}
+        if part != "training":
+            baseline_label = metric_keys[part]
+            if not acceptance_check(report["metrics"][baseline_label], report["metrics"][label],
+                                    report["group_metrics"][baseline_label]["events"],
+                                    report["group_metrics"][label]["events"], protocol):
+                raise ValueError(f"NO_{part.upper()}_ACCEPTANCE: frozen candidate rejected; baseline retained")
+    fractions = {key: value["observations"] / len(train)
+                 for key, value in report["group_metrics"]["baseline"]["events"].items()}
+    report["training_event_observation_fractions"] = fractions
+    if max(fractions.values()) > 0.5:
+        report["warnings"].append("One event supplies more than half of training targets")
+    return search
 
 
 def calibrate(history: dict[str, Any] | None, *, config: CalibrationConfig | None = None,
@@ -244,6 +302,13 @@ def calibrate(history: dict[str, Any] | None, *, config: CalibrationConfig | Non
         report["dataset"] = {"evidence_kind": REAL_EVIDENCE, "provenance": metadata,
                              "content_sha256": content_hash(history), "accepted": []}
         stamp = parse_time(history.get("calibration_timestamp"), "calibration_timestamp")
+        from models.plume.protocol import (
+            code_identity, split_matches, validate_manifest_windows, validate_protocol,
+        )
+        protocol = validate_protocol(history.get("protocol"), config, stamp)
+        if protocol.get("history_inputs_sha256") != content_hash({k: v for k, v in history.items() if k != "protocol"}):
+            raise ValueError("Protocol historical inputs changed after freezing")
+        report.update(protocol=protocol, protocol_sha256=content_hash(protocol), code_sha256=code_identity())
         raw_events, raw_obs = history.get("events"), history.get("observations")
         if not isinstance(raw_events, list) or not isinstance(raw_obs, list):
             raise ValueError("events and observations must be lists")
@@ -260,55 +325,32 @@ def calibrate(history: dict[str, Any] | None, *, config: CalibrationConfig | Non
         if report["rejected"]:
             raise ValueError("INVALID_HISTORY: invalid provenance/timing/schema records; fix rather than silently drop them")
         check_history_population(events, observations, config.eligibility, stamp)
+        planned = {i for ids in protocol["split"].values() for i in ids}
+        if {e.event_id for e in events} != planned:
+            raise ValueError("SPLIT_EVENT_MISMATCH: manifest events differ from frozen protocol")
+        # Check all captures before matching can exclude any of their windows.
+        validate_manifest_windows(raw_events, protocol)
+        report["history_inputs"] = {k: v for k, v in history.items() if k != "protocol"}
         matches, rejected = match_observations(events, observations, config.eligibility, background_estimator)
         report["rejected"].extend(rejected)
         report.update(matched_events=len({m.event.event_id for m in matches}),
                       matched_stations=len({m.observation.station_id for m in matches}),
                       matched_observations=len(matches), matches=[m.to_dict() for m in matches])
-        train, holdout = chronological_split(matches, config.eligibility)
+        parts = split_matches(matches, protocol, config.eligibility, manifest_events=raw_events)
+        train, validation, holdout = (parts[p] for p in ("training", "validation", "test"))
         report["dataset"]["accepted"] = [{"kind": "historical_manifest", "event_captures": len(events),
                                            "observation_records": len(observations), "matched_targets": len(matches)}]
         report["leakage_checks"].update(source_availability="PASS", background_independence="PASS", event_split_disjoint="PASS")
-        report["holdout_status"] = "PROTECTED_CHRONOLOGICAL"
+        report["holdout_status"] = "PROTECTED_PREDECLARED_TEST"
         report["warnings"].append("Eligibility minimums are engineering policies, not evidence of statistical generalization")
         report["split"] = {"training_events": sorted({m.event.event_id for m in train}),
+                           "validation_events": sorted({m.event.event_id for m in validation}),
                            "holdout_events": sorted({m.event.event_id for m in holdout})}
-        predictor = make_predictor(train)
-        targets = [m.observed_delta for m in train]
-        report["optimizer_executed"] = True
-        search = grid_search(predictor, targets, config)
-        report["metrics"].update(baseline=search.baseline_metrics, calibrated=search.selected_metrics)
-        report["parameter_status"] = search.parameter_status
-        report["identifiability"] = search.identifiability
-        report["search"] = {"candidates": search.candidates, "axes": {k: asdict(v) for k, v in config.axes.items()}}
-        held_predictor = make_predictor(holdout)
-        held_targets = [m.observed_delta for m in holdout]
-        baseline_held = held_predictor(PlumeParams())
-        calibrated_held = held_predictor(search.selected)
-        report["metrics"].update(baseline_holdout=error_metrics(baseline_held, held_targets),
-                                  calibrated_holdout=error_metrics(calibrated_held, held_targets))
-        report["group_metrics"] = {}
-        for label, rows, predicted in (("baseline", train, predictor(PlumeParams())),
-                                       ("calibrated", train, predictor(search.selected)),
-                                       ("baseline_holdout", holdout, baseline_held),
-                                       ("calibrated_holdout", holdout, calibrated_held)):
-            report["group_metrics"][label] = {"events": grouped_metrics(rows, predicted, "event"),
-                                               "stations": grouped_metrics(rows, predicted, "station")}
-        fractions = {key: value["observations"] / len(train)
-                     for key, value in report["group_metrics"]["baseline"]["events"].items()}
-        report["training_event_observation_fractions"] = fractions
-        if max(fractions.values()) > 0.5:
-            report["warnings"].append("One event supplies more than half of training targets")
-        if not any(v == "CALIBRATED" for v in search.parameter_status.values()):
-            raise ValueError("UNIDENTIFIABLE: no independently supported physical parameter")
-        if search.selected_metrics["rmse"] >= search.baseline_metrics["rmse"]:
-            raise ValueError("NO_TRAINING_IMPROVEMENT: baseline retained")
-        if report["metrics"]["calibrated_holdout"]["rmse"] >= report["metrics"]["baseline_holdout"]["rmse"]:
-            raise ValueError("NO_HOLDOUT_IMPROVEMENT: baseline retained; holdout was not used to retune")
+        search = _fit_partitions(parts, config, protocol, report)
         report["status"] = "CALIBRATED" if all(v == "CALIBRATED" for v in search.parameter_status.values()) else "PARTIALLY_CALIBRATED"
-        report["reason"] = "Identified parameters improve training and protected holdout RMSE"
+        report["reason"] = "Identified candidate passes frozen validation/test criteria; pending expert review"
         report["fitted_parameters"] = asdict(search.selected)
-        report["parameter_source"] = "CALIBRATED"
+        report["parameter_source"] = "CALIBRATED_CANDIDATE_NOT_RUNTIME_APPROVED"
         report["calibration_timestamp"] = utc_string(stamp)
         report["dataset"].update(events=len({m.event.event_id for m in matches}),
                                  stations=len({m.observation.station_id for m in matches}), observations=len(matches),
@@ -320,6 +362,7 @@ def calibrate(history: dict[str, Any] | None, *, config: CalibrationConfig | Non
         report["status"] = "FAILED" if report["optimizer_executed"] else BLOCKED
         report["reason"] = str(exc)
         report["fitted_parameters"] = None
+        report["reviewer_status"] = "REJECTED" if report["optimizer_executed"] else "NOT_FITTED"
         report["parameter_status"] = {name: "ASSUMED" for name in UNITS}
     return CalibrationResult(json.loads(deterministic_json(report)))
 
@@ -330,19 +373,26 @@ def parameter_document(result: CalibrationResult, *, mathematical_test: bool = F
         raise ValueError("Blocked/failed calibration cannot produce parameters")
     if not r["optimizer_executed"]:
         raise ValueError("Unexecuted optimization cannot produce parameters")
-    document = {"schema_version": 1, "model_version": MODEL_VERSION, "status": r["status"],
+    document = {"schema_version": 1 if mathematical_test else 2, "model_version": MODEL_VERSION, "status": r["status"],
                 "evidence_kind": r["dataset"].get("evidence_kind"), "parameters": r["fitted_parameters"],
                 "units": dict(UNITS), "dataset": r["dataset"], "objective": "training_rmse_ugm3",
                 "calibration_timestamp": r["calibration_timestamp"], "parameter_status": r["parameter_status"],
                 "metrics": r["metrics"], "identifiability": r["identifiability"],
                 "leakage_checks": r["leakage_checks"], "split": r["split"]}
+    if not mathematical_test:
+        document.update({k: r.get(k) for k in ("protocol", "protocol_sha256", "code_sha256", "evaluation",
+                                         "group_metrics", "candidate_parameters_sha256", "candidate_frozen_before_test",
+                                         "history_inputs")})
+        document.update(reviewer_status="PENDING_EXPERT_REVIEW", runtime_approved=False)
     validate_document(document, allow_mathematical_test=mathematical_test)
     return document
 
 
-def write_parameters(result: CalibrationResult, path: Path = PARAMETER_FILE,
+def write_parameters(result: CalibrationResult, path: Path,
                      *, mathematical_test: bool = False) -> None:
     document = parameter_document(result, mathematical_test=mathematical_test)
+    if Path(path).resolve() == PARAMETER_FILE.resolve():
+        raise ValueError("Candidate export cannot overwrite runtime params.json; separate review required")
     if mathematical_test and Path(path).name == "params.json":
         raise ValueError("Mathematical mechanics artifacts cannot use the deployable params.json filename")
     atomic_json(Path(path), document)
@@ -359,10 +409,12 @@ def audit_repository(root: Path) -> dict[str, Any]:
         if not path.exists():
             report["dataset"]["rejected"].append({"path": path.relative_to(root).as_posix(), "reason": "MISSING_INPUT"})
             continue
-        data = json.loads(path.read_text(encoding="utf-8"))
+        raw = path.read_bytes()
+        data = json.loads(raw.decode("utf-8", errors="strict"))
         rows = data.get(key, [])
         item = {"path": path.relative_to(root).as_posix(), "generated_at": data.get("generated_at"),
                 "records": len(rows), "content_sha256": content_hash(data), "source": data.get("source")}
+        item["file_sha256"] = hashlib.sha256(raw).hexdigest()
         if name == "aqi.json":
             item.update(stations=len({s["id"] for s in rows}),
                         pm25_observations=sum(s.get("pm25") is not None and s.get("observed_at") is not None for s in rows))
@@ -382,7 +434,7 @@ def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(description="Audit local real history and calibrate only after strict eligibility")
     parser.add_argument("--history", type=Path, help="Normalized captured-history manifest (schema documented in README)")
     parser.add_argument("--report", type=Path, help="Optional deterministic audit/result JSON; stdout is always emitted")
-    parser.add_argument("--params-output", type=Path, default=PARAMETER_FILE)
+    parser.add_argument("--params-output", type=Path, help="Explicit candidate artifact path; never runtime params.json")
     args = parser.parse_args(argv)
     inputs = {p.resolve() for p in (_ROOT / "data/live").glob("*") if p.is_file()}
     try:
@@ -392,8 +444,11 @@ def main(argv: list[str] | None = None) -> None:
         path = args.history or (candidates[0] if candidates else None)
         if path is not None:
             inputs.add(path.resolve())
-        outputs = [args.params_output] + ([args.report] if args.report else [])
-        if any(p.resolve() in inputs for p in outputs) or (args.report and args.report.resolve() == args.params_output.resolve()):
+        outputs = ([args.params_output] if args.params_output else []) + ([args.report] if args.report else [])
+        if args.params_output and args.params_output.resolve() == PARAMETER_FILE.resolve():
+            raise ValueError("Candidate export cannot overwrite runtime params.json; separate review required")
+        if any(p.resolve() in inputs for p in outputs) or (args.report and args.params_output
+                                                         and args.report.resolve() == args.params_output.resolve()):
             raise ValueError("Calibration outputs must not overwrite inputs or each other")
         if args.report and args.report.resolve() == PARAMETER_FILE.resolve():
             raise ValueError("An audit report cannot overwrite deployable parameters")
@@ -403,9 +458,11 @@ def main(argv: list[str] | None = None) -> None:
             result = calibrate(None)
             result.report["reason"] = f"MISSING_HISTORY: {path}"
         else:
-            result = calibrate(json.loads(path.read_text(encoding="utf-8")))
+            raw = path.read_bytes()
+            result = calibrate(json.loads(raw.decode("utf-8", errors="strict")))
             result.report["dataset"]["path"] = path.as_posix()
-        if result.status in ("CALIBRATED", "PARTIALLY_CALIBRATED"):
+            result.report["dataset"]["file_sha256"] = hashlib.sha256(raw).hexdigest()
+        if result.status in ("CALIBRATED", "PARTIALLY_CALIBRATED") and args.params_output:
             write_parameters(result, args.params_output)
         if args.report:
             atomic_json(args.report, result.to_dict())
