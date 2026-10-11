@@ -1,0 +1,666 @@
+{
+  "schema_version": 1,
+  "analysis_date": "2026-10-11",
+  "overall_status": "BLOCKED_INSUFFICIENT_VALIDATION_DATA",
+  "baseline_commit": "1088b9f7fe722038a39edc4213026be4dbf8e754",
+  "protocol": "docs/calibration/PROTOCOL.md",
+  "eligible_independent_events": 0,
+  "eligible_independent_targets": 0,
+  "scientific_optimizer_executed": false,
+  "fitted_parameters": null,
+  "baseline_scientific_metrics": null,
+  "candidate_scientific_metrics": null,
+  "uncertainty_intervals": null,
+  "datasets": [
+    {
+      "path": "data/live/actions.json",
+      "file_sha256": "66768a4d5abb98c325016e3e39d6e99dc8dd85a7fd1e38d862f0b96bb7457695",
+      "bytes": 4382,
+      "generated_at": "2026-10-09T06:00:03.651716Z",
+      "source": null,
+      "records_key": "actions",
+      "records": 8,
+      "fields": [
+        "actions",
+        "authority_actions",
+        "generated_at",
+        "generator",
+        "summary"
+      ],
+      "dataset_id": "local-capture:66768a4d5abb98c325016e3e39d6e99dc8dd85a7fd1e38d862f0b96bb7457695",
+      "kind": "DERIVED_ADVISORY_OUTPUT",
+      "generation_method": "Stored decision-agent recommendations",
+      "license_evidence": "No separate license recorded for output",
+      "eligible_independent_targets": 0,
+      "eligible_independent_events": 0,
+      "eligible_matched_station_periods": 0,
+      "disposition": "INELIGIBLE_FOR_SCIENTIFIC_CALIBRATION",
+      "blocker": "Recommendations are not independently observed outcomes",
+      "event_match": "No independent event-to-target evidence; no alignment tolerance can repair missing lineage",
+      "historical_wind_match": "Not independently verified",
+      "aliases": [
+        {
+          "path": "web/public/data/actions.json",
+          "file_sha256": "66768a4d5abb98c325016e3e39d6e99dc8dd85a7fd1e38d862f0b96bb7457695",
+          "same_parsed_data": true
+        }
+      ],
+      "averaging_period": "NOT_APPLICABLE_OR_UNRECORDED"
+    },
+    {
+      "path": "data/live/aqi.json",
+      "file_sha256": "d94e8234ce56fec586fb09fba364732174a8649d4fbac314b3776dae0962b09c",
+      "bytes": 17956,
+      "generated_at": "2026-10-07T18:58:03.921942Z",
+      "source": null,
+      "records_key": "stations",
+      "records": 60,
+      "fields": [
+        "generated_at",
+        "stations"
+      ],
+      "valid_pm25_timestamp_records": 59,
+      "unique_stations": 60,
+      "unique_observation_timestamps": 6,
+      "time_from": "2026-09-30T18:58:57Z",
+      "time_to": "2026-10-07T08:00:00Z",
+      "min_pm25": 1.1,
+      "max_pm25": 235.0,
+      "missing_pm25": 1,
+      "missing_timestamps": 1,
+      "offset_known": 59,
+      "station_sources": {
+        "OpenAQ": 60
+      },
+      "period_start_count": 0,
+      "available_at_count": 0,
+      "quality_flag_count": 0,
+      "coordinate_range": {
+        "lat": [
+          28.31733,
+          32.48209
+        ],
+        "lon": [
+          73.9297,
+          77.431714
+        ]
+      },
+      "dataset_id": "local-capture:d94e8234ce56fec586fb09fba364732174a8649d4fbac314b3776dae0962b09c",
+      "kind": "REAL_STATION_OBSERVATIONS",
+      "generation_method": "OpenAQ latest eligible PM sensor readings; provider measurement methods/averaging periods not retained",
+      "license_evidence": "Provider license not recorded in capture",
+      "eligible_independent_targets": 0,
+      "eligible_independent_events": 0,
+      "eligible_matched_station_periods": 0,
+      "disposition": "INELIGIBLE_FOR_SCIENTIFIC_CALIBRATION",
+      "blocker": "No same-station background history, averaging/availability times, quality review, independent event attribution or valid splits; source unit verification also unavailable",
+      "event_match": "No independent event-to-target evidence; no alignment tolerance can repair missing lineage",
+      "historical_wind_match": "Not independently verified",
+      "aliases": [
+        {
+          "path": "web/public/data/aqi.json",
+          "file_sha256": "d94e8234ce56fec586fb09fba364732174a8649d4fbac314b3776dae0962b09c",
+          "same_parsed_data": true
+        }
+      ],
+      "units": "Contract-assumed PM2.5 ug/m3; original provider unit metadata not retained; reported AQI distinct",
+      "timestamp_certainty": "59 parsed offset-bearing end timestamps; source averaging intervals/quality/availability unrecorded",
+      "averaging_period": "UNKNOWN",
+      "independent_periods": "UNKNOWN (one reading per station)",
+      "quality_flags": "Not recorded",
+      "known_biases": "Latest PM-station selection, capped requests; incomplete regional/time coverage",
+      "background_series": 0
+    },
+    {
+      "path": "data/live/corridor.geojson",
+      "file_sha256": "32f81bc4e31b03fdc2ea9282bc447da410b80c2d1a6a245d7767b60b10fbd603",
+      "bytes": 86677,
+      "generated_at": "2026-10-08T14:52:16.643513Z",
+      "source": null,
+      "records_key": "features",
+      "records": 50,
+      "fields": [
+        "features",
+        "forecast_start",
+        "generated_at",
+        "type",
+        "wind_generated_at"
+      ],
+      "dataset_id": "local-capture:32f81bc4e31b03fdc2ea9282bc447da410b80c2d1a6a245d7767b60b10fbd603",
+      "kind": "DERIVED_ARCHIVED_LEGACY_MODEL_OUTPUT",
+      "generation_method": "Legacy corridor with obsolete concentration and risk floors",
+      "license_evidence": "No separate license recorded for output",
+      "eligible_independent_targets": 0,
+      "eligible_independent_events": 0,
+      "eligible_matched_station_periods": 0,
+      "disposition": "INELIGIBLE_FOR_SCIENTIFIC_CALIBRATION",
+      "blocker": "Source-band/time/grid summaries are not receptor observations",
+      "event_match": "No independent event-to-target evidence; no alignment tolerance can repair missing lineage",
+      "historical_wind_match": "Not independently verified",
+      "aliases": [
+        {
+          "path": "web/public/data/corridor.geojson",
+          "file_sha256": "32f81bc4e31b03fdc2ea9282bc447da410b80c2d1a6a245d7767b60b10fbd603",
+          "same_parsed_data": true
+        }
+      ],
+      "averaging_period": "NOT_APPLICABLE_OR_UNRECORDED"
+    },
+    {
+      "path": "data/live/fires.json",
+      "file_sha256": "5518f832f4a1554af4354597fb4b17309937440c426b6226b9a2193f01429b4c",
+      "bytes": 57583,
+      "generated_at": "2026-10-07T18:41:50.671283Z",
+      "source": "NASA FIRMS VIIRS_NOAA21_NRT+VIIRS_NOAA20_NRT+VIIRS_SNPP_NRT",
+      "records_key": "fires",
+      "records": 227,
+      "fields": [
+        "bbox",
+        "fires",
+        "generated_at",
+        "source"
+      ],
+      "time_from": "2026-10-07T07:44:00Z",
+      "time_to": "2026-10-07T08:41:00Z",
+      "satellites": {
+        "VIIRS_NOAA21_NRT": 65,
+        "VIIRS_NOAA20_NRT": 54,
+        "VIIRS_SNPP_NRT": 108
+      },
+      "confidence": {
+        "nominal": 226,
+        "high": 1
+      },
+      "unique_days": 1,
+      "dataset_id": "local-capture:5518f832f4a1554af4354597fb4b17309937440c426b6226b9a2193f01429b4c",
+      "kind": "REAL_SATELLITE_DETECTIONS",
+      "generation_method": "NASA FIRMS VIIRS NRT detections from three satellites",
+      "license_evidence": "Provider license not recorded in capture",
+      "eligible_independent_targets": 0,
+      "eligible_independent_events": 0,
+      "eligible_matched_station_periods": 0,
+      "disposition": "INELIGIBLE_FOR_SCIENTIFIC_CALIBRATION",
+      "blocker": "Detector inputs are not independently confirmed event/non-event labels; one capture, no verified event catalogue",
+      "event_match": "No independent event-to-target evidence; no alignment tolerance can repair missing lineage",
+      "historical_wind_match": "Not independently verified",
+      "aliases": [],
+      "units": "FRP MW; brightness K; WGS84 degrees",
+      "timestamp_certainty": "Stored aware acquisition times; no independent event/availability manifest",
+      "temporal_resolution": "Satellite overpass detections 07:44-08:41Z on one date",
+      "averaging_period": "Not concentration measurements",
+      "known_biases": "Overpass/detection/filter coverage; missing independent negative labels"
+    },
+    {
+      "path": "data/live/india-boundary.geojson",
+      "file_sha256": "0cbd04d50e1b3d27cb12d576388568ec9eb8a8789683ba3158d29bf13218b366",
+      "bytes": 157627,
+      "generated_at": null,
+      "source": null,
+      "records_key": "features",
+      "records": 1,
+      "fields": [
+        "features",
+        "type"
+      ],
+      "dataset_id": "local-capture:0cbd04d50e1b3d27cb12d576388568ec9eb8a8789683ba3158d29bf13218b366",
+      "kind": "REFERENCE_BOUNDARY_GEOMETRY",
+      "generation_method": "Single display boundary feature; source not embedded",
+      "license_evidence": "License/source not recorded in capture",
+      "eligible_independent_targets": 0,
+      "eligible_independent_events": 0,
+      "eligible_matched_station_periods": 0,
+      "disposition": "INELIGIBLE_FOR_SCIENTIFIC_CALIBRATION",
+      "blocker": "Display geometry, no calibration targets",
+      "event_match": "No independent event-to-target evidence; no alignment tolerance can repair missing lineage",
+      "historical_wind_match": "Not independently verified",
+      "aliases": [
+        {
+          "path": "web/public/data/india-boundary.geojson",
+          "file_sha256": "0cbd04d50e1b3d27cb12d576388568ec9eb8a8789683ba3158d29bf13218b366",
+          "same_parsed_data": true
+        }
+      ],
+      "averaging_period": "NOT_APPLICABLE_OR_UNRECORDED"
+    },
+    {
+      "path": "data/live/population.json",
+      "file_sha256": "5cecfce0a9e77ea79c616ec5ce17fecbf58bca5fd34c2b3e5952b71a6b204d36",
+      "bytes": 18308191,
+      "generated_at": "2026-10-09T01:28:11.818637Z",
+      "source": {
+        "name": "WorldPop India 2020, 1 km aggregated population raster",
+        "url": "https://worldpop-public-data.soton.ac.uk/GIS/Population/Global_2000_2020_1km/2020/IND/ind_ppp_2020_1km_Aggregated.tif",
+        "doi": "10.5258/SOTON/WP00647",
+        "year": 2020,
+        "license": "CC BY 4.0",
+        "citation": "WorldPop (www.worldpop.org \u2014 School of Geography and Environmental Science, University of Southampton; Department of Geography and Geosciences, University of Louisville; Departement de Geographie, Universite de Namur) and Center for International Earth Science Information Network (CIESIN), Columbia University (2018). Global High Resolution Population Denominators Project. https://dx.doi.org/10.5258/SOTON/WP00647"
+      },
+      "records_key": "cells",
+      "records": 222792,
+      "fields": [
+        "bbox",
+        "cell_km",
+        "cells",
+        "generated_at",
+        "source"
+      ],
+      "dataset_id": "local-capture:5cecfce0a9e77ea79c616ec5ce17fecbf58bca5fd34c2b3e5952b71a6b204d36",
+      "kind": "REAL_REFERENCE_RASTER_DERIVATIVE",
+      "generation_method": "WorldPop India 2020 aggregated population raster cells",
+      "license_evidence": "CC BY 4.0 (embedded source metadata)",
+      "eligible_independent_targets": 0,
+      "eligible_independent_events": 0,
+      "eligible_matched_station_periods": 0,
+      "disposition": "INELIGIBLE_FOR_SCIENTIFIC_CALIBRATION",
+      "blocker": "Population reference is not concentration, source-event or health-outcome validation",
+      "event_match": "No independent event-to-target evidence; no alignment tolerance can repair missing lineage",
+      "historical_wind_match": "Not independently verified",
+      "aliases": [],
+      "averaging_period": "NOT_APPLICABLE_OR_UNRECORDED"
+    },
+    {
+      "path": "data/live/ranked_sites.json",
+      "file_sha256": "41e2cd70e9bacc7c8be8458b5d898e177e06e20ae6ace2f57674e742d15495f3",
+      "bytes": 144182,
+      "generated_at": "2026-10-09T02:05:47.935603Z",
+      "source": null,
+      "records_key": "sites",
+      "records": 444,
+      "fields": [
+        "exposed_population",
+        "generated_at",
+        "sites"
+      ],
+      "dataset_id": "local-capture:41e2cd70e9bacc7c8be8458b5d898e177e06e20ae6ace2f57674e742d15495f3",
+      "kind": "DERIVED_SPATIAL_EXPOSURE_PROXY",
+      "generation_method": "Ranking of sites against archived corridor and population reference",
+      "license_evidence": "No separate license recorded for output",
+      "eligible_independent_targets": 0,
+      "eligible_independent_events": 0,
+      "eligible_matched_station_periods": 0,
+      "disposition": "INELIGIBLE_FOR_SCIENTIFIC_CALIBRATION",
+      "blocker": "No measured receptor exposure or health outcomes",
+      "event_match": "No independent event-to-target evidence; no alignment tolerance can repair missing lineage",
+      "historical_wind_match": "Not independently verified",
+      "aliases": [
+        {
+          "path": "web/public/data/ranked_sites.json",
+          "file_sha256": "41e2cd70e9bacc7c8be8458b5d898e177e06e20ae6ace2f57674e742d15495f3",
+          "same_parsed_data": true
+        }
+      ],
+      "averaging_period": "NOT_APPLICABLE_OR_UNRECORDED"
+    },
+    {
+      "path": "data/live/sites.geojson",
+      "file_sha256": "4862bf41e95d538d6389423969fb9da52386f45a4869670c122e91ad23c529bd",
+      "bytes": 1324780,
+      "generated_at": "2026-10-07T18:49:16.377954Z",
+      "source": "\u00a9 OpenStreetMap contributors",
+      "records_key": "features",
+      "records": 3132,
+      "fields": [
+        "attribution",
+        "features",
+        "generated_at",
+        "type"
+      ],
+      "dataset_id": "local-capture:4862bf41e95d538d6389423969fb9da52386f45a4869670c122e91ad23c529bd",
+      "kind": "REAL_REFERENCE_OSM_FEATURES",
+      "generation_method": "OpenStreetMap schools/hospitals, with unknown capacities preserved",
+      "license_evidence": "OSM attribution present; license text absent in capture",
+      "eligible_independent_targets": 0,
+      "eligible_independent_events": 0,
+      "eligible_matched_station_periods": 0,
+      "disposition": "INELIGIBLE_FOR_SCIENTIFIC_CALIBRATION",
+      "blocker": "Site locations/capacities are not independent exposure outcomes",
+      "event_match": "No independent event-to-target evidence; no alignment tolerance can repair missing lineage",
+      "historical_wind_match": "Not independently verified",
+      "aliases": [],
+      "averaging_period": "NOT_APPLICABLE_OR_UNRECORDED"
+    },
+    {
+      "path": "data/live/sources.json",
+      "file_sha256": "900b5925955635660d90295b2324083fc52a23a3596aaab9450f518a7221135a",
+      "bytes": 3571,
+      "generated_at": "2026-10-08T14:52:16.603976Z",
+      "source": null,
+      "records_key": "sources",
+      "records": 10,
+      "fields": [
+        "generated_at",
+        "sources"
+      ],
+      "first_seen": "2026-10-07T07:44:00Z",
+      "last_seen": "2026-10-07T08:41:00Z",
+      "dataset_id": "local-capture:900b5925955635660d90295b2324083fc52a23a3596aaab9450f518a7221135a",
+      "kind": "DERIVED_ARCHIVED_LEGACY_MODEL_OUTPUT",
+      "generation_method": "Legacy detector; exact originating input/code/parameter bindings not established",
+      "license_evidence": "No separate license recorded for output",
+      "eligible_independent_targets": 0,
+      "eligible_independent_events": 0,
+      "eligible_matched_station_periods": 0,
+      "disposition": "INELIGIBLE_FOR_SCIENTIFIC_CALIBRATION",
+      "blocker": "Derived candidate scores/types/FRP proxy are not verified source events or emissions",
+      "event_match": "No independent event-to-target evidence; no alignment tolerance can repair missing lineage",
+      "historical_wind_match": "Not independently verified",
+      "aliases": [
+        {
+          "path": "web/public/data/sources.json",
+          "file_sha256": "900b5925955635660d90295b2324083fc52a23a3596aaab9450f518a7221135a",
+          "same_parsed_data": true
+        }
+      ],
+      "averaging_period": "NOT_APPLICABLE_OR_UNRECORDED"
+    },
+    {
+      "path": "data/live/wind.json",
+      "file_sha256": "b9bba4ad4e5d2bdd8fa4f6b8b77a267951fa9697a9db87545c0df3a741f6ca09",
+      "bytes": 3202964,
+      "generated_at": "2026-10-07T18:37:57.090632Z",
+      "source": "Open-Meteo GFS",
+      "records_key": "points",
+      "records": 323,
+      "fields": [
+        "generated_at",
+        "points",
+        "source"
+      ],
+      "hourly_records": 15504,
+      "usable_hourly_records": 15504,
+      "unique_timestamps": 48,
+      "time_from": "2026-10-06T18:30:00Z",
+      "time_to": "2026-10-08T17:30:00Z",
+      "null_pblh": 0,
+      "point_hour_counts": {
+        "48": 323
+      },
+      "dataset_id": "local-capture:b9bba4ad4e5d2bdd8fa4f6b8b77a267951fa9697a9db87545c0df3a741f6ca09",
+      "kind": "MODEL_METEOROLOGICAL_FORECAST_CAPTURE",
+      "generation_method": "Open-Meteo GFS forecast, gridded wind/PBLH, not independent transport observations",
+      "license_evidence": "Provider license not recorded in capture",
+      "eligible_independent_targets": 0,
+      "eligible_independent_events": 0,
+      "eligible_matched_station_periods": 0,
+      "disposition": "INELIGIBLE_FOR_SCIENTIFIC_CALIBRATION",
+      "blocker": "Archived timezone/availability provenance unverified; no event-matched observational history",
+      "event_match": "No independent event-to-target evidence; no alignment tolerance can repair missing lineage",
+      "historical_wind_match": "Not independently verified",
+      "aliases": [
+        {
+          "path": "web/public/data/wind.json",
+          "file_sha256": "b9bba4ad4e5d2bdd8fa4f6b8b77a267951fa9697a9db87545c0df3a741f6ca09",
+          "same_parsed_data": true
+        }
+      ],
+      "units": "u/v m/s; PBLH m",
+      "timestamp_certainty": "Z-formatted stored values; original producer converted naive timestamps using host timezone; raw response unavailable",
+      "temporal_resolution": "1 hour across 48 timestamps",
+      "averaging_period": "Model forecast output; observational averaging not applicable",
+      "known_biases": "GFS forecast and 0.25-degree grid, not a historical observation network"
+    },
+    {
+      "path": ".venv/task4-surrogate/dataset.json",
+      "dataset_id": "local-simulated:234f0930667e15434ab2ca71d2ac0e6a5043b38851193978608591f5817a7855",
+      "file_sha256": "234f0930667e15434ab2ca71d2ac0e6a5043b38851193978608591f5817a7855",
+      "kind": "BASELINE_SIMULATED",
+      "generation_method": "models/training/generate.py: unchanged physics teacher; seed 42",
+      "scenarios": {
+        "test": 200,
+        "train": 1000,
+        "validation": 200
+      },
+      "raw_records": 11200,
+      "records_by_split": {
+        "test": 1600,
+        "train": 8000,
+        "validation": 1600
+      },
+      "reference_time": "2020-01-01T00:00:00Z",
+      "origin": {
+        "lat": 30.0,
+        "lon": 75.0
+      },
+      "units": "Modelled PM2.5 increment ug/m3, not observed concentrations",
+      "independent_observed_stations": 0,
+      "eligible_independent_events": 0,
+      "eligible_independent_targets": 0,
+      "disposition": "INELIGIBLE_FOR_SCIENTIFIC_CALIBRATION",
+      "blocker": "Generated labels depend on the same baseline equations; numerical surrogate evaluation is not atmospheric validation",
+      "license_evidence": "Project-generated simulations; no independent observation license",
+      "historical_wind_match": "Simulated constant weather, no real historical matches"
+    }
+  ],
+  "baseline_parameters": {
+    "source_detection": {
+      "window_hours": 24.0,
+      "eps_km": 7.5,
+      "min_samples": 3,
+      "min_confidence": "nominal",
+      "noise_policy": "drop",
+      "frp_scale_mw": 500.0,
+      "confidence_count_scale": 10.0,
+      "as_of": null,
+      "agricultural_bbox": [
+        73.8,
+        28.8,
+        77.2,
+        32.5
+      ]
+    },
+    "source_confidence_weights": {
+      "count": 0.4,
+      "high_share": 0.3,
+      "recency": 0.3
+    },
+    "plume": {
+      "sigma0_m": 2000.0,
+      "k_m_sqrt_hour": 1000.0,
+      "tau_hours": 24.0,
+      "concentration_scale_ug": 1000000000000.0,
+      "grid_cell_m": 2000.0,
+      "threshold_ugm3": 5.0,
+      "risk_scale_ugm3": 50.0,
+      "pblh_floor_m": 200.0,
+      "wind_neighbors": 4,
+      "idw_power": 2.0,
+      "max_time_gap_hours": 3.0,
+      "max_wind_distance_km": 50.0,
+      "kernel_sigma_cutoff": 4.0,
+      "max_grid_cells": 250000,
+      "max_projection_radius_km": 1000.0
+    }
+  },
+  "baseline_integrity": {
+    "models/source_detection/cluster.py": true,
+    "models/plume/advect.py": true,
+    "corridor_functions_except_cli_unchanged": true
+  },
+  "detector_replay": {
+    "sources": 22,
+    "interpretation": "Current baseline output from the existing capture; no independent events or ground-truth labels added"
+  },
+  "history_discovery": {
+    "normalized_history_manifests_present": false,
+    "additional_observation_versions_in_local_git": false,
+    "raw_wind_response_present": false,
+    "previous_calibration_report": ".venv/calibration-current-report.json",
+    "previous_status": "BLOCKED_NO_VALID_HISTORICAL_DATA",
+    "previous_optimizer_executed": false
+  },
+  "preservation_notes": {
+    "local_commit_plan": "Already absent at initial inspection; not recreated or deleted in this session",
+    "optional_model_pickle": "Hashed only; never deserialized or retrained",
+    "temporary_evidence": "C:\\Users\\LENOVO\\AppData\\Local\\Temp\\aeris-calibration-z4n0n_sl"
+  },
+  "regression_tests_added": 139,
+  "validation": {
+    "python_executable": "D:\\AERIS\\.venv\\Scripts\\python.exe",
+    "python_version": "3.14.3",
+    "targeted": {
+      "passed": 171,
+      "exit_code": 0,
+      "seconds": 6.12
+    },
+    "python_full": {
+      "passed": 811,
+      "warnings": 2,
+      "exit_code": 0,
+      "seconds": 21.11
+    },
+    "frontend": {
+      "passed": 206,
+      "files": 16,
+      "exit_code": 0,
+      "seconds": 21.8
+    },
+    "typecheck": {
+      "exit_code": 0
+    },
+    "lint": {
+      "exit_code": 0,
+      "warnings": 7
+    },
+    "static_provenance": {
+      "exit_code": 0
+    },
+    "calibration_cli": {
+      "exit_codes": [
+        1,
+        1
+      ],
+      "status": "BLOCKED_NO_VALID_HISTORICAL_DATA",
+      "identical_reports": true,
+      "optimizer_executed": false
+    },
+    "scientific_metrics": null
+  },
+  "validation_scope": "Original preparation-session results; latest executions are recorded in artifact_validation_gap_closure",
+  "artifact_validation_gap_closure": {
+    "analysis_date": "2026-10-11",
+    "overall_status": "BLOCKED_INSUFFICIENT_VALIDATION_DATA",
+    "protocol_id": "aeris-independent-history-v1",
+    "baseline_commit": "1088b9f7fe722038a39edc4213026be4dbf8e754",
+    "regression_tests_added": 84,
+    "total_new_protocol_regression_cases": 139,
+    "scientific_optimizer_executed": false,
+    "eligible_independent_events": 0,
+    "eligible_independent_targets": 0,
+    "fitted_parameters": null,
+    "scientific_metrics": null,
+    "python_executable": "D:\\AERIS\\.venv\\Scripts\\python.exe",
+    "python_version": "3.14.3",
+    "targeted": {
+      "passed": 255,
+      "exit_code": 0,
+      "seconds": 6.84,
+      "command": [
+        "D:\\AERIS\\.venv\\Scripts\\python.exe",
+        "-B",
+        "-X",
+        "utf8",
+        "-m",
+        "pytest",
+        "models/plume/tests",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "--basetemp",
+        "C:\\Users\\LENOVO\\AppData\\Local\\Temp\\aeris-calibration-gaps-m1a3e2xo\\final-plume-tmp"
+      ]
+    },
+    "python_full": {
+      "passed": 895,
+      "warnings": 2,
+      "exit_code": 0,
+      "seconds": 20.37,
+      "command": [
+        "D:\\AERIS\\.venv\\Scripts\\python.exe",
+        "-B",
+        "-X",
+        "utf8",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "--basetemp",
+        "C:\\Users\\LENOVO\\AppData\\Local\\Temp\\aeris-calibration-gaps-m1a3e2xo\\final-python-full-tmp"
+      ]
+    },
+    "calibration_cli": {
+      "runs": [
+        {
+          "command": [
+            "D:\\AERIS\\.venv\\Scripts\\python.exe",
+            "-B",
+            "-X",
+            "utf8",
+            "-m",
+            "models.plume.calibrate",
+            "--report",
+            "C:\\Users\\LENOVO\\AppData\\Local\\Temp\\aeris-calibration-gaps-m1a3e2xo\\final-blocked-1.json",
+            "--params-output",
+            "C:\\Users\\LENOVO\\AppData\\Local\\Temp\\aeris-calibration-gaps-m1a3e2xo\\final-candidate-1.json"
+          ],
+          "exit_code": 1,
+          "status": "BLOCKED_NO_VALID_HISTORICAL_DATA",
+          "optimizer_executed": false,
+          "candidate_exists": false,
+          "sha256": "c2d489dcdda408d024751576240023522e8e5bc3802a804f67a92b4cdcd35bf1"
+        },
+        {
+          "command": [
+            "D:\\AERIS\\.venv\\Scripts\\python.exe",
+            "-B",
+            "-X",
+            "utf8",
+            "-m",
+            "models.plume.calibrate",
+            "--report",
+            "C:\\Users\\LENOVO\\AppData\\Local\\Temp\\aeris-calibration-gaps-m1a3e2xo\\final-blocked-2.json",
+            "--params-output",
+            "C:\\Users\\LENOVO\\AppData\\Local\\Temp\\aeris-calibration-gaps-m1a3e2xo\\final-candidate-2.json"
+          ],
+          "exit_code": 1,
+          "status": "BLOCKED_NO_VALID_HISTORICAL_DATA",
+          "optimizer_executed": false,
+          "candidate_exists": false,
+          "sha256": "c2d489dcdda408d024751576240023522e8e5bc3802a804f67a92b4cdcd35bf1"
+        }
+      ],
+      "identical_reports": true,
+      "optimizer_executed": false,
+      "candidate_created": false
+    },
+    "static_provenance": {
+      "exit_code": 0
+    },
+    "git_diff_check": {
+      "exit_code": 0,
+      "warning": "Existing LF/CRLF advisory for calibrate.py"
+    },
+    "frontend_validation": "Not rerun during backend-only gap closure; original results retained above",
+    "temporary_evidence": "C:\\Users\\LENOVO\\AppData\\Local\\Temp\\aeris-calibration-gaps-m1a3e2xo",
+    "remaining_limitations": [
+      "No independently eligible scientific validation data",
+      "Hashes and operator review assertions do not authenticate scientific truth",
+      "Complete retained history increases future artifact size",
+      "Real-data artifact/runtime loading, Python 3.12, remote CI, live-feed, Linux ARM64 and SAM/AWS deployment remain unverified"
+    ],
+    "earlier_gap_closure_runs": {
+      "targeted": {
+        "passed": 251,
+        "seconds": 6.67,
+        "exit_code": 0
+      },
+      "python_full": {
+        "passed": 891,
+        "seconds": 19.73,
+        "warnings": 2,
+        "exit_code": 0
+      },
+      "all_four_cli_reports_identical": true
+    }
+  }
+}
