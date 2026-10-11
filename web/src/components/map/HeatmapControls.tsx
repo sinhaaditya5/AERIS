@@ -20,7 +20,7 @@ export default function HeatmapControls({ data, enabled, onToggle, opacity, onOp
   const visible = cellsInBounds(data, bounds)
 
   return (
-    <section className="heatmap-controls" aria-label="Observed PM2.5 heatmap controls">
+    <section className={`heatmap-controls ${enabled ? 'is-enabled' : 'is-idle'}`} aria-label="Observed PM2.5 heatmap controls">
       <div className="heatmap-control-row">
         <div className="heatmap-toggle-group">
           <label className="heatmap-checkbox-label">
@@ -31,9 +31,13 @@ export default function HeatmapControls({ data, enabled, onToggle, opacity, onOp
             />
             <span className="heatmap-toggle-title">Observed PM2.5 heatmap</span>
           </label>
-          {enabled && (
+          {enabled ? (
             <span className="heatmap-unit-badge">
               Observed station PM2.5 · station mean (µg/m³)
+            </span>
+          ) : (
+            <span className="heatmap-idle-tag">
+              Station observations overlay
             </span>
           )}
         </div>

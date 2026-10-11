@@ -101,26 +101,42 @@ export default function AqiForecast12h() {
 
   return (
     <section className="aqi-forecast card" aria-label="AQI forecast availability">
+      {/* ── Header ────────────────────────────────────────────────────────── */}
       <div className="section-header aqi-forecast-head">
         <div className="forecast-title-group">
           <div className="title-row">
             <h3 className="section-title">AQI Forecast</h3>
-            <span className="modeled-tag-badge">{legacy ? 'Archived Legacy Simulation' : 'Uncalibrated Model'}</span>
+            <span className={`modeled-tag-badge ${legacy ? 'badge-legacy' : 'badge-uncalibrated'}`} title={legacy ? 'Archived simulation values - Historical calibration' : 'Uncalibrated atmospheric dispersion model'}>
+              <span className="badge-dot" aria-hidden="true" />
+              {legacy ? 'Archived Legacy Simulation' : 'Uncalibrated Model'}
+            </span>
           </div>
           <span className="forecast-sub">Reported plume band peaks and station AQI</span>
         </div>
-        <div className="forecast-mode-toggle">
-          <button type="button" className={`mode-btn ${activeTab === 'dispersion' ? 'active' : ''}`} aria-pressed={activeTab === 'dispersion'} onClick={() => setActiveTab('dispersion')}>
+        <div className="forecast-mode-toggle" role="tablist">
+          <button
+            type="button"
+            className={`mode-btn ${activeTab === 'dispersion' ? 'active' : ''}`}
+            aria-pressed={activeTab === 'dispersion'}
+            onClick={() => setActiveTab('dispersion')}
+          >
             Plume bands
           </button>
-          <button type="button" className={`mode-btn ${activeTab === 'stations' ? 'active' : ''}`} aria-pressed={activeTab === 'stations'} onClick={() => setActiveTab('stations')}>
+          <button
+            type="button"
+            className={`mode-btn ${activeTab === 'stations' ? 'active' : ''}`}
+            aria-pressed={activeTab === 'stations'}
+            onClick={() => setActiveTab('stations')}
+          >
             Stations ({stationStats.count})
           </button>
         </div>
       </div>
 
+      {/* ── Main Analytics Viewport ───────────────────────────────────────── */}
       {activeTab === 'dispersion' ? (
         <div className="forecast-dispersion-body">
+          {/* Left KPI Highlights Column */}
           <div className="dispersion-kpi-col">
             <div className="baseline-readout">
               <span className="readout-label">Reported station mean</span>
@@ -130,53 +146,97 @@ export default function AqiForecast12h() {
               </div>
               <span className="readout-tier-badge" style={{ color: tier.color, background: tier.bg }}>{tier.label}</span>
             </div>
+
+            {maxDelta != null && (
+              <div className="plume-peak-highlight">
+                <span className="peak-sublabel">Model Peak Impact</span>
+                <p className="forecast-band-peak">
+                  {legacy ? 'Largest archived band value' : 'Largest reported band peak'}: +{maxDelta} µg/m³
+                </p>
+              </div>
+            )}
           </div>
+
+          {/* Right Forecast Intervals & Horizons Column */}
           <div className="dispersion-band-col">
-          <p className="forecast-data-note" role="status" aria-label="Plume data status">
+            <p className="forecast-data-note status-banner" role="status" aria-label="Plume data status">
               {loading && 'Loading corridor data… '}{plumeStatus}
               {feedErrors.corridor && ` Corridor feed unavailable: ${feedErrors.corridor}.${model ? ' Retained model data shown.' : ''}`}
             </p>
-            {legacy && <p className="forecast-data-note">Archived legacy simulation values with obsolete concentration/risk floors; no current band-peak calculation is implied.</p>}
-            {maxDelta != null && <p className="forecast-band-peak">{legacy ? 'Largest archived band value' : 'Largest reported band peak'}: +{maxDelta} µg/m³</p>}
+            {legacy && (
+              <p className="forecast-data-note legacy-disclaimer">
+                Archived legacy simulation values with obsolete concentration/risk floors; no current band-peak calculation is implied.
+              </p>
+            )}
+
             {bandRows.length > 0 && (
-              <>
+              <div className="band-table-card">
                 <table className="forecast-band-table">
                   <caption>{legacy ? 'Largest archived simulation value' : 'Largest reported source-band peak'} by forecast interval (µg/m³)</caption>
-                  <thead><tr><th scope="col">Interval</th><th scope="col">ΔPM2.5 µg/m³</th></tr></thead>
-                  <tbody>{bandRows.map(row => (
-                    <tr key={`${row.from}-${row.to}`}><th scope="row">{row.from}–{row.to}h</th><td>+{row.peak}</td></tr>
-                  ))}</tbody>
+                  <thead>
+                    <tr>
+                      <th scope="col">Interval</th>
+                      <th scope="col">ΔPM2.5 µg/m³</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {bandRows.map(row => (
+                      <tr
+                        key={`${row.from}-${row.to}`}
+                        className={`band-row ${timeHorizon === row.from ? 'row-active-horizon' : ''}`}
+                        onClick={() => setTimeHorizon(row.from as TimeHorizon)}
+                        title={`Focus map on ${row.from}–${row.to}h forecast interval`}
+                      >
+                        <th scope="row">{row.from}–{row.to}h</th>
+                        <td>+{row.peak}</td>
+                      </tr>
+                    ))}
+                  </tbody>
                 </table>
-                <p className="forecast-data-note">Maximum across reported source bands in each interval; not a receptor concentration or additive exposure.</p>
-                <p className="forecast-data-note">Model capture: <time dateTime={model!.generated_at}>{model!.generated_at}</time>.</p>
-                <p className="forecast-data-note">{model!.forecast_start
-                  ? <>Forecast start: <time dateTime={model!.forecast_start}>{model!.forecast_start}</time>; intervals are forecast-relative.</>
-                  : 'Forecast start unavailable; intervals are forecast-relative.'}</p>
-              </>
+              </div>
             )}
-            <p className="forecast-data-note">Trajectory unavailable: band peaks are not a receptor time series. Mixing-height and inversion diagnostics unavailable in this panel.</p>
+
             <div className="horizon-sync-strip" role="group" aria-label="Plume band horizon">
               <span className="horizon-strip-label">Map horizon:</span>
               {[
                 { h: 0 as TimeHorizon, txt: '0–2h' }, { h: 2 as TimeHorizon, txt: '2–4h' },
                 { h: 4 as TimeHorizon, txt: '4–8h' }, { h: 8 as TimeHorizon, txt: '8–24h' },
               ].map(item => (
-                <button key={item.txt} type="button" className={`horizon-pill-btn ${timeHorizon === item.h ? 'active' : ''}`} aria-pressed={timeHorizon === item.h} onClick={() => setTimeHorizon(item.h)} title={`Focus map on ${item.txt} forecast band`}>
+                <button
+                  key={item.txt}
+                  type="button"
+                  className={`horizon-pill-btn ${timeHorizon === item.h ? 'active' : ''}`}
+                  aria-pressed={timeHorizon === item.h}
+                  onClick={() => setTimeHorizon(item.h)}
+                  title={`Focus map on ${item.txt} forecast band`}
+                >
                   {item.txt}
                 </button>
               ))}
+            </div>
+
+            <div className="forecast-meta-notes">
+              <p className="forecast-data-note">Maximum across reported source bands in each interval; not a receptor concentration or additive exposure.</p>
+              <p className="forecast-data-note">Model capture: <time dateTime={model!.generated_at}>{model!.generated_at}</time>.</p>
+              <p className="forecast-data-note">{model!.forecast_start
+                ? <>Forecast start: <time dateTime={model!.forecast_start}>{model!.forecast_start}</time>; intervals are forecast-relative.</>
+                : 'Forecast start unavailable; intervals are forecast-relative.'}</p>
+              <p className="forecast-data-note">Trajectory unavailable: band peaks are not a receptor time series. Mixing-height and inversion diagnostics unavailable in this panel.</p>
             </div>
           </div>
         </div>
       ) : (
         <div className="forecast-stations-body">
-          <p className="forecast-data-note" role="status" aria-label="Station data status">
+          <p className="forecast-data-note status-banner" role="status" aria-label="Station data status">
             {loading && 'Loading station data… '}{stationStatus}
             {parsedAqi?.success && (aqiFreshness.status === 'unknown' ? ' Station capture age unknown.' : aqiFreshness.stale ? ' Stale station capture.' : '')}
             {feedErrors.aqi && ` AQI feed unavailable: ${feedErrors.aqi}.${stations.length ? ' Retained observations shown.' : ''}`}
           </p>
+
           <div className="station-bar-wrap">
-            <div className="station-bar-header"><span className="text-xs font-semibold text-secondary">Reported Station AQI Distribution ({stationStats.count} stations)</span></div>
+            <div className="station-bar-header">
+              <span className="text-xs font-semibold text-secondary">Reported Station AQI Distribution ({stationStats.count} stations)</span>
+            </div>
             <div className="station-stacked-meter" aria-label="AQI Category Distribution">
               {stationStats.shares.severe > 0 && <div className="meter-seg seg-severe" style={{ width: `${stationStats.shares.severe}%` }} title={`Severe (>400): ${stationStats.severe} stations`} />}
               {stationStats.shares.veryPoor > 0 && <div className="meter-seg seg-verypoor" style={{ width: `${stationStats.shares.veryPoor}%` }} title={`Very Poor (301-400): ${stationStats.veryPoor} stations`} />}
@@ -191,6 +251,7 @@ export default function AqiForecast12h() {
               <span className="m-leg"><span className="c-dot verypoor" /> &gt;300: {stationStats.veryPoor + stationStats.severe}</span>
             </div>
           </div>
+
           <div className="top-stations-list">
             {stationStats.topStations.map(stn => {
               const stnTier = getAqiTier(stn.aqi ?? null)
@@ -211,24 +272,38 @@ export default function AqiForecast12h() {
           </div>
         </div>
       )}
-      <div className="aqi-contract-disclaimer">
-        <div role="region" aria-label="AQI source and coverage">
-          <p className="panel-sub" role="status">{coverageStatus}</p>
-          <p className="panel-sub">Stored fetch metadata: {fetchLabels[observationFeed?.fetch_status ?? 'UNKNOWN']}</p>
-          <p className="panel-sub">Source identity: {observationFeed?.source ?? 'aggregate identity unavailable'}.
-            {' '}Sources with readings: {observationFeed?.sources_with_readings == null ? 'not reported' : observationFeed.sources_with_readings.join(', ') || 'none'}.</p>
-          {!!observationFeed?.sources_failed?.length && <p className="panel-sub">Sources with fetch failures (including partial failures): {observationFeed.sources_failed.join(', ')}.</p>}
-          {observationFeed?.source_fetch_status && <ul>
-            {Object.entries(observationFeed.source_fetch_status).map(([source, status]) => <li key={source}>{source}: {status.replaceAll('_', ' ').toLowerCase()}</li>)}
-          </ul>}
-          <p className="panel-sub">Metadata describes this stored capture, not subsequent ingestion attempts. Capture freshness and observation age are separate.</p>
+
+      {/* ── Scientific Data Contract & Provenance Collapsible Drawer ──────── */}
+      <details className="aqi-contract-drawer">
+        <summary className="aqi-contract-toggle" title="Click to expand scientific data contract, coverage, and provenance details">
+          <div className="audit-toggle-left">
+            <span className="audit-pill-badge">AUDIT</span>
+            <span className="audit-title">Scientific Data Contract & Integrity Caveats</span>
+          </div>
+          <div className="audit-toggle-right">
+            <span className="audit-status-tag">{legacy ? 'Archived Simulation' : 'Uncalibrated Model'}</span>
+            <span className="audit-chevron" aria-hidden="true">▾</span>
+          </div>
+        </summary>
+        <div className="aqi-contract-disclaimer">
+          <div role="region" aria-label="AQI source and coverage" className="aqi-coverage-region">
+            <p className="panel-sub" role="status">{coverageStatus}</p>
+            <p className="panel-sub">Stored fetch metadata: {fetchLabels[observationFeed?.fetch_status ?? 'UNKNOWN']}</p>
+            <p className="panel-sub">Source identity: {observationFeed?.source ?? 'aggregate identity unavailable'}.
+              {' '}Sources with readings: {observationFeed?.sources_with_readings == null ? 'not reported' : observationFeed.sources_with_readings.join(', ') || 'none'}.</p>
+            {!!observationFeed?.sources_failed?.length && <p className="panel-sub">Sources with fetch failures (including partial failures): {observationFeed.sources_failed.join(', ')}.</p>}
+            {observationFeed?.source_fetch_status && <ul>
+              {Object.entries(observationFeed.source_fetch_status).map(([source, status]) => <li key={source}>{source}: {status.replaceAll('_', ' ').toLowerCase()}</li>)}
+            </ul>}
+            <p className="panel-sub">Metadata describes this stored capture, not subsequent ingestion attempts. Capture freshness and observation age are separate.</p>
+          </div>
+          <p className="panel-sub"><strong>Unavailable.</strong> A validated AQI forecasting contract is not provided.</p>
+          <p className="panel-sub">Reported station average: {observedAverage == null ? 'unavailable' : `${observedAverage} AQI`}.</p>
+          <p className="panel-sub">AQI may be a PM2.5 sub-index with an unverified averaging period. A reported value does not establish an official regional AQI or a compatible 24-hour observation.</p>
+          <p className="panel-sub">{stationStatus}{parsedAqi?.success && aqiFreshness.stale && ' Station capture stale or age unknown.'}</p>
+          <p className="panel-sub">Plume ΔPM2.5 is modelled and uncalibrated. It cannot be converted to regional AQI with a fixed multiplier.</p>
         </div>
-        <p className="panel-sub"><strong>Unavailable.</strong> A validated AQI forecasting contract is not provided.</p>
-        <p className="panel-sub">Reported station average: {observedAverage == null ? 'unavailable' : `${observedAverage} AQI`}.</p>
-        <p className="panel-sub">AQI may be a PM2.5 sub-index with an unverified averaging period. A reported value does not establish an official regional AQI or a compatible 24-hour observation.</p>
-        <p className="panel-sub">{stationStatus}{parsedAqi?.success && aqiFreshness.stale && ' Station capture stale or age unknown.'}</p>
-        <p className="panel-sub">Plume ΔPM2.5 is modelled and uncalibrated. It cannot be converted to regional AQI with a fixed multiplier.</p>
-      </div>
+      </details>
     </section>
   )
 }

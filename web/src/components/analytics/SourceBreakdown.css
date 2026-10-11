@@ -1,7 +1,7 @@
 /* SourceBreakdown.css — High-End Environmental Analytics Donut & Meter Widget */
 
 .source-breakdown {
-  padding: 8px 12px;
+  padding: 10px 14px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -11,6 +11,7 @@
   position: relative;
   border-radius: var(--radius-card, 12px);
   background: var(--surface-card, #ffffff);
+  border: 1px solid var(--border-subtle, rgba(0, 0, 0, 0.08));
 }
 
 .source-breakdown-head {
@@ -27,19 +28,36 @@
   min-width: 0;
 }
 
+.breakdown-title-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .breakdown-title-group .section-title {
-  font-size: 12.5px;
+  font-size: 13px;
   font-weight: 700;
   color: var(--text-primary, #1e2924);
   line-height: 1.2;
   margin: 0;
 }
 
-.breakdown-sub {
+.breakdown-tag {
   font-size: 9.5px;
+  font-weight: 700;
+  color: var(--brand-dark, #22734f);
+  background: var(--brand-light, #eaf4ef);
+  border: 1px solid rgba(34, 115, 79, 0.18);
+  padding: 1px 6px;
+  border-radius: 8px;
+  letter-spacing: 0.2px;
+}
+
+.breakdown-sub {
+  font-size: 10px;
   color: var(--text-tertiary, #6c8077);
   white-space: nowrap;
-  margin-top: 1px;
+  margin-top: 2px;
 }
 
 .breakdown-mode-toggle {
@@ -49,7 +67,7 @@
   background: var(--surface-subtle, #f0f4f1);
   border: 1px solid var(--border-subtle, rgba(0, 0, 0, 0.08));
   padding: 2px;
-  border-radius: 6px;
+  border-radius: 8px;
   flex-shrink: 0;
 }
 
@@ -58,10 +76,10 @@
   background: transparent;
   color: var(--text-secondary, #4a5e56);
   font-family: inherit;
-  font-size: 9.5px;
+  font-size: 10px;
   font-weight: 700;
-  padding: 2px 7px;
-  border-radius: 4px;
+  padding: 3px 8px;
+  border-radius: 6px;
   cursor: pointer;
   transition: all 0.15s ease;
   white-space: nowrap;
@@ -84,7 +102,8 @@
   gap: 10px;
   flex: 1;
   min-height: 0;
-  margin-top: 3px;
+  margin-top: 6px;
+  margin-bottom: 4px;
 }
 
 .donut-chart-wrap {
@@ -95,7 +114,7 @@
 }
 
 .donut-svg {
-  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.04));
+  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.05));
 }
 
 .donut-center-main {
@@ -114,20 +133,21 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 2.5px;
+  justify-content: center;
+  gap: 5px;
   padding: 0;
   margin: 0;
 }
 
 .legend-row {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 6px;
-  padding: 2px 5px;
-  border-radius: 4px;
+  flex-direction: column;
+  gap: 3px;
+  padding: 3px 6px;
+  border-radius: 6px;
   cursor: pointer;
   transition: all 0.15s ease;
+  min-width: 0;
 }
 
 .legend-row:hover,
@@ -135,10 +155,19 @@
   background: var(--surface-subtle, #f5f8f6);
 }
 
-.legend-label-col {
+.legend-row-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+}
+
+.legend-identity {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: 6px;
   min-width: 0;
   flex: 1;
 }
@@ -150,31 +179,50 @@
   flex-shrink: 0;
 }
 
-.legend-label {
-  font-size: 10.5px;
-  font-weight: 600;
-  color: var(--text-secondary, #4a5e56);
+.legend-name {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-primary, #1e2924);
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  flex-shrink: 0;
 }
 
-.legend-count {
-  color: var(--text-tertiary, #6c8077);
-  font-weight: 400;
+.legend-range-tag {
   font-size: 9px;
+  font-weight: 600;
+  color: var(--text-tertiary, #6c8077);
+  background: rgba(0, 0, 0, 0.03);
+  padding: 1px 4px;
+  border-radius: 4px;
+  white-space: nowrap;
+  flex-shrink: 1;
 }
 
-.legend-meter-col {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
+.legend-count-chip {
+  font-size: 9px;
+  color: var(--text-tertiary, #6c8077);
+  background: rgba(0, 0, 0, 0.04);
+  padding: 0.5px 5px;
+  border-radius: 5px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  margin-left: auto;
+  margin-right: 4px;
+}
+
+.legend-pct {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-primary, #1e2924);
+  min-width: 46px;
+  text-align: right;
+  white-space: nowrap;
   flex-shrink: 0;
 }
 
 .legend-meter-track {
-  width: 36px;
-  height: 4px;
+  width: 100%;
+  height: 3.5px;
   background: rgba(0, 0, 0, 0.06);
   border-radius: 2px;
   overflow: hidden;
@@ -186,45 +234,36 @@
   transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.legend-pct {
-  font-size: 10.5px;
-  font-weight: 700;
-  color: var(--text-primary, #1e2924);
-  min-width: 44px;
-  text-align: right;
-  white-space: nowrap;
-}
-
 /* Executive Metric Ticker */
 .source-breakdown-ticker {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 6px;
+  gap: 8px;
   background: var(--surface-subtle, #f8faf8);
   border: 1px solid var(--border-subtle, rgba(0, 0, 0, 0.06));
-  border-radius: 6px;
-  padding: 2.5px 8px;
-  margin-top: 4px;
+  border-radius: 8px;
+  padding: 4px 10px;
   flex-shrink: 0;
 }
 
 .ticker-chip {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  font-size: 9px;
+  gap: 5px;
+  font-size: 9.5px;
   color: var(--text-secondary, #4a5e56);
   white-space: nowrap;
 }
 
 .ticker-icon {
-  font-size: 9.5px;
+  font-size: 10px;
   line-height: 1;
 }
 
 .ticker-label {
   color: var(--text-tertiary, #6c8077);
+  font-weight: 500;
 }
 
 .ticker-val {
@@ -232,14 +271,19 @@
   font-weight: 700;
 }
 
-.ticker-district {
-  color: var(--text-tertiary, #6c8077);
+.ticker-badge {
   font-size: 8.5px;
+  font-weight: 700;
+  color: #b45309;
+  background: #fef3c7;
+  padding: 1px 5px;
+  border-radius: 6px;
+  letter-spacing: 0.2px;
 }
 
 .ticker-divider {
   width: 1px;
-  height: 10px;
+  height: 12px;
   background: rgba(0, 0, 0, 0.1);
   flex-shrink: 0;
 }

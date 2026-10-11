@@ -8,6 +8,8 @@ import './SourceBreakdown.css'
 
 interface Segment {
   label: string
+  tierName?: string
+  range?: string
   pct: number
   color: string
   count: number
@@ -27,14 +29,14 @@ function DonutChart({
   activeSegment: Segment | null
   setActiveSegment: (s: Segment | null) => void
 }) {
-  const cx = 58, cy = 58, r = 40, stroke = 17
+  const cx = 58, cy = 58, r = 40, stroke = 15
   const circumference = 2 * Math.PI * r
 
   return (
     <div className="donut-chart-wrap">
       <svg
-        width="116"
-        height="116"
+        width="110"
+        height="110"
         viewBox="0 0 116 116"
         aria-label="Source Intensity Donut Chart"
         className="donut-svg"
@@ -63,7 +65,7 @@ function DonutChart({
               r={r}
               fill="none"
               stroke={seg.color}
-              strokeWidth={isHovered ? stroke + 4 : stroke}
+              strokeWidth={isHovered ? stroke + 3 : stroke}
               strokeDasharray={`${dash} ${gap}`}
               strokeDashoffset={-offset}
               onMouseEnter={() => setActiveSegment(seg)}
@@ -103,7 +105,7 @@ function DonutChart({
           fontFamily="Outfit, var(--font, sans-serif)"
           className="donut-center-sub"
         >
-          {activeSegment ? `${Math.round(activeSegment.pct)}% · ${activeSegment.count} clus` : `${total} Clusters`}
+          {activeSegment ? `${Math.round(activeSegment.pct)}% · ${activeSegment.count} fires` : `${total} Hotspots`}
         </text>
       </svg>
     </div>
@@ -135,28 +137,36 @@ export default function SourceBreakdown() {
 
   const frpSegments: Segment[] = [
     {
-      label: 'FRP ≥200 MW',
+      label: 'Severe (≥200 MW)',
+      tierName: 'Severe',
+      range: '≥200 MW',
       pct: share(severe),
       color: '#C92A2A',
       count: severe.length,
       frpMw: Math.round(calcFrp(severe)),
     },
     {
-      label: 'FRP 100–<200 MW',
+      label: 'High (100–200 MW)',
+      tierName: 'High',
+      range: '100–200 MW',
       pct: share(high),
       color: '#D4620A',
       count: high.length,
       frpMw: Math.round(calcFrp(high)),
     },
     {
-      label: 'FRP 50–<100 MW',
+      label: 'Moderate (50–100 MW)',
+      tierName: 'Moderate',
+      range: '50–100 MW',
       pct: share(moderate),
       color: '#F59F00',
       count: moderate.length,
       frpMw: Math.round(calcFrp(moderate)),
     },
     {
-      label: 'FRP <50 MW',
+      label: 'Minor (<50 MW)',
+      tierName: 'Minor',
+      range: '<50 MW',
       pct: share(low),
       color: '#22734F',
       count: low.length,
@@ -166,14 +176,16 @@ export default function SourceBreakdown() {
 
   const scopeSegments: Segment[] = [
     {
-      label: '🇮🇳 Domestic (India)',
+      label: 'Domestic',
+      tierName: 'Domestic',
       pct: share(indiaSources),
-      color: '#DC2626',
+      color: '#16A34A',
       count: indiaSources.length,
       frpMw: Math.round(calcFrp(indiaSources)),
     },
     {
-      label: '🌐 Transboundary candidates',
+      label: 'Transboundary',
+      tierName: 'Transboundary',
       pct: share(transSources),
       color: '#D97706',
       count: transSources.length,
@@ -181,6 +193,7 @@ export default function SourceBreakdown() {
     },
     {
       label: 'Territory unavailable',
+      tierName: 'Territory unavailable',
       pct: share(unknownSources),
       color: '#64748B',
       count: unknownSources.length,
@@ -196,14 +209,24 @@ export default function SourceBreakdown() {
     : null
   const domesticFrp = calcFrp(indiaSources)
   const domesticPct = totalFrp > 0 ? Math.round((domesticFrp / totalFrp) * 100) : 0
+  const peakDistrict = peakSource?.district && peakSource.district !== 'Unassigned'
+    ? peakSource.district
+    : peakSource?.territory === 'transboundary'
+      ? 'Cross-Border'
+      : peakSource?.territory === 'india'
+        ? 'Domestic'
+        : null
 
   return (
     <div className="source-breakdown card">
       <div className="section-header source-breakdown-head">
         <div className="breakdown-title-group">
-          <h3 className="section-title">Source Intensity (% of Total FRP)</h3>
+          <div className="breakdown-title-row">
+            <h3 className="section-title">Source Intensity</h3>
+            <span className="breakdown-tag">% Total FRP</span>
+          </div>
           <span className="text-xs text-tertiary breakdown-sub">
-            Measures share of {Math.round(totalFrp)} MW Fire Radiative Power
+            {totalFrp > 0 ? `Thermal emission share · ${Math.round(totalFrp)} MW total` : 'Satellite thermal emission'}
           </span>
         </div>
         <div className="breakdown-mode-toggle">
@@ -261,26 +284,28 @@ export default function SourceBreakdown() {
                 onMouseEnter={() => setActiveSegment(seg)}
                 onMouseLeave={() => setActiveSegment(null)}
               >
-                <div className="legend-label-col">
-                  <span className="legend-dot" style={{ background: seg.color }} />
-                  <span className="legend-label">
-                    {seg.label} <small className="legend-count">({seg.count} clus)</small>
-                  </span>
-                </div>
-
-                <div className="legend-meter-col">
-                  <div className="legend-meter-track" title={`${Math.round(seg.pct)}% FRP share`}>
-                    <div
-                      className="legend-meter-fill"
-                      style={{
-                        width: `${Math.min(100, Math.max(0, seg.pct))}%`,
-                        background: seg.color,
-                      }}
-                    />
+                <div className="legend-row-header">
+                  <div className="legend-identity">
+                    <span className="legend-dot" style={{ background: seg.color }} />
+                    <span className="legend-name">{seg.tierName || seg.label}</span>
+                    {seg.range && <span className="legend-range-tag">{seg.range}</span>}
+                    <span className="legend-count-chip">
+                      {seg.count} {seg.count === 1 ? 'fire' : 'fires'}
+                    </span>
                   </div>
                   <span className="legend-pct">
                     {totalFrp > 0 ? `${Math.round(seg.pct)}% FRP` : 'N/A'}
                   </span>
+                </div>
+
+                <div className="legend-meter-track" title={`${Math.round(seg.pct)}% FRP share`}>
+                  <div
+                    className="legend-meter-fill"
+                    style={{
+                      width: `${Math.min(100, Math.max(0, seg.pct))}%`,
+                      background: seg.color,
+                    }}
+                  />
                 </div>
               </li>
             )
@@ -291,18 +316,18 @@ export default function SourceBreakdown() {
       {totalFrp > 0 && (
         <div className="source-breakdown-ticker">
           {peakSource && (
-            <span className="ticker-chip" title={`Peak emitter cluster ID: ${peakSource.id}`}>
+            <span className="ticker-chip" title={`Peak emitter ID: ${peakSource.id} (${Math.round(peakSource.total_frp_mw)} MW)`}>
               <span className="ticker-icon">⚡</span>
               <span className="ticker-label">Peak:</span>
               <strong className="ticker-val">{Math.round(peakSource.total_frp_mw)} MW</strong>
-              <small className="ticker-district">({peakSource.district || 'Unassigned'})</small>
+              {peakDistrict && <span className="ticker-badge">{peakDistrict}</span>}
             </span>
           )}
           <span className="ticker-divider" />
-          <span className="ticker-chip">
-            <span className="ticker-icon">🇮🇳</span>
-            <span className="ticker-label">Domestic Influx:</span>
-            <strong className="ticker-val">{domesticPct}%</strong>
+          <span className="ticker-chip" title="Airshed origin distribution">
+            <span className="ticker-icon">{domesticPct > 0 ? '🇮🇳' : '🌐'}</span>
+            <span className="ticker-label">Origin:</span>
+            <strong className="ticker-val">{domesticPct > 0 ? `${domesticPct}% Domestic` : 'Cross-Border (100%)'}</strong>
           </span>
         </div>
       )}
