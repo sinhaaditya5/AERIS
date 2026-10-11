@@ -1,0 +1,118 @@
+{
+  "snapshot": {
+    "fires_generated_at": "2026-10-07T18:41:50.671283Z",
+    "fires_source": "NASA FIRMS VIIRS_NOAA21_NRT+VIIRS_NOAA20_NRT+VIIRS_SNPP_NRT",
+    "sources_generated_at": "2026-10-08T14:52:16.603976Z",
+    "aqi_generated_at": "2026-10-07T18:58:03.921942Z",
+    "aqi_observed_first": "2026-09-30T18:58:57Z",
+    "aqi_observed_last": "2026-10-07T08:00:00Z",
+    "wind_generated_at": "2026-10-07T18:37:57.090632Z",
+    "wind_source": "Open-Meteo GFS",
+    "corridor_generated_at": "2026-10-08T14:52:16.643513Z",
+    "corridor_forecast_start": "2026-10-07T18:00:00Z",
+    "ranked_generated_at": "2026-10-09T02:05:47.935603Z",
+    "actions_generated_at": "2026-10-09T06:00:03.651716Z"
+  },
+  "source": {
+    "viirs_detections_raw_file": 227,
+    "clustered_detections": 215,
+    "clusters": 10,
+    "total_frp_mw": 1278.2,
+    "top_id": "src_004",
+    "top_type": "stubble_burning",
+    "top_frp_mw": 675.5,
+    "top_fires": 104,
+    "top_lat": 30.77605,
+    "top_lon": 74.00381,
+    "top_frp_share_pct": 53,
+    "satellites": [
+      "VIIRS_NOAA20_NRT",
+      "VIIRS_NOAA21_NRT",
+      "VIIRS_SNPP_NRT"
+    ],
+    "aqi_stations": 60,
+    "aqi_stations_with_value": 59,
+    "aqi_mean": 179,
+    "aqi_provider": [
+      "OpenAQ"
+    ]
+  },
+  "move": {
+    "corridor_polygons": 40,
+    "bands_hours": [
+      "0-2",
+      "2-4",
+      "4-8",
+      "8-24"
+    ],
+    "wind_sample_points": 323,
+    "wind_first_sample": {
+      "lat": 28.0,
+      "lon": 73.5,
+      "t": "2026-10-06T18:30:00Z",
+      "speed_kmh": 10.2,
+      "dir_from_deg": 214
+    }
+  },
+  "expose": {
+    "sites_ranked": 444,
+    "schools": 230,
+    "hospitals": 214,
+    "exposed_estimate": 7132123,
+    "exposed_low": 7132123,
+    "exposed_high": 14488106,
+    "exposure_method": "Population cells inside corridor bands with band risk \u2265 0.30 (estimate). Low: threshold raised to 0.45. High: threshold lowered to 0.15. This is a threshold sensitivity range, not a statistical confidence interval.",
+    "sites_attributed_to": {
+      "src_001": 444
+    },
+    "ranked_source": {
+      "id": "src_001",
+      "type": "industrial_fire",
+      "frp_mw": 9.1,
+      "fires": 2
+    },
+    "top_site": "Akash Hospital, Ballabgarh",
+    "top_site_id": "s_0446",
+    "top_site_type": "hospital",
+    "sites_inside_corridor_by_source": {
+      "src_001": 444,
+      "src_002": 0,
+      "src_003": 0,
+      "src_004": 0,
+      "src_005": 0,
+      "src_006": 0,
+      "src_007": 0,
+      "src_008": 0,
+      "src_009": 0,
+      "src_010": 0
+    },
+    "sites_inside_punjab_corridors": 0,
+    "sites_by_eta_hours": {
+      "0.0": 5,
+      "2.0": 27,
+      "4.0": 23,
+      "8.0": 389
+    }
+  },
+  "act": {
+    "facility_actions": 8,
+    "authority_actions": 3,
+    "generator": "rules",
+    "first_action": {
+      "priority": 1,
+      "site_id": "s_0446",
+      "who": "Medical Director, Akash Hospital, Ballabgarh",
+      "action": "Activate hospital HVAC HEPA filtration in ICU & pulmonary wards; seal triage entryways and stage supplemental oxygen supplies",
+      "reason": "ETA 0.0h, forecast PM2.5 delta +15 \u00b5g/m\u00b3",
+      "deadline_hours": 0.5
+    },
+    "authority": [
+      "Commission for Air Quality Management (CAQM)",
+      "Delhi Pollution Control Committee (DPCC)",
+      "Directorate of Education (DoE)"
+    ]
+  },
+  "integrity": {
+    "problems": []
+  }
+}
