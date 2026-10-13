@@ -61,8 +61,8 @@ export default function AqiKpiCard() {
               style={{
                 fontSize: '9px',
                 fontWeight: 700,
-                color: '#FEF08A',
-                background: 'rgba(234, 179, 8, 0.3)',
+                color: 'var(--risk-caution, #FEF08A)',
+                background: 'var(--risk-caution-bg, rgba(234, 179, 8, 0.3))',
                 padding: '1px 5px',
                 borderRadius: '4px',
                 whiteSpace: 'normal',

@@ -29,9 +29,9 @@ export default function WhatIfWeAct() {
   const reduction = 55
 
   const bars: { id: 'none' | 'partial' | 'full'; label: string; icon: string; value: number; color: string; pattern?: string }[] = [
-    { id: 'none',    label: 'No Action',         icon: '⚠', value: total,        color: '#E03131' },
-    { id: 'partial', label: 'Partial Intervene', icon: '🛡', value: schoolHosp,   color: '#F59F00', pattern: 'repeating-linear-gradient(45deg, #F59F00, #F59F00 4px, #D97706 4px, #D97706 8px)' },
-    { id: 'full',    label: 'Full Intervene',    icon: '✓', value: allIntervene, color: '#22734F' },
+    { id: 'none',    label: 'No Action',         icon: '⚠', value: total,        color: 'var(--risk-critical, #E03131)' },
+    { id: 'partial', label: 'Partial Intervene', icon: '🛡', value: schoolHosp,   color: 'var(--risk-caution, #F59F00)', pattern: 'repeating-linear-gradient(45deg, var(--risk-caution, #F59F00), var(--risk-caution, #F59F00) 4px, var(--risk-high, #D97706) 4px, var(--risk-high, #D97706) 8px)' },
+    { id: 'full',    label: 'Full Intervene',    icon: '✓', value: allIntervene, color: 'var(--accent-primary, #22734F)' },
   ]
 
   const maxVal = Math.max(total, 1)

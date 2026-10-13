@@ -24,6 +24,14 @@ import {
   Crosshair,
   ShieldCheck,
   Compass,
+  Palette,
+  Eye,
+  Sun,
+  Moon,
+  Monitor,
+  Type,
+  SlidersHorizontal,
+  Contrast,
 } from 'lucide-react'
 import { useAeris, type BasemapMode } from '@/services/dataContext'
 import { DATA_MODE, getFeedFreshness } from '@/services/api'
@@ -40,9 +48,14 @@ import {
   type DefaultTab,
   type AutoRefreshInterval,
 } from '@/services/settingsStorage'
+import {
+  useTheme,
+  type ThemeMode,
+  type AccentColor,
+} from '@/services/themeContext'
 import './SettingsView.css'
 
-type SettingsTab = 'all' | 'general' | 'thresholds' | 'feeds' | 'storage' | 'provenance'
+type SettingsTab = 'all' | 'appearance' | 'general' | 'thresholds' | 'feeds' | 'storage' | 'provenance'
 
 const BASEMAP_OPTIONS: {
   id: BasemapMode
@@ -91,6 +104,65 @@ const BASEMAP_OPTIONS: {
   },
 ]
 
+const THEME_OPTIONS: {
+  id: ThemeMode
+  title: string
+  subtitle: string
+  desc: string
+  tag: string
+  previewClass: string
+  icon: typeof Sun
+}[] = [
+  {
+    id: 'forest',
+    title: 'Forest',
+    subtitle: 'Standard Control Room',
+    desc: 'Warm slate-grey page (#F2F5F2), crisp white elevation, and forest green accents. Baseline standard for day/night duty.',
+    tag: 'Baseline Default',
+    previewClass: 'preview-theme-forest',
+    icon: Sun,
+  },
+  {
+    id: 'night-watch',
+    title: 'Night Watch',
+    subtitle: 'Emergency Night Operations',
+    desc: 'Deep oceanic slate (#0E1B26), calibrated dark cards (#152635), and signal teal indicators. Zero glare for dim control rooms.',
+    tag: 'OLED / Low Glare',
+    previewClass: 'preview-theme-night-watch',
+    icon: Moon,
+  },
+  {
+    id: 'field-daylight',
+    title: 'Field Daylight',
+    subtitle: 'Outdoor Incident Response',
+    desc: 'High-albedo page (#E6EBEE), pure white cards, and 2px architectural borders (#1B2B38). Maximum legibility under direct sunlight.',
+    tag: 'Sunlight / High Contrast',
+    previewClass: 'preview-theme-field-daylight',
+    icon: Eye,
+  },
+  {
+    id: 'system',
+    title: 'Match System',
+    subtitle: 'Adaptive OS Scheme',
+    desc: 'Automatically synchronizes with your device operating system dark or light preference.',
+    tag: 'Adaptive OS',
+    previewClass: 'preview-theme-system',
+    icon: Monitor,
+  },
+]
+
+const ACCENT_OPTIONS: {
+  id: AccentColor
+  label: string
+  colorHex: string
+}[] = [
+  { id: 'forest', label: 'Forest Green', colorHex: '#15803D' },
+  { id: 'teal', label: 'Signal Teal', colorHex: '#0D9488' },
+  { id: 'blue', label: 'Deep Blue', colorHex: '#2563EB' },
+  { id: 'violet', label: 'Amethyst Violet', colorHex: '#7C3AED' },
+  { id: 'slate', label: 'Carbon Slate', colorHex: '#475569' },
+]
+
 const FEED_ICONS: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
   sources: Flame,
   corridor: Wind,
@@ -118,6 +190,12 @@ export default function SettingsView() {
   } = useAeris()
 
   const [settings, updateSettings, resetAllSettings] = useSettings()
+  const {
+    settings: themeSettings,
+    updateSettings: updateThemeSettings,
+    resetThemeSettings,
+    effectiveTheme,
+  } = useTheme()
   const [activeTab, setActiveTab] = useState<SettingsTab>('all')
   const [message, setMessage] = useState('')
   const [toast, setToast] = useState<string | null>(null)
@@ -152,7 +230,7 @@ export default function SettingsView() {
   // Contextual FRP fire cluster retention count
   const retainedFiresCount = useMemo(() => {
     if (!sources?.sources) return 0
-    return sources.sources.filter(s => (s.frp ?? 0) >= settings.minFrpMw).length
+    return sources.sources.filter(s => (s.total_frp_mw ?? 0) >= settings.minFrpMw).length
   }, [sources, settings.minFrpMw])
 
   // Data Feeds specification (strictly preserves all 6 .feed-item elements for tests)
@@ -263,6 +341,14 @@ export default function SettingsView() {
           </button>
           <button
             type="button"
+            className={`nav-pill ${activeTab === 'appearance' ? 'active' : ''}`}
+            onClick={() => setActiveTab('appearance')}
+          >
+            <Palette size={13} />
+            Appearance
+          </button>
+          <button
+            type="button"
             className={`nav-pill ${activeTab === 'general' ? 'active' : ''}`}
             onClick={() => setActiveTab('general')}
           >
@@ -303,6 +389,288 @@ export default function SettingsView() {
           </button>
         </div>
       </div>
+
+      {/* SECTION: Appearance & Visual Accessibility */}
+      {(activeTab === 'all' || activeTab === 'appearance') && (
+        <section className="settings-card full-width" id="section-appearance">
+          <div className="card-header">
+            <Palette size={18} />
+            <div className="header-text-group">
+              <h2>Appearance &amp; Visual Accessibility</h2>
+              <span className="card-desc-text">
+                Switch control room operational themes, non-emergency accents, interface density, and visual accessibility.
+              </span>
+            </div>
+          </div>
+
+          {/* Theme Mode Selection Cards */}
+          <div className="appearance-subsection">
+            <div className="subsection-header">
+              <span className="subsection-title">Operational Theme Mode</span>
+              <span className="subsection-desc">
+                Adapts page luminescence, card elevation, and contrast for control rooms or outdoor rugged field laptops.
+              </span>
+            </div>
+
+            <div className="theme-cards-grid">
+              {THEME_OPTIONS.map((opt) => {
+                const isSelected = themeSettings.theme === opt.id
+                const IconComponent = opt.icon
+                return (
+                  <button
+                    type="button"
+                    key={opt.id}
+                    className={`theme-option-card ${isSelected ? 'selected' : ''}`}
+                    aria-pressed={isSelected}
+                    onClick={() => {
+                      updateThemeSettings({ theme: opt.id })
+                      showToast(`Theme switched to ${opt.title}`)
+                    }}
+                  >
+                    <div className={`theme-preview-banner ${opt.previewClass}`}>
+                      <div className="banner-mock-window">
+                        <div className="mock-header">
+                          <span className="mock-dot" />
+                          <span className="mock-bar" />
+                        </div>
+                        <div className="mock-card">
+                          <span className="mock-pill" />
+                          <span className="mock-text" />
+                        </div>
+                      </div>
+                      <span className="banner-label">{opt.tag}</span>
+                      {isSelected && (
+                        <span className="banner-active-chip">
+                          <Check size={11} /> Active
+                        </span>
+                      )}
+                    </div>
+                    <div className="theme-card-content">
+                      <div className="theme-card-top">
+                        <div className="theme-card-title-row">
+                          <IconComponent size={14} className="theme-icon" />
+                          <strong className="theme-title">{opt.title}</strong>
+                        </div>
+                        {isSelected && <CheckCircle2 size={16} className="selected-check" aria-hidden="true" />}
+                      </div>
+                      <span className="theme-subtitle">{opt.subtitle}</span>
+                      <p className="theme-card-desc">{opt.desc}</p>
+                    </div>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+
+          {/* Accent Color Selection */}
+          <div className="appearance-subsection">
+            <div className="subsection-header">
+              <span className="subsection-title">Operational Accent Color</span>
+              <span className="subsection-desc">
+                Customizes primary interactive elements, active navigation pills, and focused selections.
+              </span>
+            </div>
+
+            <div className="accent-pills-row" role="radiogroup" aria-label="Operational accent palette">
+              {ACCENT_OPTIONS.map((opt) => {
+                const isSelected = themeSettings.accent === opt.id
+                return (
+                  <button
+                    type="button"
+                    key={opt.id}
+                    className={`accent-pill-btn ${isSelected ? 'selected' : ''}`}
+                    role="radio"
+                    aria-checked={isSelected}
+                    onClick={() => {
+                      updateThemeSettings({ accent: opt.id })
+                      showToast(`Accent color set to ${opt.label}`)
+                    }}
+                  >
+                    <span
+                      className="accent-swatch-circle"
+                      style={{ backgroundColor: opt.colorHex }}
+                    />
+                    <span className="accent-name">{opt.label}</span>
+                    {isSelected && <Check size={13} className="accent-check" />}
+                  </button>
+                )
+              })}
+            </div>
+            <div className="accent-safety-notice">
+              <ShieldAlert size={13} className="safety-icon" />
+              <span>
+                <strong>Safety Guarantee:</strong> Statutory severity colors (Critical, High, Caution, Ok) and the fire plume ramp (0-2h, 2-4h, 4-8h, 8-24h) remain fixed to statutory safety standards and never collide with accent selection.
+              </span>
+            </div>
+          </div>
+
+          {/* Typography, Density, and Accessibility Controls */}
+          <div className="appearance-controls-grid">
+            {/* Typography Scale */}
+            <div className="pref-item">
+              <div className="pref-header-row">
+                <div className="pref-icon-squircle icon-blue">
+                  <Type size={15} />
+                </div>
+                <div className="pref-header-text">
+                  <label className="pref-label" htmlFor="pref-text-size">Typography Scaling</label>
+                  <span className="pref-help">Root font scale for control room displays and wall monitors.</span>
+                </div>
+              </div>
+              <div className="pref-segmented-control" id="pref-text-size">
+                <button
+                  type="button"
+                  className={`seg-btn ${themeSettings.textSize === 'default' ? 'active' : ''}`}
+                  onClick={() => {
+                    updateThemeSettings({ textSize: 'default' })
+                    showToast('Typography set to Standard (14px baseline)')
+                  }}
+                >
+                  Standard (14px)
+                </button>
+                <button
+                  type="button"
+                  className={`seg-btn ${themeSettings.textSize === 'large' ? 'active' : ''}`}
+                  onClick={() => {
+                    updateThemeSettings({ textSize: 'large' })
+                    showToast('Typography set to Large (16px baseline)')
+                  }}
+                >
+                  Large (16px)
+                </button>
+              </div>
+            </div>
+
+            {/* Interface Density */}
+            <div className="pref-item">
+              <div className="pref-header-row">
+                <div className="pref-icon-squircle icon-cyan">
+                  <SlidersHorizontal size={15} />
+                </div>
+                <div className="pref-header-text">
+                  <label className="pref-label" htmlFor="pref-density">Interface Density</label>
+                  <span className="pref-help">Controls padding and gap spacing across KPI cards and tables.</span>
+                </div>
+              </div>
+              <div className="pref-segmented-control" id="pref-density">
+                <button
+                  type="button"
+                  className={`seg-btn ${themeSettings.density === 'comfortable' ? 'active' : ''}`}
+                  onClick={() => {
+                    updateThemeSettings({ density: 'comfortable' })
+                    showToast('Density set to Comfortable')
+                  }}
+                >
+                  Comfortable
+                </button>
+                <button
+                  type="button"
+                  className={`seg-btn ${themeSettings.density === 'compact' ? 'active' : ''}`}
+                  onClick={() => {
+                    updateThemeSettings({ density: 'compact' })
+                    showToast('Density set to Compact')
+                  }}
+                >
+                  Compact
+                </button>
+              </div>
+            </div>
+
+            {/* Basemap Matching Toggle */}
+            <div className="pref-item toggle-item">
+              <div className="pref-header-row">
+                <div className="pref-icon-squircle icon-emerald">
+                  <Globe size={15} />
+                </div>
+                <div className="pref-header-text">
+                  <label className="pref-label" htmlFor="toggle-match-basemap">Synchronize Cartography</label>
+                  <span className="pref-help">Auto-match basemap (Dark for Night Watch, Street for Daylight, Satellite for Forest).</span>
+                </div>
+              </div>
+              <label className="toggle-switch">
+                <input
+                  id="toggle-match-basemap"
+                  type="checkbox"
+                  checked={themeSettings.matchBasemap}
+                  onChange={(e) => {
+                    updateThemeSettings({ matchBasemap: e.target.checked })
+                    showToast(e.target.checked ? 'Basemap synchronization enabled' : 'Basemap synchronization disabled')
+                  }}
+                />
+                <span className="toggle-slider" />
+              </label>
+            </div>
+
+            {/* Colour-blind-safe Ramp Toggle */}
+            <div className="pref-item toggle-item">
+              <div className="pref-header-row">
+                <div className="pref-icon-squircle icon-orange">
+                  <Contrast size={15} />
+                </div>
+                <div className="pref-header-text">
+                  <label className="pref-label" htmlFor="toggle-cb-safe">Colour-Blind-Safe Severity Ramp</label>
+                  <span className="pref-help">Applies Okabe-Ito / Viridis palette to plume bands and severity badges.</span>
+                </div>
+              </div>
+              <label className="toggle-switch">
+                <input
+                  id="toggle-cb-safe"
+                  type="checkbox"
+                  checked={themeSettings.colorBlindSafe}
+                  onChange={(e) => {
+                    updateThemeSettings({ colorBlindSafe: e.target.checked })
+                    showToast(e.target.checked ? 'Colour-blind-safe palette enabled' : 'Default severity palette restored')
+                  }}
+                />
+                <span className="toggle-slider" />
+              </label>
+            </div>
+
+            {/* Reduce Motion Toggle */}
+            <div className="pref-item toggle-item">
+              <div className="pref-header-row">
+                <div className="pref-icon-squircle icon-purple">
+                  <Activity size={15} />
+                </div>
+                <div className="pref-header-text">
+                  <label className="pref-label" htmlFor="toggle-reduce-motion">Reduce Interface Motion</label>
+                  <span className="pref-help">Disables animated transitions and pulsing indicators for rugged terminals.</span>
+                </div>
+              </div>
+              <label className="toggle-switch">
+                <input
+                  id="toggle-reduce-motion"
+                  type="checkbox"
+                  checked={themeSettings.reduceMotion}
+                  onChange={(e) => {
+                    updateThemeSettings({ reduceMotion: e.target.checked })
+                    showToast(e.target.checked ? 'Reduced motion enabled' : 'Standard motion enabled')
+                  }}
+                />
+                <span className="toggle-slider" />
+              </label>
+            </div>
+          </div>
+
+          {/* Reset Appearance Actions */}
+          <div className="appearance-footer-actions">
+            <button
+              type="button"
+              className="btn-reset-appearance"
+              onClick={() => {
+                resetThemeSettings()
+                showToast('Appearance restored to Forest default')
+              }}
+            >
+              <RotateCcw size={13} />
+              Reset Appearance to Defaults
+            </button>
+            <span className="appearance-active-summary">
+              Active Theme: <strong>{effectiveTheme}</strong> · Accent: <strong>{themeSettings.accent}</strong> · Scale: <strong>{themeSettings.textSize}</strong>
+            </span>
+          </div>
+        </section>
+      )}
 
       {/* SECTION 1: General & Display Preferences */}
       {(activeTab === 'all' || activeTab === 'general') && (

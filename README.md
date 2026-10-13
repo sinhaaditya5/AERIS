@@ -50,7 +50,29 @@ The SAM template configures the pipeline every 30 minutes, fires every 15 minute
 | 3. **Forecast the corridor** | Advects puffs from each source with the real forecast wind, giving time bands (0–2 h, 2–4 h, 4–8 h, 8–24 h) and a centreline with ETAs | `models/plume/` |
 | 4. **Rank exposure** | Intersects the corridor with schools, hospitals and the population grid. Scores each site by PM2.5 increase, ETA and vulnerability, and estimates the people exposed | `models/exposure/` |
 | 5. **Plan actions** | A Strands agent on Amazon Bedrock reads the results through tools and writes a prioritised plan for each site and for the authorities. Every site in the plan is checked against the ranking | `agent/` |
-| 6. **Serve and show** | An HTTP API serves every result with its age. A React + MapLibre dashboard shows source → corridor → sites → actions | `api/`, `web/` |
+| 6. **Serve and show** | An HTTP API serves every result with its age. An 8-view React 19 + MapLibre operator console visualizes source → corridor → sites → actions with multi-theme support (Forest, Night Watch, Field Daylight) | `api/`, `web/` |
+
+### 🖥️ Operator Console & Web Views
+
+The AERIS web frontend (`web/`, React 19 + Vite + strict TypeScript + MapLibre GL) is a read-only emergency decision dashboard designed for CAQM and DPCC duty officers operating both in control rooms at night and on rugged laptops outdoors.
+
+#### 8 Dedicated Command Views
+1. **Executive Dashboard (`/dashboard`)**: Incident command overview featuring key metrics (active clusters, peak FRP, impacted population), earliest corridor arrival countdown, top vulnerable sites at risk, and Bedrock action recommendations.
+2. **GIS Map Explorer (`/map`)**: Full-canvas MapLibre GL visualization displaying multi-hour plume corridor bands (0–2 h, 2–4 h, 4–8 h, 8–24 h), candidate fire clusters, live AQI monitoring stations, wind vector streamlines, and sensitive receptor markers with a streamlined single-line HUD.
+3. **Analytics Hub (`/analytics`)**: Time-series concentration profiles, source emission intensity charts with progress meters, and monitoring station trends.
+4. **Wind & Atmospheric Flow (`/wind`)**: Real-time GFS 48-hour wind vectors, boundary-layer mixing heights, and forward trajectory dispersion pathways.
+5. **Source Clusters & Emissions (`/sources`)**: Detailed satellite cluster diagnostics, FRP energy distribution, and crop-residue confidence classification.
+6. **Demographic Exposure (`/population`)**: WorldPop 1 km demographic intersections, quantifying vulnerable children, elderly, and total exposed population per time band.
+7. **Vulnerability Shield (`/shield`)**: Receptor intelligence covering 3,132 schools and hospitals in Delhi NCR with exposure-ranked safety advisories.
+8. **Settings & Appearance Hub (`/settings`)**: Operational threshold tuning, data provenance diagnostics, cartographic style switchers, squircle status badges, AQI spectrum reference, and custom UI preferences.
+
+#### Multi-Theme System & Appearance Controls
+- **🌲 Forest (Default)**: `#F2F5F2` warm slate-grey canvas, crisp white cards, and `#22734F` pine/forest green accent for standard daytime operations.
+- **🌙 Night Watch**: `#0E1B26` deep oceanic slate dark mode, `#152635` cards, and `#3DC6B8` signal teal accent paired with CARTO Dark Matter basemap for zero-glare night control-room operations.
+- **☀️ Field Daylight**: `#E6EBEE` high-albedo canvas, reinforced 2px `#1B2B38` high-contrast borders, and `#0B5D3B` emerald accent with CARTO Positron/Topo basemap for high-glare outdoor sunlight readability.
+- **💻 Match System**: Dynamically follows the user's OS dark/light preferences.
+- **Zero-FOUC Rendering**: Inline blocking theme script in `index.html` eliminating white flashes on page loads.
+- **Accessibility & Customization**: 5 non-emergency accent hues (preserves emergency severity tokens), typography scaling (14px Standard vs 16px Legibility), density toggles (Comfortable vs Compact), color-blind-safe plume ramps (`cb-safe`), and reduced motion support.
 
 ### Preserved archive and current replay
 
@@ -94,10 +116,11 @@ AERIS/
 ├── agent/        # Strands tools, Bedrock agent with model fallback, rules plan, prompts
 ├── pipeline/     # One Lambda handler per pipeline step + contract checks
 ├── api/          # HTTP API handler (read routes, /summary, /run)
-├── web/          # React + Vite + TypeScript + MapLibre dashboard
+├── web/          # React + Vite + TypeScript + MapLibre dashboard (8 command views, multi-theme)
 ├── infra/        # CloudFormation/SAM template, Lambda build targets
 ├── scripts/      # deploy, deploy_web, smoke_test, local_api, cost_check, teardown
 ├── data/live/    # Real snapshots captured from live sources (source + time stamped)
+├── Saba/reports/ # Comprehensive frontend audit & architecture reviews
 └── docs/         # Architecture, data contracts, API list, member tasks, reports, audit
 ```
 
@@ -220,6 +243,7 @@ Region of interest: Punjab, Haryana and Delhi NCR (bbox `73.5, 28.0, 77.5, 32.5`
 | [`models/README.md`](models/README.md) | Source detection, physics corridor, calibration readiness, optional ML surrogate and modelling evidence |
 | [`docs/demo-script.md`](docs/demo-script.md) | 3-minute demo video script |
 | [`docs/submission/`](docs/submission/) | Submission checklist and AWS Builder Center blog draft |
+| [`Saba/reports/frontend-report-14-oct-2026.md`](Saba/reports/frontend-report-14-oct-2026.md) | Comprehensive Frontend Audit & Architecture Review (14-Oct-2026) |
 
 ## 👥 Team
 
@@ -228,7 +252,7 @@ Region of interest: Punjab, Haryana and Delhi NCR (bbox `73.5, 28.0, 77.5, 32.5`
 | **Aditya** ([@aditbytes](https://github.com/aditbytes)) | All AWS infrastructure, pipeline, API, hosting, monitoring, integration |
 | **Meenal Sinha** ([@MeenalSinha](https://github.com/MeenalSinha)) | Data ingestion and exposure ranking |
 | **Pritam Singh** ([@pritamsingh019](https://github.com/pritamsingh019)) | Source detection and plume models |
-| **Saba Saeed** ([@SabaSaiid](https://github.com/SabaSaiid)) | Action agent, map dashboard and demo |
+| **Saba Saeed** ([@SabaSaiid](https://github.com/SabaSaiid)) | Action agent, multi-theme architecture, map dashboard and frontend engineering |
 
 ## 🏆 Hackathon
 
