@@ -70,12 +70,12 @@
 
 /* AQI Card overrides */
 .aqi-card {
-  background: linear-gradient(135deg, #1A4433 0%, #237253 60%, #2D9765 100%) !important;
-  border-color: transparent !important;
+  background: var(--card-hero-bg, linear-gradient(135deg, #1A4433 0%, #237253 60%, #2D9765 100%)) !important;
+  border: var(--border-width, 1px) solid var(--card-hero-border, transparent) !important;
 }
 
-.aqi-card .metric-label { color: rgba(255, 255, 255, 0.7); }
-.aqi-card .metric-value  { color: white; }
+.aqi-card .metric-label { color: rgba(255, 255, 255, 0.75); }
+.aqi-card .metric-value  { color: var(--card-hero-text, white); }
 
 .aqi-status-badge {
   display: inline-flex;

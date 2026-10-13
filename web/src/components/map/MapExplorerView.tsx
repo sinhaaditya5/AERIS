@@ -24,6 +24,8 @@ import { getStyleForMode, setupMapLayers, applyProjectionAndPitch, isValidSubcon
 import HeatmapControls from './HeatmapControls'
 import { useObservationHeatmap } from './useObservationHeatmap'
 import { useScientificLayers } from './useScientificLayers'
+import { useTheme } from '@/services/themeContext'
+import { applyThemeToMap } from './mapThemeBridge'
 const SvgFallbackMap = lazy(() => import('./SvgFallbackMap'))
 import './MapExplorerView.css'
 
@@ -67,6 +69,8 @@ export default function MapExplorerView() {
     setBasemapMode,
     flyToLocation,
   } = useAeris()
+
+  const { settings: themeSettings, effectiveTheme } = useTheme()
 
   const [webGlSupported, setWebGlSupported] = useState(true)
   const [isPlaying, setIsPlaying]           = useState(false)
@@ -158,6 +162,7 @@ export default function MapExplorerView() {
       map.on('load', () => {
         setupMapLayers(map, initialMode.current)
         applyProjectionAndPitch(map, initialMode.current)
+        applyThemeToMap(map)
         onZoom()
       })
     } catch (err) {
@@ -192,11 +197,31 @@ export default function MapExplorerView() {
     if (!map || !webGlSupported) return
     if (appliedStyleMode.current === basemapMode) return
     appliedStyleMode.current = basemapMode
-    const onStyleLoad = () => applyProjectionAndPitch(map, basemapMode)
+    const onStyleLoad = () => {
+      setupMapLayers(map, basemapMode)
+      applyProjectionAndPitch(map, basemapMode)
+      applyThemeToMap(map)
+    }
     map.once('style.load', onStyleLoad)
     map.setStyle(getStyleForMode(basemapMode), { diff: false })
     return () => { map.off('style.load', onStyleLoad) }
   }, [basemapMode, webGlSupported])
+
+  // ── Dynamically update layer paint properties on theme change ─────────
+  useEffect(() => {
+    const map = mapRef.current
+    if (!map || !webGlSupported) return
+    applyThemeToMap(map)
+  }, [effectiveTheme, themeSettings.accent, themeSettings.colorBlindSafe, webGlSupported])
+
+  // ── Auto-sync basemap to theme when enabled ───────────────────────────
+  useEffect(() => {
+    if (!themeSettings.matchBasemap) return
+    const targetMode = effectiveTheme === 'night-watch' ? 'dark' : effectiveTheme === 'field-daylight' ? 'topo' : 'satellite'
+    if (basemapMode !== targetMode) {
+      setBasemapMode(targetMode)
+    }
+  }, [effectiveTheme, themeSettings.matchBasemap, basemapMode, setBasemapMode])
 
   // Automatically trigger map.resize() whenever container bounds resize
   useEffect(() => {
@@ -377,11 +402,11 @@ export default function MapExplorerView() {
 
       clusters.forEach(cluster => {
         const aqiVal = cluster.peakAqi
-        const color = aqiVal > 400 ? '#7F1D1D'
-          : aqiVal > 300 ? '#991B1B'
-          : aqiVal > 200 ? '#C2410C'
-          : aqiVal > 100 ? '#B45309'
-          : '#15803D'
+        const color = aqiVal > 400 ? 'var(--risk-critical, #7F1D1D)'
+          : aqiVal > 300 ? 'var(--risk-critical, #991B1B)'
+          : aqiVal > 200 ? 'var(--risk-high, #C2410C)'
+          : aqiVal > 100 ? 'var(--risk-caution, #B45309)'
+          : 'var(--risk-ok, #15803D)'
 
         const el = document.createElement('div')
         if (cluster.count > 1) {
@@ -650,7 +675,7 @@ export default function MapExplorerView() {
           <div className="floating-layer-panel open" onClick={(e) => e.stopPropagation()}>
             <div className="layer-panel-header">
               <div className="layer-panel-title">
-                <Layers size={15} color="#22734F" />
+                <Layers size={15} color="var(--accent-primary)" />
                 <span>Map Layers & Feeds</span>
               </div>
               <button
@@ -754,7 +779,7 @@ export default function MapExplorerView() {
                     checked={showPlume}
                     onChange={(e) => setShowPlume(e.target.checked)}
                   />
-                  <span className="layer-badge-icon" style={{ color: '#DC2626' }}>🟥</span>
+                  <span className="layer-badge-icon" style={{ color: 'var(--plume-h0-2, #DC2626)' }}>🟥</span>
                   <div className="layer-info">
                     <span className="layer-name">Modelled plume footprint</span>
                     <span className="layer-desc">Uncalibrated baseline · forecast-relative bands</span>
@@ -868,7 +893,7 @@ export default function MapExplorerView() {
             {selectedFeature.actionText && (
               <div className="inspector-action-card">
                 <div className="action-card-title">
-                  <Shield size={14} color="#166534" />
+                  <Shield size={14} color="var(--accent-primary)" />
                   <span>Advisory context (not dispatched)</span>
                 </div>
                 <p className="action-card-text">{selectedFeature.actionText}</p>

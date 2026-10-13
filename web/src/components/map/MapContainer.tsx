@@ -16,6 +16,8 @@ import HeatmapControls from './HeatmapControls'
 import { useObservationHeatmap } from './useObservationHeatmap'
 import { useScientificLayers } from './useScientificLayers'
 import { escapeHtml } from './html'
+import { useTheme } from '@/services/themeContext'
+import { applyThemeToMap } from './mapThemeBridge'
 import './MapContainer.css'
 
 const SvgFallbackMap = lazy(() => import('./SvgFallbackMap'))
@@ -75,6 +77,8 @@ export default function MapContainer() {
     etaHours,
     staleFeeds,
   } = useAeris()
+
+  const { settings, effectiveTheme } = useTheme()
 
   const now = useClock()
   const parsedWind = useMemo(() => wind == null ? null : WindFileSchema.safeParse(wind), [wind])
@@ -161,6 +165,7 @@ export default function MapContainer() {
       map.on('load', () => {
         setupMapLayers(map, initialMode.current)
         applyProjectionAndPitch(map, initialMode.current)
+        applyThemeToMap(map)
         onZoom()
       })
     } catch (err) {
@@ -187,11 +192,28 @@ export default function MapContainer() {
     const onStyleLoad = () => {
       setupMapLayers(map, basemapMode)
       applyProjectionAndPitch(map, basemapMode)
+      applyThemeToMap(map)
     }
     map.once('style.load', onStyleLoad)
     map.setStyle(getStyleForMode(basemapMode), { diff: false })
     return () => { map.off('style.load', onStyleLoad) }
   }, [basemapMode, webGlSupported])
+
+  // ── 1c. Dynamically update layer paint properties on theme change ─────────
+  useEffect(() => {
+    const map = mapRef.current
+    if (!map || !webGlSupported) return
+    applyThemeToMap(map)
+  }, [effectiveTheme, settings.accent, settings.colorBlindSafe, webGlSupported])
+
+  // ── 1d. Auto-sync basemap to theme when enabled ───────────────────────────
+  useEffect(() => {
+    if (!settings.matchBasemap) return
+    const targetMode = effectiveTheme === 'night-watch' ? 'dark' : effectiveTheme === 'field-daylight' ? 'topo' : 'satellite'
+    if (basemapMode !== targetMode) {
+      setBasemapMode(targetMode)
+    }
+  }, [effectiveTheme, settings.matchBasemap, basemapMode, setBasemapMode])
 
   // Automatically trigger map.resize() whenever the container dimensions change
   useEffect(() => {
@@ -719,27 +741,27 @@ export default function MapContainer() {
           </button>
           <div className="micro-legend-divider" />
           <div className="micro-legend-item">
-            <span className="micro-legend-glyph" style={{ color: '#EF4444', fontWeight: 800 }}>⊕</span>
+            <span className="micro-legend-glyph" style={{ color: 'var(--risk-critical, #EF4444)', fontWeight: 800 }}>⊕</span>
             <span>{sources?.sources.filter(s => isValidSubcontinentCoord(s.lat, s.lon) && (scopeFilter === 'all' || s.territory === 'india')).length ?? 0} source candidates</span>
           </div>
           <div className="micro-legend-item" title="0–2h immediate plume arrival band">
-            <span className="micro-legend-swatch" style={{ background: '#DC2626', width: 8, height: 7 }} />
+            <span className="micro-legend-swatch" style={{ background: 'var(--plume-h0-2, #DC2626)', width: 8, height: 7 }} />
             <span>0-2h</span>
           </div>
           <div className="micro-legend-item" title="2–4h dispersion corridor band">
-            <span className="micro-legend-swatch" style={{ background: '#EA580C', width: 8, height: 7 }} />
+            <span className="micro-legend-swatch" style={{ background: 'var(--plume-h2-4, #EA580C)', width: 8, height: 7 }} />
             <span>2-4h</span>
           </div>
           <div className="micro-legend-item" title="4–8h forward plume band">
-            <span className="micro-legend-swatch" style={{ background: '#D97706', width: 8, height: 7 }} />
+            <span className="micro-legend-swatch" style={{ background: 'var(--plume-h4-8, #D97706)', width: 8, height: 7 }} />
             <span>4-8h</span>
           </div>
           <div className="micro-legend-item" title="8–24h downstream dispersion band">
-            <span className="micro-legend-swatch" style={{ background: '#CA8A04', width: 8, height: 7 }} />
+            <span className="micro-legend-swatch" style={{ background: 'var(--plume-h8-24, #CA8A04)', width: 8, height: 7 }} />
             <span>8-24h</span>
           </div>
           <div className="micro-legend-item" title="Centerline with milestone ETA ticks">
-            <span style={{ color: 'var(--brand-dark)', fontWeight: 800, fontSize: '9px', letterSpacing: '-1px' }}>---</span>
+            <span style={{ color: 'var(--accent-hover, var(--brand-dark))', fontWeight: 800, fontSize: '9px', letterSpacing: '-1px' }}>---</span>
             <span>ETA</span>
           </div>
           <div className="micro-legend-item">

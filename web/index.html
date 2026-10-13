@@ -5,7 +5,39 @@
     <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="AERIS — Air Exposure & Risk Intelligence System. Reported air quality, baseline model corridors, and advisory actions with explicit data limitations." />
-    <title>AERIS — Air Exposure & Risk Intelligence System</title>
+    <meta name="theme-color" content="#F2F5F2" />
+    <script>
+      (function() {
+        try {
+          var raw = localStorage.getItem('aeris_theme_settings_v1');
+          var cfg = raw ? JSON.parse(raw) : {};
+          var theme = cfg.theme || 'forest';
+          if (theme === 'system') {
+            theme = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'night-watch' : 'forest';
+          }
+          var accent = cfg.accent || 'forest';
+          var density = cfg.density || 'comfortable';
+          var text = cfg.textSize || 'default';
+          var cb = cfg.colorBlindSafe ? 'true' : 'false';
+          var motion = cfg.reduceMotion ? 'true' : 'false';
+
+          var root = document.documentElement;
+          root.setAttribute('data-theme', theme);
+          root.setAttribute('data-accent', accent);
+          root.setAttribute('data-density', density);
+          root.setAttribute('data-text', text);
+          root.setAttribute('data-cb-safe', cb);
+          root.setAttribute('data-reduce-motion', motion);
+
+          var metaTheme = document.querySelector('meta[name="theme-color"]');
+          if (metaTheme) {
+            metaTheme.content = theme === 'night-watch' ? '#0E1B26' : (theme === 'field-daylight' ? '#E6EBEE' : '#F2F5F2');
+          }
+        } catch (e) {
+          document.documentElement.setAttribute('data-theme', 'forest');
+        }
+      })();
+    </script>
     <!-- Preconnect to map tile and CDN providers -->
     <link rel="preconnect" href="https://server.arcgisonline.com" crossorigin />
     <link rel="dns-prefetch" href="https://server.arcgisonline.com" />
