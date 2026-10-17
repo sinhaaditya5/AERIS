@@ -1,8 +1,20 @@
-import { Bell, PanelLeft, RefreshCw, Search, ShieldCheck } from 'lucide-react'
+import {
+  Bell,
+  CheckCircle2,
+  ChevronRight,
+  PanelLeft,
+  RefreshCw,
+  Search,
+  ShieldCheck,
+  Volume2,
+  VolumeX,
+} from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import './Header.css'
 import { useAeris } from '@/services/dataContext'
 import { DATA_MODE, getFeedFreshness } from '@/services/api'
+import { useNotifications } from '@/services/notificationContext'
+import type { AerisNotification } from '@/types/notifications'
 
 const TAB_META: Record<string, { label: string; subtitle: string }> = {
   dashboard: { label: 'Dashboard', subtitle: 'Observed & modelled data' },
@@ -12,6 +24,7 @@ const TAB_META: Record<string, { label: string; subtitle: string }> = {
   sources: { label: 'Source Candidates', subtitle: 'Satellite thermal detections' },
   population: { label: 'Population Risk Registry', subtitle: 'Heuristic facility ranking' },
   shield: { label: 'Protective Actions', subtitle: 'Advisory checklist' },
+  notifications: { label: 'Notification Center', subtitle: 'Environmental alerts & telemetry incident log' },
   settings: { label: 'System Settings', subtitle: 'Configuration & data state' },
 }
 
@@ -37,9 +50,12 @@ const PLACES: Record<string, { lon: number; lat: number; zoom: number; name: str
 export default function Header() {
   const { loading, refreshing, refreshData, setFlyToLocation, activeTab, setActiveTab, isSidebarCollapsed,
     toggleSidebar, sources, corridor, actions, rankedSites, aqi, wind, staleFeeds } = useAeris()
+  const { notifications, unreadCount, criticalCount, markAsRead, markAllAsRead, isChimeMuted, toggleMuteChime } = useNotifications()
+
   const [searchInput, setSearchInput] = useState('')
   const [searchFeedback, setSearchFeedback] = useState('')
   const [showNotifs, setShowNotifs] = useState(false)
+  const [notifTab, setNotifTab] = useState<'all' | 'critical' | 'feeds'>('all')
   const [now, setNow] = useState(Date.now)
   const searchInputRef = useRef<HTMLInputElement>(null)
   const notifRef = useRef<HTMLDivElement>(null)
@@ -58,7 +74,13 @@ export default function Header() {
       }
     }
     const handlePointer = (event: PointerEvent) => {
-      if (!notifRef.current?.contains(event.target as Node)) setShowNotifs(false)
+      if (
+        notifRef.current &&
+        !notifRef.current.contains(event.target as Node) &&
+        !notifButtonRef.current?.contains(event.target as Node)
+      ) {
+        setShowNotifs(false)
+      }
     }
     window.addEventListener('keydown', handleKeyDown)
     window.addEventListener('pointerdown', handlePointer)
@@ -94,6 +116,26 @@ export default function Header() {
     setSearchInput('')
   }
 
+  const handleNotificationClick = (item: AerisNotification) => {
+    markAsRead(item.id)
+    if (item.targetPayload && item.targetPayload.lon != null && item.targetPayload.lat != null) {
+      setFlyToLocation({
+        lon: item.targetPayload.lon,
+        lat: item.targetPayload.lat,
+        zoom: item.targetPayload.zoom ?? 12,
+        name: item.targetPayload.name ?? item.title,
+      })
+    }
+    if (item.targetTab) {
+      setActiveTab(item.targetTab)
+    }
+    setShowNotifs(false)
+  }
+
+  const displayedAlerts = notifTab === 'critical'
+    ? notifications.filter(n => n.severity === 'critical')
+    : notifications
+
   return (
     <header className="header">
       <div className="header-left">
@@ -116,15 +158,144 @@ export default function Header() {
           <span className="live-status-text">{modeLabel} · {statusText}</span>
         </div>
         <button className="icon-btn refresh-btn" onClick={refreshData} disabled={loading || refreshing} title="Refresh environmental data" aria-label="Refresh data" type="button"><RefreshCw size={16} className={loading || refreshing ? 'spinning' : ''} /></button>
+        
+        {/* Enhanced Notification Hub */}
         <div className="notif-wrapper" ref={notifRef}>
-          <button ref={notifButtonRef} className="icon-btn notif-btn" aria-label="Data feed status" aria-expanded={showNotifs} aria-controls="feed-status-panel" onClick={() => setShowNotifs(value => !value)} type="button"><Bell size={17} /></button>
-          {showNotifs && <section id="feed-status-panel" className="notif-dropdown" aria-label="Data feed status">
-            <div className="notif-dropdown-header"><span className="notif-title">Data feed status · {modeLabel}</span></div>
-            <ul className="notif-list">
-              {feeds.map(feed => <li className="notif-item" key={feed.label}><div className="notif-content"><strong className="notif-headline">{feed.label.replace('_', ' ')}: {feed.status}</strong><span className="notif-desc">{feed.generatedAt ?? 'Timestamp unavailable'}{feed.reason ? ` · ${feed.reason}` : ''}</span></div></li>)}
-            </ul>
-          </section>}
+          <button
+            ref={notifButtonRef}
+            className="icon-btn notif-btn"
+            aria-label="Environmental alerts & telemetry"
+            aria-expanded={showNotifs}
+            aria-controls="feed-status-panel"
+            onClick={() => setShowNotifs(value => !value)}
+            type="button"
+          >
+            <Bell size={17} />
+            {unreadCount > 0 && (
+              <span className={`notif-badge ${criticalCount > 0 ? 'critical-pulse' : ''}`}>
+                {unreadCount > 99 ? '99+' : unreadCount}
+              </span>
+            )}
+          </button>
+
+          {showNotifs && (
+            <section id="feed-status-panel" className="notif-dropdown" aria-label="Environmental Alerts & Telemetry">
+              <div className="notif-dropdown-header">
+                <div className="notif-title-wrap">
+                  <span className="notif-title">Environmental Alerts</span>
+                  <span className="live-status-text" style={{ fontSize: '10px', opacity: 0.8 }}>({modeLabel})</span>
+                </div>
+                <div className="notif-header-actions">
+                  <button
+                    className="notif-icon-action-btn"
+                    onClick={toggleMuteChime}
+                    title={isChimeMuted ? 'Unmute alert audio chime' : 'Mute alert audio chime'}
+                    aria-label={isChimeMuted ? 'Unmute chime' : 'Mute chime'}
+                    type="button"
+                  >
+                    {isChimeMuted ? <VolumeX size={14} /> : <Volume2 size={14} />}
+                  </button>
+                  {unreadCount > 0 && (
+                    <button
+                      className="notif-mark-read"
+                      onClick={markAllAsRead}
+                      type="button"
+                    >
+                      Mark all read
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Segmented control tabs */}
+              <div className="notif-dropdown-tabs">
+                <button
+                  type="button"
+                  className={`notif-tab-btn ${notifTab === 'all' ? 'active' : ''}`}
+                  onClick={() => setNotifTab('all')}
+                >
+                  All ({notifications.length})
+                </button>
+                <button
+                  type="button"
+                  className={`notif-tab-btn ${notifTab === 'critical' ? 'active' : ''}`}
+                  onClick={() => setNotifTab('critical')}
+                >
+                  Critical ({criticalCount})
+                </button>
+                <button
+                  type="button"
+                  className={`notif-tab-btn ${notifTab === 'feeds' ? 'active' : ''}`}
+                  onClick={() => setNotifTab('feeds')}
+                >
+                  Feeds ({feeds.length})
+                </button>
+              </div>
+
+              {/* Alerts or Feeds view */}
+              {notifTab === 'feeds' ? (
+                <ul className="notif-list">
+                  {feeds.map(feed => (
+                    <li className="notif-item" key={feed.label}>
+                      <div className={`notif-dot ${feed.status === 'current' ? 'advisory' : 'critical'}`} />
+                      <div className="notif-content">
+                        <strong className="notif-headline">{feed.label.replace('_', ' ')}: {feed.status}</strong>
+                        <span className="notif-desc">{feed.generatedAt ?? 'Timestamp unavailable'}{feed.reason ? ` · ${feed.reason}` : ''}</span>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <ul className="notif-list">
+                  {displayedAlerts.length === 0 ? (
+                    <li className="notif-empty">
+                      <CheckCircle2 size={24} color="#059669" />
+                      <span className="notif-empty-title">All clear</span>
+                      <span className="notif-empty-desc">No {notifTab === 'critical' ? 'critical' : ''} environmental alerts active at this threshold.</span>
+                    </li>
+                  ) : (
+                    displayedAlerts.map(item => (
+                      <li
+                        key={item.id}
+                        className={`notif-item ${!item.isRead ? 'unread' : ''}`}
+                        onClick={() => handleNotificationClick(item)}
+                        role="button"
+                        tabIndex={0}
+                      >
+                        <div className={`notif-dot ${item.severity}`} />
+                        <div className="notif-content">
+                          <div className="notif-top-row">
+                            <span className="notif-headline">{item.title}</span>
+                          </div>
+                          <p className="notif-desc">{item.message}</p>
+                          <div className="notif-meta-row">
+                            <span className="notif-time">{new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                            <span className="notif-source-tag">· {item.sourceName}</span>
+                          </div>
+                        </div>
+                      </li>
+                    ))
+                  )}
+                </ul>
+              )}
+
+              <div className="notif-dropdown-footer">
+                <button
+                  className="notif-view-all-btn"
+                  onClick={() => {
+                    setActiveTab('notifications')
+                    setShowNotifs(false)
+                  }}
+                  type="button"
+                >
+                  <span>Open Full Notification Center</span>
+                  <ChevronRight size={13} />
+                </button>
+              </div>
+            </section>
+          )}
         </div>
+
         <div className="officer-session-chip" title="Local dashboard; no authenticated officer or dispatch service">
           <div className="officer-avatar-badge"><ShieldCheck size={14} color="#059669" /></div>
           <div className="officer-meta"><span className="officer-desk-title">AERIS Dashboard</span><span className="officer-session-tag">Local read-only session</span></div>
@@ -133,3 +304,4 @@ export default function Header() {
     </header>
   )
 }
+

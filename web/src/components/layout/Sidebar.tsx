@@ -1,5 +1,6 @@
 import {
   BarChart2,
+  Bell,
   LayoutDashboard,
   Map,
   PanelLeftClose,
@@ -11,6 +12,7 @@ import {
   Zap,
 } from 'lucide-react'
 import { useAeris } from '@/services/dataContext'
+import { useNotifications } from '@/services/notificationContext'
 import './Sidebar.css'
 
 interface NavItemConfig {
@@ -19,7 +21,7 @@ interface NavItemConfig {
   icon: React.ComponentType<{ size?: number; className?: string; strokeWidth?: number }>
   shortcut: string
   badgeText?: string
-  badgeKey?: 'fires' | 'facilities' | 'actions' | 'wind'
+  badgeKey?: 'fires' | 'facilities' | 'actions' | 'wind' | 'alerts'
   badgeType?: 'primary' | 'warning' | 'alert' | 'neutral'
 }
 
@@ -49,12 +51,13 @@ const SECTIONS: NavSectionConfig[] = [
     items: [
       { id: 'population', label: 'Population Risk', icon: Users, shortcut: '6', badgeKey: 'facilities', badgeType: 'warning' },
       { id: 'shield', label: 'Protective Actions', icon: Shield, shortcut: '7', badgeKey: 'actions', badgeType: 'primary' },
+      { id: 'notifications', label: 'Notifications', icon: Bell, shortcut: '8', badgeKey: 'alerts', badgeType: 'alert' },
     ],
   },
   {
     section: 'System',
     items: [
-      { id: 'settings', label: 'Settings', icon: Settings, shortcut: '8' },
+      { id: 'settings', label: 'Settings', icon: Settings, shortcut: '9' },
     ],
   },
 ]
@@ -71,10 +74,14 @@ export default function Sidebar() {
     actions,
     wind,
   } = useAeris()
+  const { unreadCount } = useNotifications()
 
   // Compute live badge values from scientific data
   const getBadgeValue = (item: NavItemConfig): string | null => {
     if (item.badgeText) return item.badgeText
+    if (item.badgeKey === 'alerts') {
+      return unreadCount > 0 ? `${unreadCount}` : null
+    }
     if (item.badgeKey === 'fires') {
       const count = sources?.sources?.length
       return count != null ? `${count}` : '—'
