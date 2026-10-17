@@ -8,7 +8,7 @@ import { useEffect, useState } from 'react'
 export type WindUnit = 'kmh' | 'ms' | 'knots'
 export type TempUnit = 'celsius' | 'fahrenheit'
 export type AqiStandard = 'cpcb' | 'who' | 'epa'
-export type DefaultTab = 'dashboard' | 'map' | 'analytics' | 'wind' | 'sources' | 'population' | 'shield'
+export type DefaultTab = 'dashboard' | 'map' | 'analytics' | 'wind' | 'sources' | 'population' | 'shield' | 'notifications'
 export type AutoRefreshInterval = 0 | 1 | 2 | 5 | 15 // minutes, 0 = manual
 
 export interface AerisUserSettings {

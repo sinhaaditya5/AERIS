@@ -21,7 +21,9 @@ const FireSourcesView = lazy(() => import('@/components/views/FireSourcesView'))
 const PopulationRiskView = lazy(() => import('@/components/views/PopulationRiskView'))
 const ActionsWorkbenchView = lazy(() => import('@/components/views/ActionsWorkbenchView'))
 const SettingsView = lazy(() => import('@/components/views/SettingsView'))
+const NotificationsView = lazy(() => import('@/components/views/NotificationsView'))
 const ActionsModal = lazy(() => import('@/components/agent/ActionsModal'))
+import ToastContainer from '@/components/notifications/ToastContainer'
 
 function ViewSkeleton() {
   return (
@@ -102,10 +104,11 @@ function Dashboard() {
 
   if (error && !hasData) return <ErrorScreen message={error} onRetry={refreshData} />
 
-  const isDedicatedView = ['map', 'analytics', 'wind', 'sources', 'population', 'shield', 'settings'].includes(activeTab)
+  const isDedicatedView = ['map', 'analytics', 'wind', 'sources', 'population', 'shield', 'notifications', 'settings'].includes(activeTab)
 
   return (
     <div className="app-shell">
+      <ToastContainer />
       <Sidebar />
       <div className="main-content">
         <Header />
@@ -119,6 +122,7 @@ function Dashboard() {
           {activeTab === 'sources' && <FireSourcesView />}
           {activeTab === 'population' && <PopulationRiskView />}
           {activeTab === 'shield' && <ActionsWorkbenchView />}
+          {activeTab === 'notifications' && <NotificationsView />}
           {activeTab === 'settings' && <SettingsView />}
         </Suspense>
 

@@ -32,12 +32,17 @@ import {
   Type,
   SlidersHorizontal,
   Contrast,
+  Bell,
+  Volume2,
+  VolumeX,
 } from 'lucide-react'
 import { useAeris, type BasemapMode } from '@/services/dataContext'
 import { DATA_MODE, getFeedFreshness } from '@/services/api'
 import { clearActionChecklist } from '@/components/agent/actionChecklist'
 import { useClock } from '@/components/status/useClock'
 import ModelProvenanceNotice from '@/components/status/ModelProvenanceNotice'
+import { useNotifications } from '@/services/notificationContext'
+import { playAlertChime } from '@/services/soundChime'
 import {
   useSettings,
   getLocalStorageStats,
@@ -55,7 +60,7 @@ import {
 } from '@/services/themeContext'
 import './SettingsView.css'
 
-type SettingsTab = 'all' | 'appearance' | 'general' | 'thresholds' | 'feeds' | 'storage' | 'provenance'
+type SettingsTab = 'all' | 'appearance' | 'general' | 'notifications' | 'thresholds' | 'feeds' | 'storage' | 'provenance'
 
 const BASEMAP_OPTIONS: {
   id: BasemapMode
@@ -197,6 +202,7 @@ export default function SettingsView() {
     effectiveTheme,
   } = useTheme()
   const [activeTab, setActiveTab] = useState<SettingsTab>('all')
+  const { triggerTestNotification, clearAllRead } = useNotifications()
   const [message, setMessage] = useState('')
   const [toast, setToast] = useState<string | null>(null)
   const now = useClock()
@@ -354,6 +360,14 @@ export default function SettingsView() {
           >
             <Globe size={13} />
             General &amp; Display
+          </button>
+          <button
+            type="button"
+            className={`nav-pill ${activeTab === 'notifications' ? 'active' : ''}`}
+            onClick={() => setActiveTab('notifications')}
+          >
+            <Bell size={13} />
+            Notifications &amp; Alerts
           </button>
           <button
             type="button"
@@ -822,6 +836,7 @@ export default function SettingsView() {
                   <option value="sources">Fire Sources</option>
                   <option value="population">Population Risk</option>
                   <option value="shield">Protective Actions</option>
+                  <option value="notifications">Notification Center</option>
                 </select>
               </div>
 
@@ -912,6 +927,191 @@ export default function SettingsView() {
             </div>
           </section>
         </>
+      )}
+
+      {/* SECTION: Environmental Alerts & Notification Controls */}
+      {(activeTab === 'all' || activeTab === 'notifications') && (
+        <section className="settings-card full-width" id="section-notifications">
+          <div className="card-header">
+            <Bell size={18} />
+            <div className="header-text-group">
+              <h2>Environmental Alerts &amp; Notification Controls</h2>
+              <span className="card-desc-text">
+                Manage operational alert dispatch, audio chimes, in-app toast banners, and incident sensitivity.
+              </span>
+            </div>
+          </div>
+
+          <div className="preferences-grid">
+            {/* In-App Toast Banners */}
+            <div className="pref-item">
+              <div className="pref-header-row">
+                <div className="pref-icon-squircle icon-cyan">
+                  <Bell size={15} />
+                </div>
+                <div className="pref-header-text">
+                  <label className="pref-label" htmlFor="pref-toast-toggle">In-App Toast Banners</label>
+                  <span className="pref-help">Floating toasts for real-time critical receptor arrivals and telemetry downtime.</span>
+                </div>
+              </div>
+              <div className="pref-segmented-control" id="pref-toast-toggle">
+                <button
+                  type="button"
+                  className={`seg-btn ${settings.inAppAlertBanners ? 'active' : ''}`}
+                  onClick={() => {
+                    updateSettings({ inAppAlertBanners: true })
+                    showToast('Enabled in-app alert toasts')
+                  }}
+                >
+                  Enabled
+                </button>
+                <button
+                  type="button"
+                  className={`seg-btn ${!settings.inAppAlertBanners ? 'active' : ''}`}
+                  onClick={() => {
+                    updateSettings({ inAppAlertBanners: false })
+                    showToast('Disabled in-app alert toasts')
+                  }}
+                >
+                  Disabled
+                </button>
+              </div>
+            </div>
+
+            {/* Critical Alert Audio Chime */}
+            <div className="pref-item">
+              <div className="pref-header-row">
+                <div className="pref-icon-squircle icon-orange">
+                  {settings.criticalAlertChime ? <Volume2 size={15} /> : <VolumeX size={15} />}
+                </div>
+                <div className="pref-header-text">
+                  <label className="pref-label" htmlFor="pref-chime-toggle">Critical Audio Chime</label>
+                  <span className="pref-help">Synthesized dual-tone audio chime on emergency receptor exposure events.</span>
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                <div className="pref-segmented-control" id="pref-chime-toggle" style={{ flex: 1 }}>
+                  <button
+                    type="button"
+                    className={`seg-btn ${settings.criticalAlertChime ? 'active' : ''}`}
+                    onClick={() => {
+                      updateSettings({ criticalAlertChime: true })
+                      playAlertChime('test')
+                      showToast('Critical audio chime enabled')
+                    }}
+                  >
+                    Enabled
+                  </button>
+                  <button
+                    type="button"
+                    className={`seg-btn ${!settings.criticalAlertChime ? 'active' : ''}`}
+                    onClick={() => {
+                      updateSettings({ criticalAlertChime: false })
+                      showToast('Critical audio chime disabled')
+                    }}
+                  >
+                    Muted
+                  </button>
+                </div>
+                <button
+                  type="button"
+                  className="btn-compact-tool"
+                  onClick={() => {
+                    playAlertChime('critical')
+                    showToast('Played test audio chime')
+                  }}
+                  title="Test Web Audio synthesizer tone"
+                  style={{
+                    padding: '6px 10px',
+                    fontSize: '11px',
+                    fontWeight: 600,
+                    borderRadius: '6px',
+                    border: '1px solid var(--border-subtle)',
+                    background: 'var(--surface-subtle)',
+                    color: 'var(--text-primary)',
+                    cursor: 'pointer',
+                  }}
+                >
+                  Test Tone
+                </button>
+              </div>
+            </div>
+
+            {/* Diagnostic Alert Drill */}
+            <div className="pref-item">
+              <div className="pref-header-row">
+                <div className="pref-icon-squircle icon-purple">
+                  <ShieldAlert size={15} />
+                </div>
+                <div className="pref-header-text">
+                  <label className="pref-label">Operational Drill Simulation</label>
+                  <span className="pref-help">Simulate an immediate high-priority hospital plume arrival drill.</span>
+                </div>
+              </div>
+              <button
+                type="button"
+                className="btn-compact-tool"
+                onClick={() => {
+                  triggerTestNotification('critical')
+                  showToast('Simulated critical operational alert')
+                }}
+                style={{
+                  padding: '7px 12px',
+                  fontSize: '12px',
+                  fontWeight: 600,
+                  borderRadius: '6px',
+                  border: '1px solid var(--risk-critical)',
+                  background: 'rgba(225, 29, 72, 0.08)',
+                  color: 'var(--risk-critical)',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                }}
+              >
+                <ShieldAlert size={13} />
+                <span>Simulate Emergency Drill Alert</span>
+              </button>
+            </div>
+
+            {/* Queue Management */}
+            <div className="pref-item">
+              <div className="pref-header-row">
+                <div className="pref-icon-squircle icon-green">
+                  <Trash2 size={15} />
+                </div>
+                <div className="pref-header-text">
+                  <label className="pref-label">Incident Queue Maintenance</label>
+                  <span className="pref-help">Clear all previously read incidents from local browser memory.</span>
+                </div>
+              </div>
+              <button
+                type="button"
+                className="btn-compact-tool"
+                onClick={() => {
+                  clearAllRead()
+                  showToast('Cleared read incidents from queue')
+                }}
+                style={{
+                  padding: '7px 12px',
+                  fontSize: '12px',
+                  fontWeight: 600,
+                  borderRadius: '6px',
+                  border: '1px solid var(--border-subtle)',
+                  background: 'var(--surface-subtle)',
+                  color: 'var(--text-primary)',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                }}
+              >
+                <Trash2 size={13} />
+                <span>Clear Read Incidents</span>
+              </button>
+            </div>
+          </div>
+        </section>
       )}
 
       {/* SECTION 2: Environmental Safety Thresholds */}
