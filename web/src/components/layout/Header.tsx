@@ -163,8 +163,17 @@ export default function Header() {
         <div className="notif-wrapper" ref={notifRef}>
           <button
             ref={notifButtonRef}
-            className="icon-btn notif-btn"
-            aria-label="Environmental alerts & telemetry"
+            className={`icon-btn notif-btn ${showNotifs ? 'active' : ''}`}
+            aria-label={
+              unreadCount > 0
+                ? `${unreadCount} environmental alerts${criticalCount > 0 ? `, ${criticalCount} critical` : ''}`
+                : 'Environmental alerts & telemetry'
+            }
+            title={
+              unreadCount > 0
+                ? `${unreadCount} unread alert${unreadCount === 1 ? '' : 's'}${criticalCount > 0 ? ` (${criticalCount} critical)` : ''}`
+                : 'No unread alerts'
+            }
             aria-expanded={showNotifs}
             aria-controls="feed-status-panel"
             onClick={() => setShowNotifs(value => !value)}
@@ -172,7 +181,10 @@ export default function Header() {
           >
             <Bell size={17} />
             {unreadCount > 0 && (
-              <span className={`notif-badge ${criticalCount > 0 ? 'critical-pulse' : ''}`}>
+              <span
+                className={`notif-badge ${criticalCount > 0 ? 'critical-pulse' : ''}`}
+                aria-hidden="true"
+              >
                 {unreadCount > 99 ? '99+' : unreadCount}
               </span>
             )}
