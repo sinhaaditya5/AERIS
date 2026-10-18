@@ -30,7 +30,7 @@ interface NotificationContextValue {
 const NotificationContext = createContext<NotificationContextValue | null>(null)
 
 export function NotificationProvider({ children }: { children: ReactNode }) {
-  const { sources, rankedSites, actions, aqi, staleFeeds } = useAeris()
+  const { sources, rankedSites, actions, aqi, staleFeeds, loading, refreshing, hasData } = useAeris()
   const [settings] = useSettings()
 
   const [readIds, setReadIds] = useState<Set<string>>(() => {
@@ -63,7 +63,8 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   const [testAlerts, setTestAlerts] = useState<AerisNotification[]>([])
   const [activeToasts, setActiveToasts] = useState<AerisNotification[]>([])
   const prevCriticalIdsRef = useRef<Set<string>>(new Set())
-  const hasInitializedRef = useRef(false)
+  const isBaselineEstablishedRef = useRef(false)
+  const wasRefreshingRef = useRef(false)
 
   // Persist read/dismissed state
   useEffect(() => {
@@ -109,44 +110,67 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   const unreadCount = useMemo(() => notifications.filter(n => !n.isRead).length, [notifications])
   const criticalCount = useMemo(() => notifications.filter(n => !n.isRead && n.severity === 'critical').length, [notifications])
 
-  // Audio chime and toast dispatch on new critical alerts
+  // Audio chime and toast dispatch on newly arrived critical alerts
   useEffect(() => {
     const currentCritical = notifications.filter(n => n.severity === 'critical' && !n.isRead)
     const currentCriticalIds = new Set(currentCritical.map(n => n.id))
 
-    // Don't play chime on very first load to avoid jarring user before interaction
-    if (hasInitializedRef.current) {
-      const newCriticalAlerts = currentCritical.filter(n => !prevCriticalIdsRef.current.has(n.id))
-
-      if (newCriticalAlerts.length > 0) {
-        if (settings.criticalAlertChime && !isChimeMuted) {
-          playAlertChime('critical')
-        }
-
-        if (settings.inAppAlertBanners) {
-          setActiveToasts(prev => {
-            const existingIds = new Set(prev.map(p => p.id))
-            const additions = newCriticalAlerts.filter(a => !existingIds.has(a.id))
-            return [...additions, ...prev].slice(0, 3) // max 3 simultaneous toasts
-          })
-        }
+    // 1. Initial Load / Tab Refresh:
+    // Wait until data has loaded before establishing baseline.
+    // Existing baseline alerts must NEVER pop up sliding toasts or audio chimes on load/refresh.
+    if (!isBaselineEstablishedRef.current) {
+      if (hasData || !loading || notifications.length > 0) {
+        isBaselineEstablishedRef.current = true
+        prevCriticalIdsRef.current = currentCriticalIds
       }
-    } else {
-      hasInitializedRef.current = true
+      return
+    }
+
+    // 2. Data Refresh:
+    // When the user or system triggers a refresh, absorb updated alert IDs quietly into the baseline.
+    if (refreshing) {
+      wasRefreshingRef.current = true
+      prevCriticalIdsRef.current = currentCriticalIds
+      return
+    }
+
+    if (wasRefreshingRef.current) {
+      wasRefreshingRef.current = false
+      prevCriticalIdsRef.current = currentCriticalIds
+      return
+    }
+
+    // 3. Newly arrived critical alerts during steady-state live operations
+    const newCriticalAlerts = currentCritical.filter(n => !prevCriticalIdsRef.current.has(n.id))
+
+    if (newCriticalAlerts.length > 0) {
+      if (settings.criticalAlertChime && !isChimeMuted) {
+        playAlertChime('critical')
+      }
+
+      if (settings.inAppAlertBanners) {
+        setActiveToasts(prev => {
+          const existingIds = new Set(prev.map(p => p.id))
+          const additions = newCriticalAlerts.filter(a => !existingIds.has(a.id))
+          return [...additions, ...prev].slice(0, 3) // max 3 simultaneous toasts
+        })
+      }
     }
 
     prevCriticalIdsRef.current = currentCriticalIds
-  }, [notifications, settings.criticalAlertChime, settings.inAppAlertBanners, isChimeMuted])
+  }, [notifications, settings.criticalAlertChime, settings.inAppAlertBanners, isChimeMuted, hasData, loading, refreshing])
 
   const markAsRead = (id: string) => {
     setReadIds(prev => new Set(prev).add(id))
     setTestAlerts(prev => prev.map(a => a.id === id ? { ...a, isRead: true } : a))
+    setActiveToasts(prev => prev.filter(t => t.id !== id))
   }
 
   const markAllAsRead = () => {
     const allIds = notifications.map(n => n.id)
     setReadIds(new Set(allIds))
     setTestAlerts(prev => prev.map(a => ({ ...a, isRead: true })))
+    setActiveToasts([])
   }
 
   const dismissNotification = (id: string) => {
