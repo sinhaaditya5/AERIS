@@ -20,6 +20,14 @@ interface EngineInputs {
   dismissedIds?: Set<string>
 }
 
+// Shared severity ranking — higher number = higher priority
+export const SEVERITY_SCORE: Record<string, number> = {
+  critical: 4,
+  warning: 3,
+  advisory: 2,
+  system: 1,
+}
+
 export function synthesizeNotifications({
   sources,
   rankedSites,
@@ -39,12 +47,14 @@ export function synthesizeNotifications({
   if (sources?.sources && Array.isArray(sources.sources)) {
     // Sort sources by FRP descending
     const sortedSources = [...sources.sources].sort((a, b) => b.total_frp_mw - a.total_frp_mw)
-    
+
     // Pick the top notable clusters exceeding threshold
     for (const src of sortedSources) {
       if (src.total_frp_mw < Math.max(25, minFrp)) continue
 
-      const id = `fire-${src.id}-${Math.round(src.total_frp_mw)}`
+      // B1 FIX: Stable ID — keyed on cluster identity only; FRP fluctuates between polls
+      // and caused the same fire to re-alert after every data refresh.
+      const id = `fire-${src.id}`
       const isCritical = src.total_frp_mw >= 400 || src.fire_count >= 50
       const location = src.location_name || src.district || src.state || 'Agricultural Belt'
 
@@ -78,7 +88,9 @@ export function synthesizeNotifications({
       .slice(0, 10)
 
     for (const site of imminentSites) {
-      const id = `site-${site.site_id}-${site.eta_hours.toFixed(1)}`
+      // B2 FIX: Stable ID — eta_hours drifts on every refresh, causing the same site
+      // to generate a brand-new notification and lose its read/dismissed state.
+      const id = `site-${site.site_id}`
       const isImmediateHospital = site.type === 'hospital' && site.eta_hours <= 1.0
       const isCritical = isImmediateHospital || site.pm25_delta_ugm3 >= pm25Critical
 
@@ -109,7 +121,10 @@ export function synthesizeNotifications({
     const urgentActions = actions.actions.filter(a => a.deadline_hours <= 1.5).slice(0, 5)
 
     for (const act of urgentActions) {
-      const id = `action-${act.site_id}-${act.priority}`
+      // B3 FIX: Include who-slug so that different advisees at the same priority rank
+      // no longer silently collapse to the same ID.
+      const whoSlug = (act.who ?? '').toLowerCase().replace(/\s+/g, '-').slice(0, 12)
+      const id = `action-${act.site_id}-${act.priority}-${whoSlug}`
       const isTopPriority = act.priority <= 2
 
       notifs.push({
@@ -179,16 +194,9 @@ export function synthesizeNotifications({
   }
 
   // Sort order:
-  // 1. Critical first, then Warning, Advisory, System
-  // 2. Unread before read
+  // 1. Unread before read
+  // 2. Critical first, then Warning, Advisory, System
   // 3. Newest timestamp descending
-  const severityScore: Record<string, number> = {
-    critical: 4,
-    warning: 3,
-    advisory: 2,
-    system: 1,
-  }
-
   return notifs
     .filter(n => !n.isDismissed)
     .sort((a, b) => {
@@ -197,7 +205,7 @@ export function synthesizeNotifications({
       if (a.isRead && !b.isRead) return 1
 
       // Severity prioritized
-      const diffSeverity = (severityScore[b.severity] ?? 0) - (severityScore[a.severity] ?? 0)
+      const diffSeverity = (SEVERITY_SCORE[b.severity] ?? 0) - (SEVERITY_SCORE[a.severity] ?? 0)
       if (diffSeverity !== 0) return diffSeverity
 
       // Timestamp fallback
