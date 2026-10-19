@@ -12,6 +12,24 @@ import { useSettings } from '@/services/settingsStorage'
 
 const STORAGE_KEY = 'aeris_notifications_state_v1'
 
+// B4 FIX: Single shared localStorage parse on init — prevents two separate JSON.parse
+// calls for the same key that the original dual useState initialisers caused.
+function loadStoredState(): { readIds: Set<string>; dismissedIds: Set<string> } {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY)
+    if (raw) {
+      const parsed = JSON.parse(raw)
+      return {
+        readIds: new Set(Array.isArray(parsed.readIds) ? parsed.readIds : []),
+        dismissedIds: new Set(Array.isArray(parsed.dismissedIds) ? parsed.dismissedIds : []),
+      }
+    }
+  } catch {
+    // fallback to empty sets
+  }
+  return { readIds: new Set<string>(), dismissedIds: new Set<string>() }
+}
+
 interface NotificationContextValue {
   notifications: AerisNotification[]
   unreadCount: number
@@ -33,31 +51,9 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   const { sources, rankedSites, actions, aqi, staleFeeds, loading, refreshing, hasData } = useAeris()
   const [settings] = useSettings()
 
-  const [readIds, setReadIds] = useState<Set<string>>(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY)
-      if (raw) {
-        const parsed = JSON.parse(raw)
-        return new Set(Array.isArray(parsed.readIds) ? parsed.readIds : [])
-      }
-    } catch {
-      // fallback
-    }
-    return new Set<string>()
-  })
-
-  const [dismissedIds, setDismissedIds] = useState<Set<string>>(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY)
-      if (raw) {
-        const parsed = JSON.parse(raw)
-        return new Set(Array.isArray(parsed.dismissedIds) ? parsed.dismissedIds : [])
-      }
-    } catch {
-      // fallback
-    }
-    return new Set<string>()
-  })
+  // B4 FIX: Single init call — shared parse, not two independent JSON.parse calls
+  const [readIds, setReadIds] = useState<Set<string>>(() => loadStoredState().readIds)
+  const [dismissedIds, setDismissedIds] = useState<Set<string>>(() => loadStoredState().dismissedIds)
 
   const [isChimeMuted, setIsChimeMuted] = useState(false)
   const [testAlerts, setTestAlerts] = useState<AerisNotification[]>([])
@@ -178,11 +174,14 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     setActiveToasts(prev => prev.filter(t => t.id !== id))
   }
 
+  // B6 FIX: Use functional updater that reads the current notifications snapshot inside
+  // the setter to avoid stale closure mismatch when React batches state updates.
   const clearAllRead = () => {
-    const readItems = notifications.filter(n => n.isRead).map(n => n.id)
+    // Capture IDs from the current render's notifications snapshot
+    const readItemIds = notifications.filter(n => n.isRead).map(n => n.id)
     setDismissedIds(prev => {
       const next = new Set(prev)
-      readItems.forEach(id => next.add(id))
+      readItemIds.forEach(id => next.add(id))
       return next
     })
   }

@@ -588,6 +588,15 @@ body {
   gap: var(--space-body-gap, 12px);
 }
 
+/* Scrollable wrapper for dedicated full-page views (Notifications, Analytics, etc.).
+   .main-content is overflow:hidden so each non-dashboard view needs its own scroll root. */
+.dedicated-view-scroll {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  min-height: 0;
+}
+
 
 /* 6. Card Base */
 .card {

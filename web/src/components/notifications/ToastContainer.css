@@ -183,3 +183,51 @@
     width: calc(100vw - 20px);
   }
 }
+
+/* 2F: Toast auto-dismiss progress bar */
+.toast-progress-track {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--border-subtle);
+  border-radius: 0 0 12px 12px;
+  overflow: hidden;
+}
+
+.toast-progress-bar {
+  height: 100%;
+  border-radius: 0 0 12px 12px;
+  transition: width 100ms linear;
+}
+
+.toast-progress-bar.severity-critical {
+  background: var(--risk-critical);
+}
+
+.toast-progress-bar.severity-warning {
+  background: var(--risk-high);
+}
+
+.toast-progress-bar.severity-advisory {
+  background: var(--accent-primary);
+}
+
+.toast-progress-bar.severity-system {
+  background: var(--text-tertiary);
+}
+
+.toast-progress-bar.paused {
+  transition: none;
+}
+
+/* Accessibility: respect reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  .toast-item {
+    animation: none;
+  }
+  .toast-progress-bar {
+    transition: none;
+  }
+}

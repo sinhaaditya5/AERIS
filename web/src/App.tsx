@@ -115,17 +115,22 @@ function Dashboard() {
         {error && <div className="feed-error-banner" role="alert"><span>{error} Available or retained feeds remain visible.</span><button type="button" onClick={refreshData} disabled={refreshing}>Retry failed feeds</button></div>}
 
         <ErrorBoundary key={activeTab} resetKey={activeTab}>
-        <Suspense fallback={<ViewSkeleton />}>
-          {activeTab === 'map' && <MapExplorerView />}
-          {activeTab === 'analytics' && <AnalyticsView />}
-          {activeTab === 'wind' && <WindWeatherView />}
-          {activeTab === 'sources' && <FireSourcesView />}
-          {activeTab === 'population' && <PopulationRiskView />}
-          {activeTab === 'shield' && <ActionsWorkbenchView />}
-          {activeTab === 'notifications' && <NotificationsView />}
-          {activeTab === 'settings' && <SettingsView />}
-        </Suspense>
-
+        {/* Scrollable wrapper for all dedicated (non-dashboard) views.
+            .main-content is overflow:hidden so the scroll must live here. */}
+        {isDedicatedView && (
+          <div className="dedicated-view-scroll">
+            <Suspense fallback={<ViewSkeleton />}>
+              {activeTab === 'map' && <MapExplorerView />}
+              {activeTab === 'analytics' && <AnalyticsView />}
+              {activeTab === 'wind' && <WindWeatherView />}
+              {activeTab === 'sources' && <FireSourcesView />}
+              {activeTab === 'population' && <PopulationRiskView />}
+              {activeTab === 'shield' && <ActionsWorkbenchView />}
+              {activeTab === 'notifications' && <NotificationsView />}
+              {activeTab === 'settings' && <SettingsView />}
+            </Suspense>
+          </div>
+        )}
         {!isDedicatedView && (
           loading ? (
             <SkeletonDashboard />

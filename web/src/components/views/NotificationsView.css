@@ -495,3 +495,150 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ─────────────────────────────────────────────────
+   2C: Unread pulse dot — top-right corner of cards
+───────────────────────────────────────────────── */
+.notif-unread-dot {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  animation: notif-pulse 2s ease-in-out infinite;
+}
+
+.notif-unread-dot.dot-inline {
+  position: static;
+  display: inline-block;
+  margin-right: 6px;
+  flex-shrink: 0;
+}
+
+.notif-unread-dot.dot-critical {
+  background: var(--risk-critical);
+  box-shadow: 0 0 0 0 rgba(225, 29, 72, 0.6);
+}
+
+.notif-unread-dot.dot-warning {
+  background: var(--risk-high);
+  box-shadow: 0 0 0 0 rgba(234, 88, 12, 0.6);
+}
+
+.notif-unread-dot.dot-advisory {
+  background: var(--accent-primary);
+  box-shadow: 0 0 0 0 rgba(13, 148, 136, 0.6);
+}
+
+.notif-unread-dot.dot-system {
+  background: var(--text-tertiary);
+  box-shadow: 0 0 0 0 rgba(100, 116, 139, 0.4);
+}
+
+@keyframes notif-pulse {
+  0%   { transform: scale(1);   box-shadow: 0 0 0 0 currentColor; }
+  70%  { transform: scale(1.1); box-shadow: 0 0 0 5px transparent; }
+  100% { transform: scale(1);   box-shadow: 0 0 0 0 transparent; }
+}
+
+/* ─────────────────────────────────────────────────
+   2A: Category filter row
+───────────────────────────────────────────────── */
+.notif-category-row {
+  padding-top: 8px;
+  border-top: 1px solid var(--border-subtle);
+  margin-top: 2px;
+}
+
+.notif-filter-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+/* A2: Result count announced to screen readers, visually subtle */
+.notif-result-count {
+  font-size: 11.5px;
+  color: var(--text-tertiary);
+  white-space: nowrap;
+  margin: 0;
+}
+
+/* Severity-tinted active filter pills */
+.notif-filter-pill.severity-critical.active {
+  background: var(--risk-critical);
+  border-color: var(--risk-critical);
+}
+
+.notif-filter-pill.severity-warning.active {
+  background: var(--risk-high);
+  border-color: var(--risk-high);
+}
+
+.notif-filter-pill.severity-advisory.active {
+  background: var(--accent-primary);
+  border-color: var(--accent-primary);
+}
+
+.notif-filter-pill.unread-pill.active {
+  background: rgba(99, 102, 241, 0.9);
+  border-color: rgba(99, 102, 241, 0.9);
+}
+
+/* ─────────────────────────────────────────────────
+   2B: Sortable table headers
+───────────────────────────────────────────────── */
+.notif-sort-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  font-weight: 700;
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  text-transform: uppercase;
+  font-size: 10.5px;
+  letter-spacing: 0.5px;
+  transition: color 0.15s ease;
+}
+
+.notif-sort-btn:hover {
+  color: var(--text-primary);
+}
+
+.sort-icon-neutral {
+  color: var(--text-tertiary);
+  opacity: 0.5;
+}
+
+.sort-icon-active {
+  color: var(--accent-primary);
+}
+
+/* Table severity cell with inline unread dot */
+.notif-table-severity-cell {
+  display: flex;
+  align-items: center;
+}
+
+/* ─────────────────────────────────────────────────
+   A5: Reduced motion accessibility guards
+───────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .notif-card-item {
+    transition: none;
+  }
+  .notif-card-item:hover {
+    transform: none;
+  }
+  .notif-unread-dot {
+    animation: none;
+  }
+}
