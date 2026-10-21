@@ -26,6 +26,7 @@ import { useObservationHeatmap } from './useObservationHeatmap'
 import { useScientificLayers } from './useScientificLayers'
 import { useTheme } from '@/services/themeContext'
 import { applyThemeToMap } from './mapThemeBridge'
+import ExplorerTelemetryTray from './ExplorerTelemetryTray'
 const SvgFallbackMap = lazy(() => import('./SvgFallbackMap'))
 import './MapExplorerView.css'
 
@@ -79,6 +80,7 @@ export default function MapExplorerView() {
   const [isRegionsOpen, setIsRegionsOpen]   = useState(false)
   const [isFullscreen, setIsFullscreen]     = useState(false)
   const [showLegend, setShowLegend]         = useState(true)
+  const [isTrayExpanded, setIsTrayExpanded] = useState(false)
 
   // Layer Visibility & Territory Scope
   const [showFires, setShowFires]             = useState(true)
@@ -269,7 +271,7 @@ export default function MapExplorerView() {
 
       filteredSources.forEach(src => {
         const isTransboundary = src.territory === 'transboundary'
-        const isSelected = selectedFeature?.type === 'fire' && selectedFeature.title.includes(src.id)
+        const isSelected = selectedFeature?.type === 'fire' && (selectedFeature.siteId === src.id || selectedFeature.title.includes(src.id))
         const isPeak = src.id === peakSourceId
 
         const el = createThermalMarkerElement(src, {
@@ -294,6 +296,8 @@ export default function MapExplorerView() {
           },
         })
 
+        el.dataset.markerType = 'fire'
+        el.dataset.markerId = src.id
         el.title = `${src.district || src.type}: ${src.fire_count} fires (${src.total_frp_mw.toFixed(0)} MW) [${isTransboundary ? 'Transboundary' : 'India'}]`
 
         const marker = new Marker({ element: el, anchor: 'center' })
@@ -316,7 +320,10 @@ export default function MapExplorerView() {
           const riskText = riskLabel(riskLvl)
           const isImminent = site.eta_hours < 8
           const el = document.createElement('div')
-          el.className = `explorer-site-marker site-${site.type} risk-${riskLvl} ${isImminent ? 'is-imminent' : 'is-background'}`
+          el.dataset.markerType = site.type
+          el.dataset.markerId = site.site_id
+          const isSelected = selectedFeature?.siteId === site.site_id
+          el.className = `explorer-site-marker site-${site.type} risk-${riskLvl} ${isImminent ? 'is-imminent' : 'is-background'} ${isSelected ? 'is-selected' : ''}`
           el.innerHTML = `
             <span class="site-icon">${isSchool ? '🏫' : '🏥'}</span>
             <span class="site-risk-tag">${riskText}${isImminent ? ` · ~${site.eta_hours.toFixed(0)}h` : ''}</span>
@@ -409,13 +416,16 @@ export default function MapExplorerView() {
           : 'var(--risk-ok, #15803D)'
 
         const el = document.createElement('div')
+        el.dataset.markerType = 'station'
+        el.dataset.markerId = cluster.id
+        const isSelected = selectedFeature?.siteId === cluster.id
         if (cluster.count > 1) {
-          el.className = 'explorer-aqi-cluster-marker'
+          el.className = `explorer-aqi-cluster-marker ${isSelected ? 'is-selected' : ''}`
           el.style.backgroundColor = color
           el.innerHTML = `<span>${aqiVal}</span><span class="cluster-subtag">+${cluster.count - 1}</span>`
           el.title = `${cluster.name} (${cluster.count} sensors): Peak AQI ${aqiVal}`
         } else {
-          el.className = 'explorer-aqi-station-marker'
+          el.className = `explorer-aqi-station-marker ${isSelected ? 'is-selected' : ''}`
           el.style.backgroundColor = color
           el.innerHTML = `<span>${aqiVal}</span>`
           el.title = `${cluster.name}: AQI ${aqiVal}`
@@ -450,10 +460,25 @@ export default function MapExplorerView() {
       })
     }
     return () => { markersRef.current.forEach(m => m.remove()); markersRef.current = [] }
-  }, [sources, rankedSites, aqi, showFires, fireScopeFilter, showSchools, showHospitals, showStations, webGlSupported, setSelectedSiteId, selectedFeature?.title, selectedFeature?.type])
+  }, [sources, rankedSites, aqi, showFires, fireScopeFilter, showSchools, showHospitals, showStations, webGlSupported, setSelectedSiteId])
+
+  // ── 4b. Synchronize selection highlight without rebuilding all DOM markers ──
+  useEffect(() => {
+    const container = mapContainerRef.current
+    if (!container) return
+    container.querySelectorAll('.is-selected').forEach(el => el.classList.remove('is-selected'))
+    if (!selectedFeature) return
+    const id = selectedFeature.siteId || (selectedFeature.type === 'fire' ? selectedFeature.title.match(/\(([^)]+)\)/)?.[1] : null)
+    if (id) {
+      const match = container.querySelector(`[data-marker-id="${id}"]`)
+        || container.querySelector(`[data-source-id="${id}"]`)
+        || container.querySelector(`[data-site-id="${id}"]`)
+      if (match) match.classList.add('is-selected')
+    }
+  }, [selectedFeature])
 
   // ── Fly to selected preset ───────────────────────────────────────────────
-  const flyToPreset = (center: [number, number], zoom: number) => {
+  const flyToPreset = (center: [number, number], zoom = 8.5) => {
     mapRef.current?.flyTo({
       center,
       zoom,
@@ -989,13 +1014,19 @@ export default function MapExplorerView() {
         </div>
       </div>
 
-      {/* Sleek Bottom Status Strip */}
-      <div className="explorer-footer-status">
-        <p className="map-science-note">
-          <Info size={11} className="science-note-icon" />
-          <span>Uncalibrated model corridors · forecast start: {corridor?.forecast_start ?? 'unavailable'}. Time controls select cumulative bands; full centrelines and ETA markers remain as forecast context. Station observations are separate from modelled band peaks. Facility markers show up to 12 ranked sites after filtering; the facility table contains the full list.</span>
-        </p>
-      </div>
+      {/* ── Interactive Collapsible Telemetry & Facility Tray ───────────── */}
+      <ExplorerTelemetryTray
+        isExpanded={isTrayExpanded}
+        onToggleExpanded={() => setIsTrayExpanded(!isTrayExpanded)}
+        rankedSites={rankedSites}
+        sources={sources}
+        stations={aqi?.stations ?? null}
+        corridor={corridor}
+        etaHours={etaHours}
+        exposedPopulation={exposedPopulation}
+        onFlyTo={flyToPreset}
+        onSelectFeature={setSelectedFeature}
+      />
     </div>
   )
 }

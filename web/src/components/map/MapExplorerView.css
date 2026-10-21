@@ -4,12 +4,12 @@
   display: flex;
   flex-direction: column;
   width: 100%;
-  height: auto;
+  height: 100%;
   flex: 1;
   min-height: 0;
   position: relative;
-  background: #EDF1EC;
-  overflow-y: auto;
+  background: var(--bg-app, #EDF1EC);
+  overflow: hidden;
 }
 
 .map-explorer-container.fullscreen {
@@ -26,6 +26,7 @@
   position: relative;
   width: 100%;
   height: 100%;
+  min-height: 0;
   overflow: hidden;
 }
 
@@ -1177,6 +1178,8 @@
   display: flex;
   flex-direction: column;
   width: 230px;
+  max-height: calc(100% - 85px);
+  overflow-y: auto;
   pointer-events: auto;
   transition: all 0.2s ease;
 }
