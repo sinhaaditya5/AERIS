@@ -477,6 +477,19 @@ export default function MapExplorerView() {
     }
   }, [selectedFeature])
 
+  // ── Global Escape key handler ───────────────────────────────────────────
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setIsLayerPanelOpen(false)
+        setIsRegionsOpen(false)
+        setSelectedFeature(null)
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [])
+
   // ── Fly to selected preset ───────────────────────────────────────────────
   const flyToPreset = (center: [number, number], zoom = 8.5) => {
     mapRef.current?.flyTo({
@@ -492,13 +505,31 @@ export default function MapExplorerView() {
 
   return (
     <div className={`map-explorer-container ${isFullscreen ? 'fullscreen' : ''}`}>
-      <HeatmapControls data={heatmap.data} enabled={heatmap.enabled} onToggle={heatmap.setEnabled} opacity={heatmap.opacity} onOpacity={heatmap.setOpacity} onFit={webGlSupported ? heatmap.fit : undefined} bounds={webGlSupported ? heatmap.bounds : null} loading={loading} error={feedErrors.aqi} />
-      <div className="explorer-stage" onClick={() => { if (isRegionsOpen) setIsRegionsOpen(false); if (isLayerPanelOpen) setIsLayerPanelOpen(false); }}>
+      <div
+        className="explorer-stage"
+        onClick={() => {
+          if (isRegionsOpen) setIsRegionsOpen(false)
+          if (isLayerPanelOpen) setIsLayerPanelOpen(false)
+        }}
+      >
         {webGlSupported ? (
           <div ref={mapContainerRef} className="explorer-canvas" />
         ) : (
           <Suspense fallback={<p role="status">Loading static map…</p>}><SvgFallbackMap sources={showFires ? sources : null} rankedSites={rankedSites ? { ...rankedSites, sites: rankedSites.sites.filter(s => s.type === 'school' ? showSchools : showHospitals) } : null} scopeFilter={fireScopeFilter} corridor={showPlume ? corridor : null} horizon={timeHorizon} heatmap={heatmap.data} heatmapEnabled={heatmap.enabled} opacity={heatmap.opacity} /></Suspense>
         )}
+
+        {/* ── Floating PM2.5 Heatmap Glass Capsule (Zero-CLS Overlay) ────── */}
+        <HeatmapControls
+          data={heatmap.data}
+          enabled={heatmap.enabled}
+          onToggle={heatmap.setEnabled}
+          opacity={heatmap.opacity}
+          onOpacity={heatmap.setOpacity}
+          onFit={webGlSupported ? heatmap.fit : undefined}
+          bounds={webGlSupported ? heatmap.bounds : null}
+          loading={loading}
+          error={feedErrors.aqi}
+        />
 
         {/* ── Top Floating Command HUD Capsule ────────────────────────────── */}
         <div className="map-floating-hud" onClick={(e) => e.stopPropagation()}>
@@ -513,7 +544,7 @@ export default function MapExplorerView() {
               title={fireScopeFilter === 'india' ? "Viewing India source scope — click to show Full Regional Airshed" : "Viewing Full Regional Airshed — click to filter to India source scope"}
               type="button"
             >
-              <span>{fireScopeFilter === 'india' ? '🇮🇳 India Scope' : '🌐 Full Airshed'}</span>
+              <span>{fireScopeFilter === 'india' ? '🇮🇳 India' : '🌐 Airshed'}</span>
             </button>
             <button
               className="hud-preset-chip"
@@ -614,7 +645,7 @@ export default function MapExplorerView() {
               title="Mercator satellite perspective, 32 degree tilt"
               type="button"
             >
-              <span>🪐 Tilted satellite</span>
+              <span>🪐 3D Tilt</span>
             </button>
             <button
               className={`hud-basemap-btn ${basemapMode === 'dark' ? 'active' : ''}`}

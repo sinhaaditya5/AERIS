@@ -64,20 +64,21 @@
   transform: translateX(-50%);
   display: flex;
   align-items: center;
-  gap: 8px;
-  background: rgba(255, 255, 255, 0.90);
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.92);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid rgba(22, 115, 79, 0.18);
   border-radius: 30px;
-  padding: 4px 8px;
+  padding: 3px 8px;
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.10), 0 1px 3px rgba(0, 0, 0, 0.05);
   z-index: 25;
+  max-width: calc(100% - 150px);
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .map-floating-hud:hover {
-  background: rgba(255, 255, 255, 0.96);
+  background: rgba(255, 255, 255, 0.97);
   box-shadow: 0 10px 36px rgba(0, 0, 0, 0.14), 0 2px 6px rgba(0, 0, 0, 0.06);
 }
 
@@ -338,6 +339,7 @@
 }
 
 /* ── Floating Left Controls: Layer FAB ───────────────────────────────────── */
+/* ── Floating Left Controls: Layer FAB ───────────────────────────────────── */
 .map-floating-fab {
   position: absolute;
   top: 14px;
@@ -345,10 +347,10 @@
   height: 38px;
   padding: 0 14px;
   border-radius: 20px;
-  background: rgba(255, 255, 255, 0.92);
+  background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
-  border: 1px solid rgba(22, 115, 79, 0.18);
+  border: 1px solid rgba(22, 115, 79, 0.22);
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
   display: flex;
   align-items: center;
@@ -358,7 +360,7 @@
   font-weight: 700;
   color: var(--brand-dark);
   cursor: pointer;
-  z-index: 20;
+  z-index: 35;
   transition: all 0.15s ease;
 }
 
@@ -387,15 +389,18 @@
   position: absolute;
   top: 60px;
   left: 14px;
-  width: 300px;
-  background: rgba(255, 255, 255, 0.96);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  width: 310px;
+  background: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
   border: 1px solid var(--border-subtle);
   border-radius: 16px;
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.14);
-  z-index: 20;
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.16);
+  z-index: 45;
   overflow: hidden;
+  max-height: calc(100% - 80px);
+  display: flex;
+  flex-direction: column;
   animation: drawer-fade-down 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -411,6 +416,7 @@
   padding: 12px 16px;
   border-bottom: 1px solid var(--border-subtle);
   background: rgba(248, 250, 248, 0.90);
+  flex-shrink: 0;
 }
 
 .layer-panel-title {
@@ -445,8 +451,8 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
-  max-height: calc(100vh - 200px);
   overflow-y: auto;
+  flex: 1;
 }
 
 /* Layer Toggle Rows */
@@ -536,20 +542,22 @@
 /* ── Floating Right Drawer: Feature Inspector ──────────────────────────── */
 .floating-inspector-drawer {
   position: absolute;
-  top: 14px;
+  top: 60px;
   right: 14px;
   width: 320px;
-  background: rgba(255, 255, 255, 0.96);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  background: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
   border: 1px solid var(--border-subtle);
   border-radius: 16px;
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.14);
-  z-index: 25;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.16);
+  z-index: 35;
   padding: 16px;
   display: flex;
   flex-direction: column;
   gap: 12px;
+  max-height: calc(100% - 80px);
+  overflow-y: auto;
   animation: slide-in 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -1164,9 +1172,9 @@
 /* ── Floating Geospatial Intelligence Legend ────────────────────────────── */
 .map-floating-legend {
   position: absolute;
-  bottom: 24px;
-  left: 20px;
-  background: rgba(255, 255, 255, 0.92);
+  bottom: 16px;
+  right: 62px;
+  background: rgba(255, 255, 255, 0.94);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid rgba(22, 115, 79, 0.20);
@@ -1177,8 +1185,8 @@
   z-index: 20;
   display: flex;
   flex-direction: column;
-  width: 230px;
-  max-height: calc(100% - 85px);
+  width: 220px;
+  max-height: min(280px, calc(100% - 70px));
   overflow-y: auto;
   pointer-events: auto;
   transition: all 0.2s ease;
@@ -1292,6 +1300,46 @@
   margin: 0;
   line-height: 1.35;
   overflow-wrap: anywhere;
+}
+
+/* ── Responsive Viewport Ergonomics ──────────────────────────────────────── */
+@media (max-width: 1200px) {
+  .map-floating-hud {
+    gap: 4px;
+    padding: 3px 6px;
+    max-width: calc(100% - 140px);
+  }
+  .hud-preset-chip {
+    padding: 4px 8px;
+    font-size: 11px;
+  }
+  .hud-basemap-btn {
+    padding: 3px 6px;
+    font-size: 10.5px;
+  }
+  .hud-time-pill {
+    padding: 2px 6px;
+    font-size: 10px;
+  }
+}
+
+@media (max-width: 1040px) {
+  .map-floating-hud {
+    left: auto;
+    right: 14px;
+    transform: none;
+    max-width: calc(100% - 135px);
+  }
+}
+
+@media (max-width: 768px) {
+  .map-floating-legend {
+    display: none;
+  }
+  .floating-layer-panel {
+    width: calc(100vw - 28px);
+    max-height: calc(100% - 70px);
+  }
 }
 
 
