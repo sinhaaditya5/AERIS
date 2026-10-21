@@ -5,6 +5,7 @@ import {
   Map,
   PanelLeftClose,
   PanelLeftOpen,
+  Play,
   Settings,
   Shield,
   Users,
@@ -44,6 +45,7 @@ const SECTIONS: NavSectionConfig[] = [
       { id: 'analytics', label: 'Analytics', icon: BarChart2, shortcut: '3' },
       { id: 'wind', label: 'Wind & Weather', icon: Wind, shortcut: '4', badgeKey: 'wind', badgeType: 'neutral' },
       { id: 'sources', label: 'Fire Sources', icon: Zap, shortcut: '5', badgeKey: 'fires', badgeType: 'alert' },
+      { id: 'replay', label: 'Forecast Replay', icon: Play, shortcut: '0', badgeText: 'NEW', badgeType: 'primary' },
     ],
   },
   {

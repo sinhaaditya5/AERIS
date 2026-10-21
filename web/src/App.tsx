@@ -23,6 +23,7 @@ const ActionsWorkbenchView = lazy(() => import('@/components/views/ActionsWorkbe
 const SettingsView = lazy(() => import('@/components/views/SettingsView'))
 const NotificationsView = lazy(() => import('@/components/views/NotificationsView'))
 const ActionsModal = lazy(() => import('@/components/agent/ActionsModal'))
+const ReplayView = lazy(() => import('@/components/replay/ReplayView'))
 import ToastContainer from '@/components/notifications/ToastContainer'
 
 function ViewSkeleton() {
@@ -104,7 +105,7 @@ function Dashboard() {
 
   if (error && !hasData) return <ErrorScreen message={error} onRetry={refreshData} />
 
-  const isDedicatedView = ['map', 'analytics', 'wind', 'sources', 'population', 'shield', 'notifications', 'settings'].includes(activeTab)
+  const isDedicatedView = ['map', 'analytics', 'wind', 'sources', 'population', 'shield', 'notifications', 'settings', 'replay'].includes(activeTab)
 
   return (
     <div className="app-shell">
@@ -128,6 +129,7 @@ function Dashboard() {
               {activeTab === 'shield' && <ActionsWorkbenchView />}
               {activeTab === 'notifications' && <NotificationsView />}
               {activeTab === 'settings' && <SettingsView />}
+              {activeTab === 'replay' && <ReplayView />}
             </Suspense>
           </div>
         )}
