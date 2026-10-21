@@ -1,0 +1,6 @@
+{
+  "id": "live",
+  "label": "Current forecast run",
+  "forecast_start": null,
+  "feeds": {}
+}

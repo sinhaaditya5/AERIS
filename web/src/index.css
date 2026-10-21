@@ -589,12 +589,20 @@ body {
 }
 
 /* Scrollable wrapper for dedicated full-page views (Notifications, Analytics, etc.).
-   .main-content is overflow:hidden so each non-dashboard view needs its own scroll root. */
+   .main-content is overflow:hidden so each non-dashboard view needs its own scroll root.
+   When on dedicated map view, stretch full height with flex column. */
 .dedicated-view-scroll {
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
   min-height: 0;
+}
+
+.dedicated-view-scroll.dedicated-map-mode {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
 }
 
 
@@ -794,8 +802,22 @@ a:focus-visible, summary:focus-visible, textarea:focus-visible {
 .map-header { flex-wrap: wrap; }
 .map-header-actions { flex-wrap: wrap; max-width: 100%; }
 .map-canvas-area { min-height: 280px; }
-.map-explorer-container { flex: 1; height: auto; min-height: 0; }
-.explorer-stage { min-height: 280px; }
+.map-explorer-container {
+  flex: 1;
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+}
+.explorer-stage {
+  flex: 1;
+  height: 100%;
+  min-height: 0;
+  position: relative;
+  overflow: hidden;
+}
 @media(max-width: 1100px) {
   .map-floating-hud { position: relative; top: 0; left: 0; transform: none; flex-wrap: wrap; justify-content: center; border-radius: 0; width: 100%; gap: 4px; }
   .hud-divider { display: none; }
