@@ -4,20 +4,31 @@
  * TimelineScrubber, and ProvenanceChip into the full presentation.
  */
 import { useAeris } from '@/services/dataContext'
+import { useReplay } from './ReplayProvider'
 import { ReplayProvider } from './ReplayProvider'
 import ReplayMap         from './ReplayMap'
 import ChapterNav        from './ChapterNav'
 import ChapterCard       from './ChapterCard'
 import TimelineScrubber  from './TimelineScrubber'
 import ProvenanceChip    from './ProvenanceChip'
+import { CHAPTERS }      from './replayPure'
 import './replay.css'
+
+const CHAPTER_INDEX: Record<string, number> = {
+  source: 1, movement: 2, exposure: 3, action: 4,
+}
 
 function ReplayShell() {
   const { setActiveTab } = useAeris()
+  const { chapter, playing } = useReplay()
+
+  const chapterNum   = CHAPTER_INDEX[chapter] ?? 1
+  const chapterLabel = CHAPTERS.find(c => c.id === chapter)?.label ?? ''
 
   return (
     <main
-      className="replay-shell"
+      className={`replay-shell${playing ? ' is-playing' : ''}`}
+      data-chapter={chapter}
       role="main"
       aria-label="Forecast Replay"
     >
@@ -29,9 +40,14 @@ function ReplayShell() {
           onClick={() => setActiveTab('dashboard')}
           aria-label="Return to dashboard"
         >
-          ← Dashboard
+          Dashboard
         </button>
-        <h1 className="replay-title">Forecast Replay</h1>
+        <h1 className="replay-title">
+          Forecast Replay
+          <span className="replay-title-badge" aria-label={`Chapter ${chapterNum} of 4: ${chapterLabel}`}>
+            {chapterNum} / 4
+          </span>
+        </h1>
         <div className="replay-topbar-right">
           <ProvenanceChip />
         </div>

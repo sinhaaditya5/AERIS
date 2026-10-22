@@ -19,6 +19,14 @@ const CHAPTER_HEADINGS: Record<ReplayChapter, { icon: string; title: string }> =
   action:   { icon: '🛡️', title: 'Protective Actions' },
 }
 
+/** Map risk level to the data-risk attribute value for CSS coloring */
+function riskAttr(lvl: string): string {
+  if (lvl === 'very-high') return 'very-high'
+  if (lvl === 'high')      return 'high'
+  if (lvl === 'medium')    return 'medium'
+  return 'low'
+}
+
 export default function ChapterCard() {
   const { chapter, sources, corridor, rankedSites, actions, wind } = useReplay()
   const { setActiveTab } = useAeris()
@@ -79,6 +87,7 @@ export default function ChapterCard() {
     <article
       className="replay-chapter-card"
       id={`replay-panel-${chapter}`}
+      key={chapter}           /* key forces remount + slide-in animation on chapter change */
       role="tabpanel"
       aria-labelledby={`replay-chapter-${chapter}`}
     >
@@ -98,20 +107,23 @@ export default function ChapterCard() {
 
       {/* ── Source KPIs ── */}
       {chapter === 'source' && sourceCard && (
-        <div className="replay-kpi-grid">
-          <div className="replay-kpi">
-            <span className="replay-kpi-value">{sourceCard.total.toLocaleString()}</span>
-            <span className="replay-kpi-label">Active fires</span>
+        <>
+          <div className="replay-section-label">Key Metrics</div>
+          <div className="replay-kpi-grid">
+            <div className="replay-kpi">
+              <span className="replay-kpi-value">{sourceCard.total.toLocaleString()}</span>
+              <span className="replay-kpi-label">Active fires</span>
+            </div>
+            <div className="replay-kpi">
+              <span className="replay-kpi-value">{sourceCard.frp}</span>
+              <span className="replay-kpi-label">Combined FRP (MW)</span>
+            </div>
+            <div className="replay-kpi">
+              <span className="replay-kpi-value">{sourceCard.count}</span>
+              <span className="replay-kpi-label">Detected clusters</span>
+            </div>
           </div>
-          <div className="replay-kpi">
-            <span className="replay-kpi-value">{sourceCard.frp}</span>
-            <span className="replay-kpi-label">Combined FRP (MW)</span>
-          </div>
-          <div className="replay-kpi">
-            <span className="replay-kpi-value">{sourceCard.count}</span>
-            <span className="replay-kpi-label">Detected clusters</span>
-          </div>
-        </div>
+        </>
       )}
       {chapter === 'source' && (
         <div className="replay-card-footer">
@@ -120,31 +132,34 @@ export default function ChapterCard() {
             className="replay-deep-link-btn"
             onClick={() => setActiveTab('sources')}
           >
-            Open in Fire Sources →
+            Open Fire Sources
           </button>
         </div>
       )}
 
       {/* ── Movement KPIs ── */}
       {chapter === 'movement' && (
-        <div className="replay-kpi-grid">
-          <div className="replay-kpi">
-            <span className="replay-kpi-value">
-              {movementCard.speedKmh != null ? `${movementCard.speedKmh}` : '—'}
-            </span>
-            <span className="replay-kpi-label">Transport speed (km/h)</span>
-          </div>
-          <div className="replay-kpi">
-            <span className="replay-kpi-value">{movementCard.bandCount}</span>
-            <span className="replay-kpi-label">Modelled bands</span>
-          </div>
-          {movementCard.maxHorizon != null && (
+        <>
+          <div className="replay-section-label">Key Metrics</div>
+          <div className="replay-kpi-grid">
             <div className="replay-kpi">
-              <span className="replay-kpi-value">T+{movementCard.maxHorizon}h</span>
-              <span className="replay-kpi-label">Forecast horizon</span>
+              <span className="replay-kpi-value">
+                {movementCard.speedKmh != null ? `${movementCard.speedKmh}` : '—'}
+              </span>
+              <span className="replay-kpi-label">Transport speed (km/h)</span>
             </div>
-          )}
-        </div>
+            <div className="replay-kpi">
+              <span className="replay-kpi-value">{movementCard.bandCount}</span>
+              <span className="replay-kpi-label">Modelled bands</span>
+            </div>
+            {movementCard.maxHorizon != null && (
+              <div className="replay-kpi">
+                <span className="replay-kpi-value">T+{movementCard.maxHorizon}h</span>
+                <span className="replay-kpi-label">Forecast horizon</span>
+              </div>
+            )}
+          </div>
+        </>
       )}
       {chapter === 'movement' && (
         <div className="replay-card-footer">
@@ -153,7 +168,7 @@ export default function ChapterCard() {
             className="replay-deep-link-btn"
             onClick={() => setActiveTab('wind')}
           >
-            Open in Wind &amp; Weather →
+            Open Wind &amp; Weather
           </button>
         </div>
       )}
@@ -161,6 +176,7 @@ export default function ChapterCard() {
       {/* ── Exposure KPIs ── */}
       {chapter === 'exposure' && (
         <>
+          <div className="replay-section-label">Key Metrics</div>
           <div className="replay-kpi-grid">
             <div className="replay-kpi">
               <span className="replay-kpi-value">
@@ -177,31 +193,36 @@ export default function ChapterCard() {
           </div>
 
           {exposureCard.top3.length > 0 && (
-            <ul className="replay-site-list" aria-label="Top-3 highest-risk sites">
-              {exposureCard.top3.map(site => {
-                const lvl = getRiskLevel(site.risk_score)
-                return (
-                  <li key={site.site_id} className="replay-site-row">
-                    <span className="replay-site-icon">
-                      {site.type === 'hospital' ? '🏥' : '🏫'}
-                    </span>
-                    <div className="replay-site-info">
-                      <span className="replay-site-name">{site.name}</span>
-                      <span className="replay-site-meta">
-                        ETA {formatEta(site.eta_hours)}
-                        {' · '}
-                        Occupancy: {formatOccupancy(site.occupancy)}
-                        {' · '}
-                        PM2.5 +{site.pm25_delta_ugm3.toFixed(0)} µg/m³
+            <>
+              <div className="replay-section-label">Highest-Risk Facilities</div>
+              <ul className="replay-site-list" aria-label="Top-3 highest-risk sites">
+                {exposureCard.top3.map(site => {
+                  const lvl = getRiskLevel(site.risk_score)
+                  return (
+                    <li
+                      key={site.site_id}
+                      className="replay-site-row"
+                      data-risk={riskAttr(lvl)}
+                    >
+                      <span className="replay-site-icon">
+                        {site.type === 'hospital' ? '🏥' : '🏫'}
                       </span>
-                    </div>
-                    <span className={`badge badge-${lvl === 'very-high' ? 'vh' : lvl === 'high' ? 'h' : lvl === 'medium' ? 'm' : 'l'}`}>
-                      {riskLabel(lvl)}
-                    </span>
-                  </li>
-                )
-              })}
-            </ul>
+                      <div className="replay-site-info">
+                        <span className="replay-site-name">{site.name}</span>
+                        <span className="replay-site-meta">
+                          Occupancy: {formatOccupancy(site.occupancy)}
+                          {' · '}
+                          PM2.5 +{site.pm25_delta_ugm3.toFixed(0)} µg/m³
+                        </span>
+                      </div>
+                      <span className="replay-eta-pill">
+                        ETA {formatEta(site.eta_hours)}
+                      </span>
+                    </li>
+                  )
+                })}
+              </ul>
+            </>
           )}
           <div className="replay-card-footer">
             <button
@@ -209,7 +230,7 @@ export default function ChapterCard() {
               className="replay-deep-link-btn"
               onClick={() => setActiveTab('population')}
             >
-              Open in Population Risk →
+              Open Population Risk
             </button>
           </div>
         </>
@@ -218,6 +239,7 @@ export default function ChapterCard() {
       {/* ── Action KPIs ── */}
       {chapter === 'action' && actionCard && (
         <>
+          <div className="replay-section-label">Key Metrics</div>
           <div className="replay-kpi-grid">
             <div className="replay-kpi">
               <span className="replay-kpi-value">{actionCard.count}</span>
@@ -240,17 +262,24 @@ export default function ChapterCard() {
           </div>
 
           {actionCard.top3actions.length > 0 && (
-            <ul className="replay-action-list" aria-label="Sample protective actions">
-              {actionCard.top3actions.map(a => (
-                <li key={`${a.site_id}-${a.priority}`} className="replay-action-row">
-                  <span className="replay-action-priority">#{a.priority}</span>
-                  <div className="replay-action-info">
-                    <span className="replay-action-who">{a.who}</span>
-                    <span className="replay-action-desc">{a.action}</span>
-                  </div>
-                </li>
-              ))}
-            </ul>
+            <>
+              <div className="replay-section-label">Recommended Actions</div>
+              <ul className="replay-action-list" aria-label="Sample protective actions">
+                {actionCard.top3actions.map(a => (
+                  <li
+                    key={`${a.site_id}-${a.priority}`}
+                    className="replay-action-row"
+                    data-priority={a.priority <= 3 ? a.priority : undefined}
+                  >
+                    <span className="replay-action-priority">#{a.priority}</span>
+                    <div className="replay-action-info">
+                      <span className="replay-action-who">{a.who}</span>
+                      <span className="replay-action-desc">{a.action}</span>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </>
           )}
 
           <div className="replay-card-footer">
@@ -259,7 +288,7 @@ export default function ChapterCard() {
               className="replay-deep-link-btn"
               onClick={() => setActiveTab('shield')}
             >
-              Open in Protective Actions →
+              Open Protective Actions
             </button>
           </div>
         </>
