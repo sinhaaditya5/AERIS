@@ -212,12 +212,12 @@ export default function MapContainer() {
 
   // ── 1d. Auto-sync basemap to theme when enabled ───────────────────────────
   useEffect(() => {
-    if (!settings.matchBasemap) return
+    if (!settings.matchBasemap || satelliteCheck.isOpen) return
     const targetMode = effectiveTheme === 'night-watch' ? 'dark' : effectiveTheme === 'field-daylight' ? 'topo' : 'satellite'
     if (basemapMode !== targetMode) {
       setBasemapMode(targetMode)
     }
-  }, [effectiveTheme, settings.matchBasemap, basemapMode, setBasemapMode])
+  }, [effectiveTheme, settings.matchBasemap, basemapMode, setBasemapMode, satelliteCheck.isOpen])
 
   // Automatically trigger map.resize() whenever the container dimensions change
   useEffect(() => {
@@ -405,7 +405,7 @@ export default function MapContainer() {
   const earliestEta = reportedEta != null && Number.isFinite(reportedEta) && reportedEta >= 0 ? reportedEta.toFixed(1) : null
 
   return (
-    <div className="map-wrapper card">
+    <div className={`map-wrapper card ${satelliteCheck.isOpen ? 'satellite-check-active' : ''}`}>
       <div className="map-header">
         <div className="map-title-group">
           <div className="map-icon">
@@ -480,9 +480,12 @@ export default function MapContainer() {
             </button>
           </div>
 
-          <div className="map-header-divider" />
-
-          <TimeControls showPlayToggle={true} />
+          {!satelliteCheck.isOpen && (
+            <>
+              <div className="map-header-divider" />
+              <TimeControls showPlayToggle={true} />
+            </>
+          )}
           <button
             className="map-header-expand-btn"
             onClick={() => setActiveTab('map')}
@@ -684,92 +687,95 @@ export default function MapContainer() {
           </Suspense>
         )}
 
-        {/* Sleek Top-Right Floating Layer Switcher */}
-        {/* Sleek Top-Right Floating Layer Switcher (Stray dot removed) */}
-        <div className="map-layer-dock" onKeyDown={e => { if (e.key === 'Escape') setIsLayerMenuOpen(false) }} onClick={(e) => e.stopPropagation()}>
-          <button
-            className={`map-layer-trigger-btn ${isLayerMenuOpen ? 'active' : ''}`}
-            onClick={() => setIsLayerMenuOpen(!isLayerMenuOpen)}
-            title={`Basemap Engine: ${basemapMode}`}
-            aria-label="Switch Basemap Style"
-            aria-expanded={isLayerMenuOpen}
-            type="button"
-          >
-            <Layers size={14} />
-          </button>
+        {/* Sleek Top-Right Floating Layer Switcher (Hidden in Satellite Check) */}
+        {!satelliteCheck.isOpen && (
+          <div className="map-layer-dock" onKeyDown={e => { if (e.key === 'Escape') setIsLayerMenuOpen(false) }} onClick={(e) => e.stopPropagation()}>
+            <button
+              className={`map-layer-trigger-btn ${isLayerMenuOpen ? 'active' : ''}`}
+              onClick={() => setIsLayerMenuOpen(!isLayerMenuOpen)}
+              title={`Basemap Engine: ${basemapMode}`}
+              aria-label="Switch Basemap Style"
+              aria-expanded={isLayerMenuOpen}
+              type="button"
+            >
+              <Layers size={14} />
+            </button>
 
-          {isLayerMenuOpen && (
-            <div className="map-layer-dropdown">
-              <div className="layer-dropdown-header">Basemap Engine</div>
-              <button
-                className={`layer-dropdown-item ${basemapMode === 'satellite' ? 'active' : ''}`}
-                onClick={() => { setBasemapMode('satellite'); setIsLayerMenuOpen(false); }}
-                type="button"
-              >
-                <span className="item-icon">🛰️</span>
-                <div className="item-text">
-                  <strong>Satellite</strong>
-                  <small>ESRI Photorealistic</small>
-                </div>
-              </button>
-              <button
-                className={`layer-dropdown-item ${basemapMode === 'globe' ? 'active' : ''}`}
-                onClick={() => { setBasemapMode('globe'); setIsLayerMenuOpen(false); }}
-                type="button"
-              >
-                <span className="item-icon">🪐</span>
-                <div className="item-text">
-                  <strong>Tilted satellite</strong>
-                  <small>Mercator · 32° tilt</small>
-                </div>
-              </button>
-              <button
-                className={`layer-dropdown-item ${basemapMode === 'dark' ? 'active' : ''}`}
-                onClick={() => { setBasemapMode('dark'); setIsLayerMenuOpen(false); }}
-                type="button"
-              >
-                <span className="item-icon">🌑</span>
-                <div className="item-text">
-                  <strong>Dark GIS</strong>
-                  <small>Night console</small>
-                </div>
-              </button>
-              <button
-                className={`layer-dropdown-item ${basemapMode === 'topo' ? 'active' : ''}`}
-                onClick={() => { setBasemapMode('topo'); setIsLayerMenuOpen(false); }}
-                type="button"
-              >
-                <span className="item-icon">🗺️</span>
-                <div className="item-text">
-                  <strong>Topographic</strong>
-                  <small>Cartographic roads</small>
-                </div>
-              </button>
-            </div>
-          )}
-        </div>
+            {isLayerMenuOpen && (
+              <div className="map-layer-dropdown">
+                <div className="layer-dropdown-header">Basemap Engine</div>
+                <button
+                  className={`layer-dropdown-item ${basemapMode === 'satellite' ? 'active' : ''}`}
+                  onClick={() => { setBasemapMode('satellite'); setIsLayerMenuOpen(false); }}
+                  type="button"
+                >
+                  <span className="item-icon">🛰️</span>
+                  <div className="item-text">
+                    <strong>Satellite</strong>
+                    <small>ESRI Photorealistic</small>
+                  </div>
+                </button>
+                <button
+                  className={`layer-dropdown-item ${basemapMode === 'globe' ? 'active' : ''}`}
+                  onClick={() => { setBasemapMode('globe'); setIsLayerMenuOpen(false); }}
+                  type="button"
+                >
+                  <span className="item-icon">🪐</span>
+                  <div className="item-text">
+                    <strong>Tilted satellite</strong>
+                    <small>Mercator · 32° tilt</small>
+                  </div>
+                </button>
+                <button
+                  className={`layer-dropdown-item ${basemapMode === 'dark' ? 'active' : ''}`}
+                  onClick={() => { setBasemapMode('dark'); setIsLayerMenuOpen(false); }}
+                  type="button"
+                >
+                  <span className="item-icon">🌑</span>
+                  <div className="item-text">
+                    <strong>Dark GIS</strong>
+                    <small>Night console</small>
+                  </div>
+                </button>
+                <button
+                  className={`layer-dropdown-item ${basemapMode === 'topo' ? 'active' : ''}`}
+                  onClick={() => { setBasemapMode('topo'); setIsLayerMenuOpen(false); }}
+                  type="button"
+                >
+                  <span className="item-icon">🗺️</span>
+                  <div className="item-text">
+                    <strong>Topographic</strong>
+                    <small>Cartographic roads</small>
+                  </div>
+                </button>
+              </div>
+            )}
+          </div>
+        )}
 
-        {/* Bottom-Right Zoom Dock */}
-        <div className="map-zoom-dock">
-          <button
-            className="map-zoom-btn"
-            onClick={() => mapRef.current?.zoomIn()}
-            title="Zoom In"
-            aria-label="Zoom in"
-            type="button"
-          >
-            +
-          </button>
-          <button
-            className="map-zoom-btn"
-            onClick={() => mapRef.current?.zoomOut()}
-            title="Zoom Out (Free Subcontinent View)"
-            aria-label="Zoom out"
-            type="button"
-          >
-            −
-          </button>
-        </div>
+        {/* Bottom-Right Zoom Dock (Hidden in Satellite Check) */}
+        {!satelliteCheck.isOpen && (
+          <div className="map-zoom-dock">
+            <button
+              className="map-zoom-btn"
+              onClick={() => mapRef.current?.zoomIn()}
+              title="Zoom In"
+              aria-label="Zoom in"
+              type="button"
+            >
+              +
+            </button>
+            <button
+              className="map-zoom-btn"
+              onClick={() => mapRef.current?.zoomOut()}
+              title="Zoom Out (Free Subcontinent View)"
+              aria-label="Zoom out"
+              type="button"
+            >
+              −
+            </button>
+          </div>
+        )}
 
         {/* Micro-compact translucent legend with clear 4-band corridor color ramp & ETA */}
         {!satelliteCheck.isOpen && (

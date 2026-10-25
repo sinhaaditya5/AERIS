@@ -221,12 +221,12 @@ export default function MapExplorerView() {
 
   // ── Auto-sync basemap to theme when enabled ───────────────────────────
   useEffect(() => {
-    if (!themeSettings.matchBasemap) return
+    if (!themeSettings.matchBasemap || satelliteCheck.isOpen) return
     const targetMode = effectiveTheme === 'night-watch' ? 'dark' : effectiveTheme === 'field-daylight' ? 'topo' : 'satellite'
     if (basemapMode !== targetMode) {
       setBasemapMode(targetMode)
     }
-  }, [effectiveTheme, themeSettings.matchBasemap, basemapMode, setBasemapMode])
+  }, [effectiveTheme, themeSettings.matchBasemap, basemapMode, setBasemapMode, satelliteCheck.isOpen])
 
   // Automatically trigger map.resize() whenever container bounds resize
   useEffect(() => {
@@ -312,7 +312,7 @@ export default function MapExplorerView() {
     }
 
     // 2. Sensitive Receptor Facilities (Schools & Hospitals)
-    if (rankedSites) {
+    if (rankedSites && !satelliteCheck.isOpen) {
       rankedSites.sites
         .filter(site => isValidSubcontinentCoord(site.lat, site.lon) && (site.type === 'school' ? showSchools : showHospitals))
         .slice(0, 12)
@@ -367,7 +367,7 @@ export default function MapExplorerView() {
     }
 
     // 3. Live AQI Monitoring Stations (Sanitized & Clustered by Proximity)
-    if (showStations && aqi?.stations) {
+    if (showStations && aqi?.stations && !satelliteCheck.isOpen) {
       type ValidStation = (typeof aqi.stations)[number] & { aqi: number }
       const validStations = aqi.stations.filter(
         (stn): stn is ValidStation =>
@@ -522,17 +522,19 @@ export default function MapExplorerView() {
         )}
 
         {/* ── Floating PM2.5 Heatmap Glass Capsule (Zero-CLS Overlay) ────── */}
-        <HeatmapControls
-          data={heatmap.data}
-          enabled={heatmap.enabled}
-          onToggle={heatmap.setEnabled}
-          opacity={heatmap.opacity}
-          onOpacity={heatmap.setOpacity}
-          onFit={webGlSupported ? heatmap.fit : undefined}
-          bounds={webGlSupported ? heatmap.bounds : null}
-          loading={loading}
-          error={feedErrors.aqi}
-        />
+        {!satelliteCheck.isOpen && (
+          <HeatmapControls
+            data={heatmap.data}
+            enabled={heatmap.enabled}
+            onToggle={heatmap.setEnabled}
+            opacity={heatmap.opacity}
+            onOpacity={heatmap.setOpacity}
+            onFit={webGlSupported ? heatmap.fit : undefined}
+            bounds={webGlSupported ? heatmap.bounds : null}
+            loading={loading}
+            error={feedErrors.aqi}
+          />
+        )}
 
         {satelliteCheck.isOpen && webGlSupported && (
           <Suspense fallback={null}>

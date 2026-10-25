@@ -35,6 +35,11 @@
   inset: 0;
   width: 100%;
   height: 100%;
+  background: #0B1420;
+}
+
+html[data-theme="field-daylight"] .explorer-canvas {
+  background: #F1F5F9;
 }
 
 .explorer-fallback {

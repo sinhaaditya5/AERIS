@@ -50,7 +50,7 @@
   cursor: default;
 }
 
-/* ── Interactive Draggable Split Handle ─────────────────── */
+/* ── High-Contrast Draggable Split Handle ───────────────── */
 .satellite-split-divider {
   position: absolute;
   top: 0;
@@ -74,8 +74,8 @@
   bottom: 0;
   left: 21px;
   width: 2px;
-  background: #FFFFFF;
-  box-shadow: 0 0 6px rgba(0, 0, 0, 0.75), 0 0 1px rgba(0, 0, 0, 0.95);
+  background: linear-gradient(180deg, #38BDF8 0%, #FFFFFF 50%, #38BDF8 100%);
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.8), 0 0 2px #000000;
 }
 
 .satellite-split-pill {
@@ -84,25 +84,25 @@
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  padding: 5px 11px;
-  background: rgba(15, 23, 42, 0.92);
+  padding: 6px 12px;
+  background: rgba(11, 20, 32, 0.95);
   color: #FFFFFF;
-  border: 1.5px solid rgba(255, 255, 255, 0.45);
+  border: 2px solid #38BDF8;
   border-radius: var(--radius-pill, 9999px);
-  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.4), 0 0 12px rgba(56, 189, 248, 0.28);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6), 0 0 16px rgba(56, 189, 248, 0.45);
   font-size: 11px;
   font-weight: 700;
   letter-spacing: -0.2px;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   transition: transform 0.12s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.12s ease, border-color 0.12s ease;
 }
 
 html[data-theme="field-daylight"] .satellite-split-pill {
-  background: rgba(255, 255, 255, 0.95);
-  color: #1E293B;
-  border-color: rgba(0, 0, 0, 0.25);
-  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.15), 0 0 10px rgba(34, 115, 79, 0.2);
+  background: rgba(255, 255, 255, 0.98);
+  color: #0F172A;
+  border-color: var(--accent-primary, #22734F);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.15), 0 0 12px rgba(34, 115, 79, 0.3);
 }
 
 .satellite-split-center-dot {
@@ -123,13 +123,13 @@ html[data-theme="field-daylight"] .satellite-split-center-dot {
 .satellite-split-divider:focus-visible .satellite-split-pill {
   outline: 2px solid var(--focus-ring, #38BDF8);
   outline-offset: 2px;
-  transform: scale(1.1);
+  transform: scale(1.12);
 }
 
 .satellite-split-divider:hover .satellite-split-pill,
 .satellite-split-divider.is-dragging .satellite-split-pill {
-  transform: scale(1.1);
-  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.55), 0 0 18px rgba(56, 189, 248, 0.55);
+  transform: scale(1.12);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.7), 0 0 22px rgba(56, 189, 248, 0.65);
   border-color: #38BDF8;
 }
 
@@ -139,91 +139,139 @@ html[data-theme="field-daylight"] .satellite-split-center-dot {
   font-size: 9.5px;
   font-weight: 800;
   letter-spacing: -0.3px;
-  opacity: 0.92;
+  opacity: 0.95;
 }
 
-/* ── Top Slim Unified Comparison Header Bar ────────────── */
+/* ── Top Floating Comparison Header Bar (Dual-Side Badges) ── */
 .satellite-top-banner {
-  position: relative;
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  right: 10px;
   z-index: 35;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 8px 12px;
-  pointer-events: none;
-  width: 100%;
-}
-
-.satellite-unified-header-capsule {
-  pointer-events: auto;
-  display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 10px;
-  width: 100%;
-  max-width: 960px;
-  min-height: 38px;
-  padding: 3px 6px 3px 14px;
-  border-radius: var(--radius-pill, 9999px);
-  background: rgba(15, 23, 42, 0.88);
+  pointer-events: none;
+  width: auto;
+  box-sizing: border-box;
+}
+
+.satellite-side-pill {
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 5px 10px;
+  border-radius: 12px;
+  background: rgba(11, 20, 32, 0.90);
   color: #FFFFFF;
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid rgba(255, 255, 255, 0.16);
-  box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.45);
+  box-sizing: border-box;
+  overflow: hidden;
+  transition: transform 0.15s ease;
 }
 
-html[data-theme="night-watch"] .satellite-unified-header-capsule {
-  background: rgba(14, 27, 38, 0.90);
+html[data-theme="night-watch"] .satellite-side-pill {
+  background: rgba(10, 22, 34, 0.92);
   border-color: rgba(255, 255, 255, 0.14);
 }
 
-html[data-theme="field-daylight"] .satellite-unified-header-capsule {
-  background: rgba(255, 255, 255, 0.94);
-  color: #1A2421;
+html[data-theme="forest"] .satellite-side-pill {
+  background: rgba(12, 28, 22, 0.92);
+  border-color: rgba(34, 197, 94, 0.22);
+}
+
+html[data-theme="field-daylight"] .satellite-side-pill {
+  background: rgba(255, 255, 255, 0.96);
+  color: #0F172A;
   border-color: rgba(0, 40, 20, 0.14);
-  box-shadow: 0 8px 24px -4px rgba(18, 50, 30, 0.12);
+  box-shadow: 0 4px 18px rgba(18, 50, 30, 0.12);
 }
 
-.satellite-labels-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex: 1;
+.satellite-side-pill.observed {
+  flex: 0 1 auto;
+  max-width: calc(50% - 10px);
   min-width: 0;
-  overflow: hidden;
-  position: relative;
-  z-index: 1;
+  border-left: 3.5px solid #38BDF8;
+  border-color: rgba(56, 189, 248, 0.45);
 }
 
-.satellite-side-pill {
+.satellite-top-right-cluster {
+  flex: 0 1 auto;
+  max-width: calc(50% - 10px);
+  min-width: 0;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
+  justify-content: flex-end;
   gap: 6px;
-  padding: 2px 6px;
-  border-radius: var(--radius-pill, 9999px);
+  pointer-events: auto;
+  box-sizing: border-box;
+}
+
+.satellite-side-pill.modelled {
+  flex: 1 1 auto;
   min-width: 0;
-  overflow: hidden;
+  border-right: 3.5px solid #F97316;
+  border-color: rgba(249, 115, 22, 0.45);
+  text-align: right;
+  align-items: flex-end;
 }
 
 .satellite-pill-primary {
-  font-size: 11.5px;
-  font-weight: 600;
-  line-height: 1.25;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.3;
   display: flex;
   align-items: center;
-  gap: 6px;
-  white-space: nowrap;
+  gap: 5px;
+  min-width: 0;
+  width: 100%;
+  overflow: hidden;
+}
+
+.satellite-pill-title {
+  flex: 1 1 auto;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .satellite-pill-secondary {
-  font-size: 10.5px;
-  opacity: 0.72;
+  font-size: 9.5px;
+  opacity: 0.75;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  min-width: 0;
+  width: 100%;
+}
+
+.satellite-pill-tag {
+  font-size: 8.5px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  padding: 1px 5px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+
+.satellite-pill-tag.observed {
+  background: rgba(56, 189, 248, 0.2);
+  color: #38BDF8;
+  border: 1px solid rgba(56, 189, 248, 0.4);
+}
+
+.satellite-pill-tag.modelled {
+  background: rgba(249, 115, 22, 0.2);
+  color: #F97316;
+  border: 1px solid rgba(249, 115, 22, 0.4);
 }
 
 .satellite-pill-dot {
@@ -244,50 +292,41 @@ html[data-theme="field-daylight"] .satellite-unified-header-capsule {
   box-shadow: 0 0 8px #F97316;
 }
 
-.satellite-header-divider {
-  width: 1px;
-  height: 16px;
-  background: rgba(255, 255, 255, 0.18);
-  flex-shrink: 0;
-}
-
-html[data-theme="field-daylight"] .satellite-header-divider {
-  background: rgba(0, 40, 20, 0.15);
-}
-
 .satellite-header-actions {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
   flex-shrink: 0;
-  position: relative;
-  z-index: 10;
-  margin-left: auto;
   pointer-events: auto;
 }
 
 .satellite-expand-btn {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  padding: 4px 10px;
+  gap: 4px;
+  padding: 5px 8px;
   font-size: 11px;
-  font-weight: 600;
-  border-radius: var(--radius-pill, 9999px);
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  background: rgba(255, 255, 255, 0.08);
-  color: inherit;
+  font-weight: 700;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(11, 20, 32, 0.88);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  color: #FFFFFF;
   cursor: pointer;
   transition: all 0.15s ease;
   white-space: nowrap;
-  position: relative;
-  z-index: 11;
-  pointer-events: auto;
+}
+
+html[data-theme="forest"] .satellite-expand-btn {
+  background: rgba(12, 28, 22, 0.88);
+  border-color: rgba(34, 197, 94, 0.22);
 }
 
 html[data-theme="field-daylight"] .satellite-expand-btn {
-  background: rgba(0, 0, 0, 0.05);
-  border-color: rgba(0, 40, 20, 0.14);
+  background: rgba(255, 255, 255, 0.94);
+  color: #0F172A;
+  border-color: rgba(0, 40, 20, 0.16);
 }
 
 .satellite-expand-btn:hover {
@@ -296,7 +335,7 @@ html[data-theme="field-daylight"] .satellite-expand-btn {
 }
 
 html[data-theme="field-daylight"] .satellite-expand-btn:hover {
-  background: rgba(0, 0, 0, 0.1);
+  background: rgba(0, 0, 0, 0.08);
 }
 
 .satellite-close-btn {
@@ -305,10 +344,12 @@ html[data-theme="field-daylight"] .satellite-expand-btn:hover {
   justify-content: center;
   width: 28px;
   height: 28px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.08);
-  color: inherit;
-  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 10px;
+  background: rgba(11, 20, 32, 0.88);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  color: #FFFFFF;
+  border: 1px solid rgba(255, 255, 255, 0.2);
   cursor: pointer;
   transition: all 0.15s ease;
   flex-shrink: 0;
@@ -317,14 +358,20 @@ html[data-theme="field-daylight"] .satellite-expand-btn:hover {
   pointer-events: auto;
 }
 
+html[data-theme="forest"] .satellite-close-btn {
+  background: rgba(12, 28, 22, 0.88);
+  border-color: rgba(34, 197, 94, 0.22);
+}
+
 html[data-theme="field-daylight"] .satellite-close-btn {
-  background: rgba(0, 0, 0, 0.05);
-  border-color: rgba(0, 40, 20, 0.14);
+  background: rgba(255, 255, 255, 0.94);
+  color: #0F172A;
+  border-color: rgba(0, 40, 20, 0.16);
 }
 
 .satellite-close-btn:hover {
   transform: scale(1.06);
-  background: rgba(239, 68, 68, 0.9);
+  background: #EF4444;
   color: #FFFFFF;
   border-color: transparent;
 }
@@ -333,16 +380,16 @@ html[data-theme="field-daylight"] .satellite-close-btn {
 .satellite-state-banner {
   pointer-events: auto;
   position: absolute;
-  top: 52px;
-  left: 16px;
+  top: 60px;
+  left: 14px;
   max-width: 420px;
   padding: 8px 12px;
   border-radius: var(--radius-card-sm, 12px);
-  background: rgba(15, 23, 42, 0.92);
+  background: rgba(11, 20, 32, 0.94);
   color: #FFFFFF;
   backdrop-filter: blur(14px);
   border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
   z-index: 35;
   display: flex;
   flex-direction: column;
@@ -386,35 +433,39 @@ html[data-theme="field-daylight"] .satellite-state-banner {
   background: rgba(255, 255, 255, 0.22);
 }
 
-/* ── Bottom Controls Dock (Single-Row Capsule + Quiet Micro-Bar) ── */
+/* ── Bottom Floating Controls Dock (Glass Island + Micro-Bar) ── */
 .satellite-bottom-dock {
-  position: relative;
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(100% - 24px);
+  max-width: 860px;
   z-index: 35;
-  margin: 6px 12px 10px 12px;
-  padding: 6px 10px 5px 10px;
-  border-radius: var(--radius-card, 16px);
-  background: rgba(15, 23, 42, 0.90);
-  color: #FFFFFF;
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
   pointer-events: auto;
+  padding: 7px 12px 6px 12px;
+  border-radius: 16px;
+  background: rgba(11, 20, 32, 0.92);
+  color: #FFFFFF;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.5);
   display: flex;
   flex-direction: column;
   gap: 5px;
 }
 
 html[data-theme="night-watch"] .satellite-bottom-dock {
-  background: rgba(14, 27, 38, 0.92);
-  border-color: rgba(255, 255, 255, 0.12);
+  background: rgba(10, 22, 34, 0.94);
+  border-color: rgba(255, 255, 255, 0.14);
 }
 
 html[data-theme="field-daylight"] .satellite-bottom-dock {
-  background: rgba(255, 255, 255, 0.94);
-  color: #1A2421;
-  border-color: rgba(0, 40, 20, 0.12);
-  box-shadow: 0 8px 30px rgba(18, 50, 30, 0.12);
+  background: rgba(255, 255, 255, 0.96);
+  color: #0F172A;
+  border-color: rgba(0, 40, 20, 0.14);
+  box-shadow: 0 12px 36px rgba(18, 50, 30, 0.15);
 }
 
 /* Row 1: Command Capsule */
@@ -424,7 +475,7 @@ html[data-theme="field-daylight"] .satellite-bottom-dock {
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 6px;
-  min-height: 34px;
+  min-height: 32px;
 }
 
 .satellite-capsule-divider {
@@ -442,26 +493,26 @@ html[data-theme="field-daylight"] .satellite-capsule-divider {
 .satellite-mode-toggle {
   display: inline-flex;
   padding: 2px;
-  background: rgba(0, 0, 0, 0.25);
+  background: rgba(0, 0, 0, 0.3);
   border-radius: var(--radius-pill, 9999px);
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 html[data-theme="field-daylight"] .satellite-mode-toggle {
-  background: rgba(0, 0, 0, 0.05);
+  background: rgba(0, 0, 0, 0.06);
   border-color: rgba(0, 40, 20, 0.08);
 }
 
 .satellite-mode-btn {
-  padding: 4px 10px;
-  font-size: 11.5px;
-  font-weight: 600;
+  padding: 4px 11px;
+  font-size: 11px;
+  font-weight: 700;
   border: none;
   background: transparent;
   color: rgba(255, 255, 255, 0.7);
   border-radius: var(--radius-pill, 9999px);
   cursor: pointer;
-  min-height: 26px;
+  min-height: 24px;
   transition: all 0.15s ease;
 }
 
@@ -470,9 +521,14 @@ html[data-theme="field-daylight"] .satellite-mode-btn {
 }
 
 .satellite-mode-btn.active {
+  background: #38BDF8;
+  color: #0B1420;
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.45);
+}
+
+html[data-theme="field-daylight"] .satellite-mode-btn.active {
   background: var(--accent-primary, #22734F);
   color: #FFFFFF;
-  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.25);
 }
 
 /* Date Stepper Controls */
@@ -480,10 +536,10 @@ html[data-theme="field-daylight"] .satellite-mode-btn {
   display: flex;
   align-items: center;
   gap: 2px;
-  background: rgba(0, 0, 0, 0.22);
+  background: rgba(0, 0, 0, 0.25);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: var(--radius-pill, 9999px);
-  padding: 1px 3px;
+  padding: 1px 4px;
 }
 
 html[data-theme="field-daylight"] .satellite-date-stepper {
@@ -495,8 +551,8 @@ html[data-theme="field-daylight"] .satellite-date-stepper {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 24px;
-  height: 24px;
+  width: 22px;
+  height: 22px;
   border-radius: 50%;
   border: none;
   background: transparent;
@@ -522,8 +578,8 @@ html[data-theme="field-daylight"] .satellite-step-btn:hover:not(:disabled) {
   border: none;
   background: transparent;
   font-family: inherit;
-  font-size: 11.5px;
-  font-weight: 600;
+  font-size: 11px;
+  font-weight: 700;
   color: inherit;
   padding: 2px 4px;
   cursor: pointer;
@@ -537,15 +593,15 @@ html[data-theme="field-daylight"] .satellite-step-btn:hover:not(:disabled) {
 
 /* Reset to model time button */
 .satellite-btn-reset-time {
-  padding: 4px 9px;
+  padding: 3px 9px;
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 700;
   border-radius: var(--radius-pill, 9999px);
   border: 1px solid rgba(255, 255, 255, 0.12);
   background: rgba(255, 255, 255, 0.06);
   color: inherit;
   cursor: pointer;
-  min-height: 26px;
+  min-height: 24px;
   display: inline-flex;
   align-items: center;
   transition: all 0.15s ease;
@@ -557,8 +613,14 @@ html[data-theme="field-daylight"] .satellite-btn-reset-time {
 }
 
 .satellite-btn-reset-time:hover {
-  background: var(--accent-surface, rgba(34, 115, 79, 0.2));
-  color: var(--accent-text, #34D399);
+  background: rgba(56, 189, 248, 0.2);
+  color: #38BDF8;
+  border-color: #38BDF8;
+}
+
+html[data-theme="field-daylight"] .satellite-btn-reset-time:hover {
+  background: rgba(34, 115, 79, 0.15);
+  color: var(--accent-text, #1A4433);
   border-color: var(--accent-primary, #22734F);
 }
 
@@ -571,8 +633,8 @@ html[data-theme="field-daylight"] .satellite-btn-reset-time {
 
 .satellite-horizon-btn {
   padding: 3px 8px;
-  font-size: 11px;
-  font-weight: 600;
+  font-size: 10.5px;
+  font-weight: 700;
   border-radius: var(--radius-pill, 9999px);
   min-width: 28px;
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -592,10 +654,10 @@ html[data-theme="field-daylight"] .satellite-horizon-btn {
 }
 
 .satellite-horizon-btn.active {
-  background: rgba(249, 115, 22, 0.25);
+  background: rgba(249, 115, 22, 0.3);
   border-color: #F97316;
-  color: #FDBA74;
-  box-shadow: 0 0 8px rgba(249, 115, 22, 0.35);
+  color: #FFEDD5;
+  box-shadow: 0 0 10px rgba(249, 115, 22, 0.4);
 }
 
 html[data-theme="field-daylight"] .satellite-horizon-btn.active {
@@ -607,14 +669,14 @@ html[data-theme="field-daylight"] .satellite-horizon-btn.active {
 .satellite-sensor-select {
   font-family: inherit;
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 700;
   color: inherit;
-  background: rgba(0, 0, 0, 0.25);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 8px;
-  padding: 4px 8px;
+  padding: 3px 8px;
   cursor: pointer;
-  min-height: 28px;
+  min-height: 26px;
   outline: none;
 }
 
@@ -638,8 +700,8 @@ html[data-theme="field-daylight"] .satellite-sensor-select {
 
 .satellite-fade-label {
   font-size: 10.5px;
-  font-weight: 600;
-  opacity: 0.8;
+  font-weight: 700;
+  opacity: 0.85;
   white-space: nowrap;
 }
 
@@ -647,9 +709,9 @@ html[data-theme="field-daylight"] .satellite-sensor-select {
   flex: 1;
   height: 5px;
   border-radius: var(--radius-pill, 9999px);
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.18);
   cursor: pointer;
-  accent-color: var(--accent-primary, #38BDF8);
+  accent-color: #38BDF8;
 }
 
 html[data-theme="field-daylight"] .satellite-fade-range {
@@ -663,7 +725,7 @@ html[data-theme="field-daylight"] .satellite-fade-range {
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  padding-top: 4px;
+  padding-top: 5px;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
   font-size: 10px;
   color: var(--text-tertiary, #94A3B8);
@@ -683,7 +745,7 @@ html[data-theme="field-daylight"] .satellite-micro-bar {
 
 .satellite-composite-notice {
   font-size: 10px;
-  opacity: 0.88;
+  opacity: 0.9;
 }
 
 .satellite-info-trigger-btn {
@@ -692,12 +754,12 @@ html[data-theme="field-daylight"] .satellite-micro-bar {
   gap: 3px;
   padding: 1px 6px;
   border-radius: var(--radius-pill, 9999px);
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.06);
   color: inherit;
   cursor: pointer;
   font-size: 10px;
-  font-weight: 600;
+  font-weight: 700;
   transition: all 0.15s ease;
 }
 
@@ -707,14 +769,14 @@ html[data-theme="field-daylight"] .satellite-info-trigger-btn {
 }
 
 .satellite-info-trigger-btn:hover {
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(56, 189, 248, 0.2);
   color: #38BDF8;
 }
 
 .satellite-worldview-link {
   color: #38BDF8;
   text-decoration: none;
-  font-weight: 600;
+  font-weight: 700;
   display: inline-flex;
   align-items: center;
   gap: 2px;
@@ -734,7 +796,7 @@ html[data-theme="field-daylight"] .satellite-worldview-link {
 .satellite-gibs-acknowledgement-line {
   font-size: 9.5px;
   line-height: 1.25;
-  opacity: 0.72;
+  opacity: 0.75;
   text-align: right;
   flex: 1;
   min-width: 0;
@@ -757,12 +819,12 @@ html[data-theme="field-daylight"] .satellite-worldview-link {
   max-width: 520px;
   padding: 14px 16px;
   border-radius: var(--radius-card-sm, 12px);
-  background: rgba(15, 23, 42, 0.96);
+  background: rgba(11, 20, 32, 0.98);
   color: #FFFFFF;
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   z-index: 50;
   display: flex;
   flex-direction: column;
@@ -772,14 +834,14 @@ html[data-theme="field-daylight"] .satellite-worldview-link {
 }
 
 html[data-theme="night-watch"] .satellite-info-popover {
-  background: rgba(14, 27, 38, 0.96);
+  background: rgba(10, 22, 34, 0.98);
 }
 
 html[data-theme="field-daylight"] .satellite-info-popover {
   background: rgba(255, 255, 255, 0.98);
-  color: #1A2421;
+  color: #0F172A;
   border-color: rgba(0, 40, 20, 0.16);
-  box-shadow: 0 12px 36px rgba(18, 50, 30, 0.18);
+  box-shadow: 0 16px 40px rgba(18, 50, 30, 0.18);
 }
 
 .satellite-popover-head {
@@ -824,35 +886,89 @@ html[data-theme="field-daylight"] .satellite-info-popover {
   line-height: 1.35;
 }
 
+/* ── Mid-size / Dashboard Card Container Adaptations (< 900px) ── */
+@media (max-width: 900px) {
+  .satellite-btn-text {
+    display: none;
+  }
+  .satellite-expand-btn {
+    padding: 5px 7px;
+  }
+  .satellite-side-pill {
+    padding: 4px 8px;
+  }
+  .satellite-pill-primary {
+    font-size: 10px;
+    gap: 4px;
+  }
+  .satellite-pill-tag {
+    font-size: 8px;
+    padding: 1px 4px;
+  }
+  .satellite-pill-secondary {
+    font-size: 9px;
+  }
+  .satellite-bottom-dock {
+    padding: 5px 8px 4px 8px;
+  }
+  .satellite-command-capsule {
+    gap: 4px 6px;
+  }
+  .satellite-mode-btn {
+    padding: 3px 8px;
+    font-size: 10px;
+  }
+  .satellite-date-input {
+    font-size: 10px;
+  }
+  .satellite-btn-reset-time {
+    font-size: 10px;
+    padding: 2px 7px;
+  }
+  .satellite-horizon-chips {
+    gap: 2px;
+  }
+  .satellite-horizon-btn {
+    font-size: 10px;
+    padding: 2px 6px;
+    min-width: 24px;
+  }
+  .satellite-sensor-select {
+    font-size: 10px;
+    padding: 2px 6px;
+  }
+}
+
 /* ── Responsive Mobile (390 px) Adaptations ─────────────── */
 @media (max-width: 640px) {
   .satellite-top-banner {
-    padding: 6px 8px;
-  }
-
-  .satellite-unified-header-capsule {
-    padding: 4px 6px 4px 10px;
-    border-radius: 14px;
+    padding: 8px 10px;
+    flex-direction: column;
+    align-items: stretch;
     gap: 6px;
   }
 
-  .satellite-labels-row {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 2px;
-  }
-
-  .satellite-header-divider {
-    display: none;
-  }
-
   .satellite-side-pill {
-    padding: 0;
+    max-width: 100%;
+    width: 100%;
+  }
+
+  .satellite-top-right-cluster {
+    max-width: 100%;
+    width: 100%;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .satellite-side-pill.modelled {
+    text-align: left;
+    align-items: flex-start;
+    border-right: none;
+    border-left: 3.5px solid #F97316;
   }
 
   .satellite-pill-primary {
-    font-size: 10px;
-    white-space: normal;
+    font-size: 10.5px;
   }
 
   .satellite-pill-secondary {
@@ -864,11 +980,15 @@ html[data-theme="field-daylight"] .satellite-info-popover {
   }
 
   .satellite-expand-btn {
-    padding: 4px 6px;
+    padding: 5px 8px;
   }
 
   .satellite-bottom-dock {
-    margin: 4px 6px;
+    left: 6px;
+    right: 6px;
+    bottom: 6px;
+    width: auto;
+    transform: none;
     padding: 6px 8px;
     border-radius: 14px;
     gap: 6px;

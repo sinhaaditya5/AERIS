@@ -21,14 +21,23 @@ test.describe('Capture Satellite Check Screenshots in Dashboard and Map Explorer
     await expect(page.locator('#nav-dashboard')).toBeVisible()
     await expect(page.locator('.skeleton-mode')).toHaveCount(0)
     await page.evaluate(() => {
-      document.documentElement.setAttribute('data-theme', 'forest')
-      localStorage.setItem('aeris_theme', 'forest')
+      const settings = {
+        theme: 'night-watch',
+        accent: 'forest',
+        textSize: 'default',
+        density: 'comfortable',
+        reduceMotion: false,
+        colorBlindSafe: false,
+        matchBasemap: true,
+      }
+      localStorage.setItem('aeris_theme_settings_v1', JSON.stringify(settings))
+      document.documentElement.setAttribute('data-theme', 'night-watch')
     })
     const trigger = page.locator('.satellite-check-trigger-btn').first()
     await trigger.scrollIntoViewIfNeeded()
     await trigger.click()
     await expect(page.locator('.satellite-check-overlay')).toBeVisible()
-    await page.waitForTimeout(2000)
+    await page.waitForTimeout(3000)
     const outputPath = path.resolve('..', 'artifacts', 'satellite_check_desktop_dark.png')
     await page.screenshot({ path: outputPath, fullPage: false })
     saveScreenshot(outputPath, 'satellite_check_desktop_dark.png')
@@ -41,14 +50,23 @@ test.describe('Capture Satellite Check Screenshots in Dashboard and Map Explorer
     await expect(page.locator('#nav-dashboard')).toBeVisible()
     await expect(page.locator('.skeleton-mode')).toHaveCount(0)
     await page.evaluate(() => {
+      const settings = {
+        theme: 'field-daylight',
+        accent: 'forest',
+        textSize: 'default',
+        density: 'comfortable',
+        reduceMotion: false,
+        colorBlindSafe: false,
+        matchBasemap: true,
+      }
+      localStorage.setItem('aeris_theme_settings_v1', JSON.stringify(settings))
       document.documentElement.setAttribute('data-theme', 'field-daylight')
-      localStorage.setItem('aeris_theme', 'field-daylight')
     })
     const trigger = page.locator('.satellite-check-trigger-btn').first()
     await trigger.scrollIntoViewIfNeeded()
     await trigger.click()
     await expect(page.locator('.satellite-check-overlay')).toBeVisible()
-    await page.waitForTimeout(2000)
+    await page.waitForTimeout(3000)
     const outputPath = path.resolve('..', 'artifacts', 'satellite_check_desktop_light.png')
     await page.screenshot({ path: outputPath, fullPage: false })
     saveScreenshot(outputPath, 'satellite_check_desktop_light.png')
@@ -61,14 +79,23 @@ test.describe('Capture Satellite Check Screenshots in Dashboard and Map Explorer
     await expect(page.locator('#nav-dashboard')).toBeVisible()
     await expect(page.locator('.skeleton-mode')).toHaveCount(0)
     await page.evaluate(() => {
-      document.documentElement.setAttribute('data-theme', 'forest')
-      localStorage.setItem('aeris_theme', 'forest')
+      const settings = {
+        theme: 'night-watch',
+        accent: 'forest',
+        textSize: 'default',
+        density: 'comfortable',
+        reduceMotion: false,
+        colorBlindSafe: false,
+        matchBasemap: true,
+      }
+      localStorage.setItem('aeris_theme_settings_v1', JSON.stringify(settings))
+      document.documentElement.setAttribute('data-theme', 'night-watch')
     })
     const trigger = page.locator('.satellite-check-trigger-btn').first()
     await trigger.scrollIntoViewIfNeeded()
     await trigger.click()
     await expect(page.locator('.satellite-check-overlay')).toBeVisible()
-    await page.waitForTimeout(2000)
+    await page.waitForTimeout(3000)
     const outputPath = path.resolve('..', 'artifacts', 'satellite_check_mobile_dark.png')
     await page.screenshot({ path: outputPath, fullPage: false })
     saveScreenshot(outputPath, 'satellite_check_mobile_dark.png')
@@ -81,14 +108,23 @@ test.describe('Capture Satellite Check Screenshots in Dashboard and Map Explorer
     await expect(page.locator('#nav-dashboard')).toBeVisible()
     await expect(page.locator('.skeleton-mode')).toHaveCount(0)
     await page.evaluate(() => {
+      const settings = {
+        theme: 'field-daylight',
+        accent: 'forest',
+        textSize: 'default',
+        density: 'comfortable',
+        reduceMotion: false,
+        colorBlindSafe: false,
+        matchBasemap: true,
+      }
+      localStorage.setItem('aeris_theme_settings_v1', JSON.stringify(settings))
       document.documentElement.setAttribute('data-theme', 'field-daylight')
-      localStorage.setItem('aeris_theme', 'field-daylight')
     })
     const trigger = page.locator('.satellite-check-trigger-btn').first()
     await trigger.scrollIntoViewIfNeeded()
     await trigger.click()
     await expect(page.locator('.satellite-check-overlay')).toBeVisible()
-    await page.waitForTimeout(2000)
+    await page.waitForTimeout(3000)
     const outputPath = path.resolve('..', 'artifacts', 'satellite_check_mobile_light.png')
     await page.screenshot({ path: outputPath, fullPage: false })
     saveScreenshot(outputPath, 'satellite_check_mobile_light.png')
@@ -100,16 +136,25 @@ test.describe('Capture Satellite Check Screenshots in Dashboard and Map Explorer
     await page.goto('/')
     await expect(page.locator('#nav-dashboard')).toBeVisible()
     await expect(page.locator('.skeleton-mode')).toHaveCount(0)
+    await page.evaluate(() => {
+      const settings = {
+        theme: 'night-watch',
+        accent: 'forest',
+        textSize: 'default',
+        density: 'comfortable',
+        reduceMotion: false,
+        colorBlindSafe: false,
+        matchBasemap: true,
+      }
+      localStorage.setItem('aeris_theme_settings_v1', JSON.stringify(settings))
+      document.documentElement.setAttribute('data-theme', 'night-watch')
+    })
     await page.locator('#nav-map').click()
     await expect(page.locator('.maplibregl-canvas').first()).toBeVisible()
-    await page.evaluate(() => {
-      document.documentElement.setAttribute('data-theme', 'forest')
-      localStorage.setItem('aeris_theme', 'forest')
-    })
     const trigger = page.locator('.satellite-check-trigger-btn').first()
     await trigger.click()
     await expect(page.locator('.satellite-check-overlay')).toBeVisible()
-    await page.waitForTimeout(2000)
+    await page.waitForTimeout(3000)
     const outputPath = path.resolve('..', 'artifacts', 'satellite_check_explorer_desktop_dark.png')
     await page.screenshot({ path: outputPath, fullPage: false })
     saveScreenshot(outputPath, 'satellite_check_explorer_desktop_dark.png')
@@ -121,16 +166,25 @@ test.describe('Capture Satellite Check Screenshots in Dashboard and Map Explorer
     await page.goto('/')
     await expect(page.locator('#nav-dashboard')).toBeVisible()
     await expect(page.locator('.skeleton-mode')).toHaveCount(0)
+    await page.evaluate(() => {
+      const settings = {
+        theme: 'night-watch',
+        accent: 'forest',
+        textSize: 'default',
+        density: 'comfortable',
+        reduceMotion: false,
+        colorBlindSafe: false,
+        matchBasemap: true,
+      }
+      localStorage.setItem('aeris_theme_settings_v1', JSON.stringify(settings))
+      document.documentElement.setAttribute('data-theme', 'night-watch')
+    })
     await page.locator('#nav-map').click()
     await expect(page.locator('.maplibregl-canvas').first()).toBeVisible()
-    await page.evaluate(() => {
-      document.documentElement.setAttribute('data-theme', 'forest')
-      localStorage.setItem('aeris_theme', 'forest')
-    })
     const trigger = page.locator('.satellite-check-trigger-btn').first()
     await trigger.click()
     await expect(page.locator('.satellite-check-overlay')).toBeVisible()
-    await page.waitForTimeout(2000)
+    await page.waitForTimeout(3000)
     const outputPath = path.resolve('..', 'artifacts', 'satellite_check_explorer_mobile_dark.png')
     await page.screenshot({ path: outputPath, fullPage: false })
     saveScreenshot(outputPath, 'satellite_check_explorer_mobile_dark.png')

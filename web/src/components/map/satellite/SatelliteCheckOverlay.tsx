@@ -120,17 +120,16 @@ export default function SatelliteCheckOverlay({
 
   // ── 1. Basemap Neutralization on Entry, Restoration on Exit ─────────────────
   useEffect(() => {
+    const savedBasemap = initialBasemapMode.current
     // When opening, if current basemap is satellite or globe, switch main basemap to neutral
-    if (basemapMode === 'satellite' || basemapMode === 'globe') {
-      const neutralMode: BasemapMode = effectiveTheme === 'night-watch' ? 'dark' : 'topo'
+    if (savedBasemap === 'satellite' || savedBasemap === 'globe') {
+      const neutralMode: BasemapMode = effectiveTheme === 'field-daylight' ? 'topo' : 'dark'
       setBasemapMode(neutralMode)
     }
 
     if (mainMap && (mainMap.getPitch() !== 0 || mainMap.getBearing() !== 0)) {
       mainMap.easeTo({ pitch: 0, bearing: 0, duration: 400 })
     }
-
-    const savedBasemap = initialBasemapMode.current
 
     return () => {
       // Restore basemap mode and camera projection on exit
@@ -146,7 +145,8 @@ export default function SatelliteCheckOverlay({
         }
       }
     }
-  }, [mainMap, effectiveTheme, basemapMode, setBasemapMode])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // ── 2. Keyboard Focus Trap & Escape Handler ────────────────────────────────
   useEffect(() => {
@@ -467,30 +467,30 @@ export default function SatelliteCheckOverlay({
         </div>
       )}
 
-      {/* ── Top Comparison Banner ────────────────────────────────────────── */}
+      {/* ── Top Floating Comparison Header Bar ──────────────────────────── */}
       <header className="satellite-top-banner">
-        <div className="satellite-unified-header-capsule">
-          <div className="satellite-labels-row">
-            <div className="satellite-side-pill observed">
-              <span className="satellite-pill-primary">
-                <span className="satellite-pill-dot observed" aria-hidden="true" />
-                🛰️ Observed: NASA {activeLayer.sensor} true colour, {date} UTC
-              </span>
-              <span className="satellite-pill-secondary">
-                Daily daytime composite • {activeLayer.satellite}
-              </span>
+        {/* Left: Observed NASA Satellite Badge */}
+        <div className="satellite-side-pill observed">
+          <div className="satellite-pill-primary">
+            <span className="satellite-pill-dot observed" aria-hidden="true" />
+            <span className="satellite-pill-tag observed">NASA OBSERVED</span>
+            <span className="satellite-pill-title">🛰️ Observed: NASA {activeLayer.sensor} true colour, {date} UTC</span>
+          </div>
+          <div className="satellite-pill-secondary">
+            Daily daytime composite • {activeLayer.satellite}
+          </div>
+        </div>
+
+        {/* Right: Modelled Plume Badge + Action Cluster */}
+        <div className="satellite-top-right-cluster">
+          <div className="satellite-side-pill modelled">
+            <div className="satellite-pill-primary">
+              <span className="satellite-pill-dot modelled" aria-hidden="true" />
+              <span className="satellite-pill-tag modelled">AERIS MODELLED</span>
+              <span className="satellite-pill-title">Modelled: plume at T+{timeHorizon}h, uncalibrated baseline</span>
             </div>
-
-            <div className="satellite-header-divider" aria-hidden="true" />
-
-            <div className="satellite-side-pill modelled">
-              <span className="satellite-pill-primary">
-                <span className="satellite-pill-dot modelled" aria-hidden="true" />
-                Modelled: plume at T+{timeHorizon}h, uncalibrated baseline
-              </span>
-              <span className="satellite-pill-secondary">
-                Dispersion corridor • neutral basemap
-              </span>
+            <div className="satellite-pill-secondary">
+              Dispersion corridor • neutral basemap
             </div>
           </div>
 
@@ -662,7 +662,7 @@ export default function SatelliteCheckOverlay({
           >
             {Object.values(GIBS_LAYERS).map((l) => (
               <option key={l.id} value={l.id}>
-                {l.name} ({l.nominalPassTime})
+                🛰️ {l.sensor} ({l.satellite}) • {l.nominalPassTime}
               </option>
             ))}
           </select>
