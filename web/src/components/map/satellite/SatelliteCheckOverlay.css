@@ -1,0 +1,651 @@
+/* =========================================================
+   AERIS — Satellite Check Overlay Styles
+   Vanilla CSS using AERIS Design System tokens
+   ========================================================= */
+
+.satellite-check-root {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 35;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  overflow: hidden;
+  font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  color: var(--text-primary);
+}
+
+/* ── Secondary Map Instance (Observed Side) ────────────── */
+.satellite-observed-map-viewport {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 5;
+  overflow: hidden;
+}
+
+.satellite-observed-map-canvas {
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* ── Anchor hotspot marker on observed satellite canvas ── */
+.satellite-anchor-marker {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: rgba(220, 38, 38, 0.25);
+  border: 1.5px solid #EF4444;
+  color: #FFFFFF;
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1;
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.6);
+  pointer-events: auto;
+  cursor: default;
+}
+
+/* ── Interactive Draggable Split Handle ─────────────────── */
+.satellite-split-divider {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 44px;
+  margin-left: -22px;
+  cursor: ew-resize;
+  pointer-events: auto;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  touch-action: none;
+  user-select: none;
+  outline: none;
+}
+
+.satellite-split-line {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 21px;
+  width: 2px;
+  background: #FFFFFF;
+  box-shadow: 0 0 6px rgba(0, 0, 0, 0.45);
+}
+
+.satellite-split-pill {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  padding: 6px 10px;
+  background: var(--surface-card, #FFFFFF);
+  color: var(--text-primary, #1E293B);
+  border: 1.5px solid var(--border-strong, rgba(0, 0, 0, 0.15));
+  border-radius: var(--radius-pill, 9999px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: -0.2px;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+
+.satellite-split-divider:focus-visible .satellite-split-pill {
+  outline: 2px solid var(--focus-ring, #22734F);
+  outline-offset: 2px;
+  transform: scale(1.08);
+}
+
+.satellite-split-divider:hover .satellite-split-pill,
+.satellite-split-divider.is-dragging .satellite-split-pill {
+  transform: scale(1.06);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+  border-color: var(--accent-primary, #22734F);
+}
+
+.satellite-split-grip-icon {
+  display: inline-flex;
+  align-items: center;
+  font-size: 9px;
+  opacity: 0.7;
+}
+
+/* ── Top Floating Comparison Header Bar ─────────────────── */
+.satellite-top-banner {
+  position: relative;
+  z-index: 35;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 12px 16px;
+  gap: 12px;
+  pointer-events: none;
+}
+
+.satellite-labels-row {
+  display: flex;
+  flex: 1;
+  justify-content: space-between;
+  gap: 12px;
+  pointer-events: none;
+}
+
+.satellite-side-pill {
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  padding: 8px 14px;
+  border-radius: var(--radius-card-sm, 12px);
+  background: rgba(15, 23, 42, 0.85);
+  color: #FFFFFF;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+  max-width: 48%;
+}
+
+html[data-theme="field-daylight"] .satellite-side-pill {
+  background: rgba(255, 255, 255, 0.92);
+  color: #1A2421;
+  border-color: rgba(0, 40, 20, 0.12);
+  box-shadow: 0 4px 14px rgba(18, 50, 30, 0.08);
+}
+
+.satellite-side-pill.observed {
+  border-left: 3.5px solid #38BDF8;
+}
+
+.satellite-side-pill.modelled {
+  border-right: 3.5px solid #F97316;
+  text-align: right;
+  align-items: flex-end;
+}
+
+.satellite-pill-primary {
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.25;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.satellite-pill-secondary {
+  font-size: 11px;
+  opacity: 0.82;
+  margin-top: 2px;
+  line-height: 1.2;
+}
+
+.satellite-close-btn {
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-pill, 9999px);
+  background: rgba(15, 23, 42, 0.85);
+  color: #FFFFFF;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  cursor: pointer;
+  backdrop-filter: blur(12px);
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+html[data-theme="field-daylight"] .satellite-close-btn {
+  background: rgba(255, 255, 255, 0.92);
+  color: #1A2421;
+  border-color: rgba(0, 40, 20, 0.15);
+}
+
+.satellite-close-btn:hover {
+  transform: scale(1.05);
+  background: rgba(220, 38, 38, 0.9);
+  color: #FFFFFF;
+}
+
+/* ── Status Banners (Loading, Missing, Error) ───────────── */
+.satellite-state-banner {
+  pointer-events: auto;
+  position: absolute;
+  top: 72px;
+  left: 20px;
+  max-width: 420px;
+  padding: 10px 14px;
+  border-radius: var(--radius-card-sm, 12px);
+  background: rgba(15, 23, 42, 0.90);
+  color: #FFFFFF;
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  z-index: 35;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+html[data-theme="field-daylight"] .satellite-state-banner {
+  background: rgba(255, 255, 255, 0.95);
+  color: #1A2421;
+  border-color: rgba(0, 40, 20, 0.16);
+}
+
+.satellite-state-content {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.satellite-state-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.satellite-btn-action {
+  padding: 5px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: var(--radius-btn, 8px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.12);
+  color: inherit;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.satellite-btn-action:hover {
+  background: rgba(255, 255, 255, 0.22);
+}
+
+/* ── Bottom Controls Tray / Sheet ───────────────────────── */
+.satellite-bottom-dock {
+  position: relative;
+  z-index: 35;
+  margin: 12px;
+  padding: 12px 18px;
+  border-radius: var(--radius-card, 18px);
+  background: var(--surface-overlay, rgba(255, 255, 255, 0.90));
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--border-subtle, rgba(0, 40, 20, 0.1));
+  box-shadow: var(--shadow-float, 0 12px 40px -8px rgba(0, 0, 0, 0.25));
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+html[data-theme="night-watch"] .satellite-bottom-dock {
+  background: rgba(14, 27, 38, 0.92);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.satellite-controls-primary-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.satellite-control-cluster {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Segmented mode pills: Swipe vs Fade */
+.satellite-mode-toggle {
+  display: inline-flex;
+  padding: 3px;
+  background: var(--surface-subtle, rgba(0, 0, 0, 0.05));
+  border-radius: var(--radius-pill, 9999px);
+  border: 1px solid var(--border-subtle, rgba(0, 0, 0, 0.08));
+}
+
+.satellite-mode-btn {
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  border-radius: var(--radius-pill, 9999px);
+  cursor: pointer;
+  min-height: 32px;
+  min-width: 44px;
+  transition: all 0.15s ease;
+}
+
+.satellite-mode-btn.active {
+  background: var(--surface-card, #FFFFFF);
+  color: var(--text-primary);
+  box-shadow: var(--shadow-sm, 0 1px 4px rgba(0, 0, 0, 0.1));
+}
+
+html[data-theme="night-watch"] .satellite-mode-btn.active {
+  background: #1E3448;
+  color: #FFFFFF;
+}
+
+/* Date Stepper Controls */
+.satellite-date-stepper {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--surface-subtle, rgba(0, 0, 0, 0.04));
+  border: 1px solid var(--border-subtle, rgba(0, 0, 0, 0.08));
+  border-radius: var(--radius-pill, 9999px);
+  padding: 2px 4px;
+}
+
+.satellite-step-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.satellite-step-btn:hover:not(:disabled) {
+  background: var(--surface-card, rgba(0, 0, 0, 0.08));
+}
+
+.satellite-step-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.satellite-date-input {
+  border: none;
+  background: transparent;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+  padding: 4px 6px;
+  cursor: pointer;
+  outline: none;
+}
+
+.satellite-date-input:focus-visible {
+  border-radius: 4px;
+  outline: 2px solid var(--focus-ring, #22734F);
+}
+
+.satellite-btn-reset-time {
+  padding: 6px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: var(--radius-pill, 9999px);
+  border: 1px solid var(--border-subtle, rgba(0, 0, 0, 0.1));
+  background: var(--surface-subtle, rgba(0, 0, 0, 0.04));
+  color: var(--text-primary);
+  cursor: pointer;
+  min-height: 34px;
+  transition: all 0.15s ease;
+}
+
+.satellite-btn-reset-time:hover {
+  background: var(--accent-surface, #E6F2EB);
+  color: var(--accent-text, #1A4433);
+  border-color: var(--accent-primary, #22734F);
+}
+
+/* Sensor Dropdown Selector */
+.satellite-sensor-select {
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+  background: var(--surface-subtle, rgba(0, 0, 0, 0.04));
+  border: 1px solid var(--border-subtle, rgba(0, 0, 0, 0.1));
+  border-radius: var(--radius-btn, 8px);
+  padding: 6px 10px;
+  cursor: pointer;
+  min-height: 34px;
+  outline: none;
+}
+
+.satellite-sensor-select:focus-visible {
+  outline: 2px solid var(--focus-ring, #22734F);
+}
+
+/* Fade Mode Slider Strip */
+.satellite-fade-slider-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 0;
+  width: 100%;
+}
+
+.satellite-fade-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.satellite-fade-range {
+  flex: 1;
+  height: 6px;
+  border-radius: var(--radius-pill, 9999px);
+  background: var(--surface-subtle, rgba(0, 0, 0, 0.1));
+  cursor: pointer;
+  accent-color: var(--accent-primary, #22734F);
+}
+
+/* Secondary Meta Row: Honest Disclaimers & Acknowledgement */
+.satellite-meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding-top: 6px;
+  border-top: 1px solid var(--border-subtle, rgba(0, 40, 20, 0.07));
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.satellite-honesty-note {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  line-height: 1.3;
+}
+
+.satellite-info-trigger-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 6px;
+  border-radius: var(--radius-pill, 9999px);
+  border: 1px solid var(--border-subtle, rgba(0, 0, 0, 0.12));
+  background: var(--surface-subtle, rgba(0, 0, 0, 0.03));
+  color: var(--text-primary);
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 600;
+  transition: all 0.15s ease;
+}
+
+.satellite-info-trigger-btn:hover {
+  background: var(--accent-surface, #E6F2EB);
+  color: var(--accent-text, #1A4433);
+}
+
+.satellite-worldview-link {
+  color: var(--accent-primary, #22734F);
+  text-decoration: none;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  transition: opacity 0.15s ease;
+}
+
+.satellite-worldview-link:hover {
+  text-decoration: underline;
+  opacity: 0.85;
+}
+
+.satellite-gibs-acknowledgement-line {
+  width: 100%;
+  font-size: 10px;
+  line-height: 1.35;
+  color: var(--text-tertiary, #64748B);
+  margin-top: 2px;
+}
+
+.satellite-gibs-acknowledgement-line a {
+  color: inherit;
+  text-decoration: underline;
+}
+
+/* ── Honesty Info Popover ───────────────────────────────── */
+.satellite-info-popover {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 18px;
+  right: 18px;
+  max-width: 520px;
+  padding: 14px 16px;
+  border-radius: var(--radius-card-sm, 12px);
+  background: var(--surface-card, #FFFFFF);
+  color: var(--text-primary);
+  border: 1px solid var(--border-strong, rgba(0, 40, 20, 0.15));
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.22);
+  z-index: 45;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+html[data-theme="night-watch"] .satellite-info-popover {
+  background: #132433;
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.satellite-popover-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.satellite-popover-title {
+  font-weight: 700;
+  font-size: 12.5px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.satellite-popover-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.satellite-popover-close:hover {
+  background: var(--surface-subtle, rgba(0, 0, 0, 0.08));
+}
+
+/* ── Responsive Mobile (390 px) Adaptations ─────────────── */
+@media (max-width: 640px) {
+  .satellite-top-banner {
+    padding: 8px 10px;
+    gap: 8px;
+  }
+
+  .satellite-labels-row {
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .satellite-side-pill {
+    max-width: 100%;
+    padding: 6px 10px;
+  }
+
+  .satellite-side-pill.modelled {
+    text-align: left;
+    align-items: flex-start;
+    border-right: none;
+    border-left: 3.5px solid #F97316;
+  }
+
+  .satellite-bottom-dock {
+    margin: 0;
+    border-radius: 16px 16px 0 0;
+    padding: 12px 14px;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.25);
+  }
+
+  .satellite-controls-primary-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .satellite-control-cluster {
+    flex-wrap: wrap;
+    justify-content: space-between;
+  }
+
+  .satellite-sensor-select {
+    width: 100%;
+  }
+
+  .satellite-meta-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .satellite-info-popover {
+    left: 8px;
+    right: 8px;
+    bottom: calc(100% + 4px);
+  }
+}
+
+/* ── Reduced Motion ─────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .satellite-split-pill,
+  .satellite-close-btn,
+  .satellite-btn-action,
+  .satellite-btn-reset-time,
+  .satellite-mode-btn {
+    transition: none !important;
+  }
+}

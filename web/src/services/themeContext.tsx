@@ -174,10 +174,15 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>
 }
 
+const DEFAULT_THEME_VALUE: ThemeContextValue = {
+  settings: DEFAULT_THEME_SETTINGS,
+  effectiveTheme: 'forest',
+  isDark: true,
+  updateSettings: () => {},
+  resetThemeSettings: () => {},
+}
+
 export function useTheme(): ThemeContextValue {
   const ctx = useContext(ThemeContext)
-  if (!ctx) {
-    throw new Error('useTheme must be used within a ThemeProvider')
-  }
-  return ctx
+  return ctx ?? DEFAULT_THEME_VALUE
 }

@@ -217,9 +217,9 @@ export default function AqiForecast12h() {
 
             <div className="forecast-meta-notes">
               <p className="forecast-data-note">Maximum across reported source bands in each interval; not a receptor concentration or additive exposure.</p>
-              <p className="forecast-data-note">Model capture: <time dateTime={model!.generated_at}>{model!.generated_at}</time>.</p>
-              <p className="forecast-data-note">{model!.forecast_start
-                ? <>Forecast start: <time dateTime={model!.forecast_start}>{model!.forecast_start}</time>; intervals are forecast-relative.</>
+              <p className="forecast-data-note">Model capture: {model?.generated_at ? <time dateTime={model.generated_at}>{model.generated_at}</time> : 'Unavailable'}.</p>
+              <p className="forecast-data-note">{model?.forecast_start
+                ? <>Forecast start: <time dateTime={model.forecast_start}>{model.forecast_start}</time>; intervals are forecast-relative.</>
                 : 'Forecast start unavailable; intervals are forecast-relative.'}</p>
               <p className="forecast-data-note">Trajectory unavailable: band peaks are not a receptor time series. Mixing-height and inversion diagnostics unavailable in this panel.</p>
             </div>

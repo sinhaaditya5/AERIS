@@ -27,7 +27,9 @@ import { useScientificLayers } from './useScientificLayers'
 import { useTheme } from '@/services/themeContext'
 import { applyThemeToMap } from './mapThemeBridge'
 import ExplorerTelemetryTray from './ExplorerTelemetryTray'
+import { useSatelliteCheck } from '@/services/satellite/satelliteContext'
 const SvgFallbackMap = lazy(() => import('./SvgFallbackMap'))
+const SatelliteCheckOverlay = lazy(() => import('./satellite/SatelliteCheckOverlay'))
 import './MapExplorerView.css'
 
 try {
@@ -72,6 +74,7 @@ export default function MapExplorerView() {
   } = useAeris()
 
   const { settings: themeSettings, effectiveTheme } = useTheme()
+  const satelliteCheck = useSatelliteCheck()
 
   const [webGlSupported, setWebGlSupported] = useState(true)
   const [isPlaying, setIsPlaying]           = useState(false)
@@ -531,8 +534,26 @@ export default function MapExplorerView() {
           error={feedErrors.aqi}
         />
 
+        {satelliteCheck.isOpen && webGlSupported && (
+          <Suspense fallback={null}>
+            <SatelliteCheckOverlay
+              mainMap={mapRef.current}
+              mapContainer={mapContainerRef.current}
+              corridor={corridor}
+              sources={sources}
+              timeHorizon={timeHorizon}
+              setTimeHorizon={setTimeHorizon}
+              basemapMode={basemapMode}
+              setBasemapMode={setBasemapMode}
+              effectiveTheme={effectiveTheme}
+              onClose={satelliteCheck.closeSatelliteCheck}
+            />
+          </Suspense>
+        )}
+
         {/* ── Top Floating Command HUD Capsule ────────────────────────────── */}
-        <div className="map-floating-hud" onClick={(e) => e.stopPropagation()}>
+        {!satelliteCheck.isOpen && (
+          <div className="map-floating-hud" onClick={(e) => e.stopPropagation()}>
           {/* Camera Presets: Segmented Quick Chips + Regional Dropdown */}
           <div className="hud-presets-group">
             <button
@@ -663,6 +684,27 @@ export default function MapExplorerView() {
             >
               <span>🗺️ Topo</span>
             </button>
+            <button
+              className={`hud-basemap-btn satellite-check-hud-btn satellite-check-trigger-btn ${satelliteCheck.isOpen ? 'active' : ''}`}
+              data-testid="satellite-check-btn"
+              onClick={(e) => {
+                if (satelliteCheck.isOpen) {
+                  satelliteCheck.closeSatelliteCheck()
+                } else {
+                  satelliteCheck.openSatelliteCheck(e.currentTarget)
+                }
+              }}
+              disabled={!satelliteCheck.isOnline}
+              title={
+                satelliteCheck.isOnline
+                  ? "Satellite check: compare real NASA satellite imagery beside modelled plume"
+                  : "Satellite check unavailable while offline. Real NASA satellite imagery requires an active internet connection."
+              }
+              aria-label="Satellite check"
+              type="button"
+            >
+              <span>🛰️ Satellite check</span>
+            </button>
           </div>
 
           <div className="hud-divider" />
@@ -709,22 +751,25 @@ export default function MapExplorerView() {
             {isFullscreen ? <Minimize2 size={15} /> : <Maximize2 size={15} />}
           </button>
         </div>
+        )}
 
         {/* ── Left Floating Controls: Layer FAB ────────────────────────────── */}
-        <button
-          className={`map-floating-fab ${isLayerPanelOpen ? 'active' : ''}`}
-          onClick={(e) => {
-            e.stopPropagation()
-            setIsLayerPanelOpen(!isLayerPanelOpen)
-            setIsRegionsOpen(false)
-          }}
-          title="Toggle Map Layers & Intelligence"
-          type="button"
-        >
-          <Layers size={15} />
-          <span>Layers</span>
-          <span className="fab-layer-badge">{activeLayerCount}</span>
-        </button>
+        {!satelliteCheck.isOpen && (
+          <button
+            className={`map-floating-fab ${isLayerPanelOpen ? 'active' : ''}`}
+            onClick={(e) => {
+              e.stopPropagation()
+              setIsLayerPanelOpen(!isLayerPanelOpen)
+              setIsRegionsOpen(false)
+            }}
+            title="Toggle Map Layers & Intelligence"
+            type="button"
+          >
+            <Layers size={15} />
+            <span>Layers</span>
+            <span className="fab-layer-badge">{activeLayerCount}</span>
+          </button>
+        )}
 
         {/* ── Left Floating Drawer: Layer Panel ────────────────────────────── */}
         {isLayerPanelOpen && (

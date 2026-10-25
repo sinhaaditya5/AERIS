@@ -19,8 +19,10 @@ import { escapeHtml } from './html'
 import { useTheme } from '@/services/themeContext'
 import { applyThemeToMap } from './mapThemeBridge'
 import './MapContainer.css'
+import { useSatelliteCheck } from '@/services/satellite/satelliteContext'
 
 const SvgFallbackMap = lazy(() => import('./SvgFallbackMap'))
+const SatelliteCheckOverlay = lazy(() => import('./satellite/SatelliteCheckOverlay'))
 
 try {
   setWorkerUrl(workerUrl)
@@ -66,6 +68,7 @@ export default function MapContainer() {
     feedErrors,
     corridor,
     timeHorizon,
+    setTimeHorizon,
     selectedSiteId,
     rankedSites,
     setSelectedSiteId,
@@ -79,6 +82,7 @@ export default function MapContainer() {
   } = useAeris()
 
   const { settings, effectiveTheme } = useTheme()
+  const satelliteCheck = useSatelliteCheck()
 
   const now = useClock()
   const parsedWind = useMemo(() => wind == null ? null : WindFileSchema.safeParse(wind), [wind])
@@ -453,6 +457,27 @@ export default function MapContainer() {
               <HelpCircle size={11} />
               <span>Guide</span>
             </button>
+            <button
+              className={`map-header-chip satellite-check-chip satellite-check-trigger-btn ${satelliteCheck.isOpen ? 'active' : ''}`}
+              data-testid="satellite-check-btn"
+              onClick={(e) => {
+                if (satelliteCheck.isOpen) {
+                  satelliteCheck.closeSatelliteCheck()
+                } else {
+                  satelliteCheck.openSatelliteCheck(e.currentTarget)
+                }
+              }}
+              disabled={!satelliteCheck.isOnline}
+              title={
+                satelliteCheck.isOnline
+                  ? "Satellite check: compare real NASA satellite imagery with modelled plume"
+                  : "Satellite check unavailable while offline. Real NASA satellite imagery requires an active internet connection."
+              }
+              aria-label="Satellite check"
+              type="button"
+            >
+              <span>🛰️ Satellite check</span>
+            </button>
           </div>
 
           <div className="map-header-divider" />
@@ -636,6 +661,23 @@ export default function MapContainer() {
         ) : (
           <Suspense fallback={<div className="map-fallback-canvas" />}>
             <SvgFallbackMap sources={sources} rankedSites={rankedSites} scopeFilter={scopeFilter} corridor={corridor} horizon={timeHorizon} heatmap={heatmap.data} heatmapEnabled={heatmap.enabled} opacity={heatmap.opacity} />
+          </Suspense>
+        )}
+
+        {satelliteCheck.isOpen && webGlSupported && (
+          <Suspense fallback={null}>
+            <SatelliteCheckOverlay
+              mainMap={mapRef.current}
+              mapContainer={mapContainerRef.current}
+              corridor={corridor}
+              sources={sources}
+              timeHorizon={timeHorizon}
+              setTimeHorizon={setTimeHorizon}
+              basemapMode={basemapMode}
+              setBasemapMode={setBasemapMode}
+              effectiveTheme={effectiveTheme}
+              onClose={satelliteCheck.closeSatelliteCheck}
+            />
           </Suspense>
         )}
 
