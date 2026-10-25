@@ -55,7 +55,7 @@ export default function Header() {
   const [searchInput, setSearchInput] = useState('')
   const [searchFeedback, setSearchFeedback] = useState('')
   const [showNotifs, setShowNotifs] = useState(false)
-  const [notifTab, setNotifTab] = useState<'all' | 'critical' | 'feeds'>('all')
+  const [notifTab, setNotifTab] = useState<'all' | 'critical' | 'feeds'>(() => notifications.length > 0 ? 'all' : 'feeds')
   const [now, setNow] = useState(Date.now)
   const searchInputRef = useRef<HTMLInputElement>(null)
   const notifRef = useRef<HTMLDivElement>(null)
@@ -164,11 +164,7 @@ export default function Header() {
           <button
             ref={notifButtonRef}
             className={`icon-btn notif-btn ${showNotifs ? 'active' : ''}`}
-            aria-label={
-              unreadCount > 0
-                ? `${unreadCount} environmental alerts${criticalCount > 0 ? `, ${criticalCount} critical` : ''}`
-                : 'Environmental alerts & telemetry'
-            }
+            aria-label="Data feed status"
             title={
               unreadCount > 0
                 ? `${unreadCount} unread alert${unreadCount === 1 ? '' : 's'}${criticalCount > 0 ? ` (${criticalCount} critical)` : ''}`

@@ -27,7 +27,9 @@ import { useScientificLayers } from './useScientificLayers'
 import { useTheme } from '@/services/themeContext'
 import { applyThemeToMap } from './mapThemeBridge'
 import ExplorerTelemetryTray from './ExplorerTelemetryTray'
+import { useSatelliteCheck } from '@/services/satellite/satelliteContext'
 const SvgFallbackMap = lazy(() => import('./SvgFallbackMap'))
+const SatelliteCheckOverlay = lazy(() => import('./satellite/SatelliteCheckOverlay'))
 import './MapExplorerView.css'
 
 try {
@@ -72,6 +74,7 @@ export default function MapExplorerView() {
   } = useAeris()
 
   const { settings: themeSettings, effectiveTheme } = useTheme()
+  const satelliteCheck = useSatelliteCheck()
 
   const [webGlSupported, setWebGlSupported] = useState(true)
   const [isPlaying, setIsPlaying]           = useState(false)
@@ -218,12 +221,12 @@ export default function MapExplorerView() {
 
   // ── Auto-sync basemap to theme when enabled ───────────────────────────
   useEffect(() => {
-    if (!themeSettings.matchBasemap) return
+    if (!themeSettings.matchBasemap || satelliteCheck.isOpen) return
     const targetMode = effectiveTheme === 'night-watch' ? 'dark' : effectiveTheme === 'field-daylight' ? 'topo' : 'satellite'
     if (basemapMode !== targetMode) {
       setBasemapMode(targetMode)
     }
-  }, [effectiveTheme, themeSettings.matchBasemap, basemapMode, setBasemapMode])
+  }, [effectiveTheme, themeSettings.matchBasemap, basemapMode, setBasemapMode, satelliteCheck.isOpen])
 
   // Automatically trigger map.resize() whenever container bounds resize
   useEffect(() => {
@@ -309,7 +312,7 @@ export default function MapExplorerView() {
     }
 
     // 2. Sensitive Receptor Facilities (Schools & Hospitals)
-    if (rankedSites) {
+    if (rankedSites && !satelliteCheck.isOpen) {
       rankedSites.sites
         .filter(site => isValidSubcontinentCoord(site.lat, site.lon) && (site.type === 'school' ? showSchools : showHospitals))
         .slice(0, 12)
@@ -364,7 +367,7 @@ export default function MapExplorerView() {
     }
 
     // 3. Live AQI Monitoring Stations (Sanitized & Clustered by Proximity)
-    if (showStations && aqi?.stations) {
+    if (showStations && aqi?.stations && !satelliteCheck.isOpen) {
       type ValidStation = (typeof aqi.stations)[number] & { aqi: number }
       const validStations = aqi.stations.filter(
         (stn): stn is ValidStation =>
@@ -519,20 +522,40 @@ export default function MapExplorerView() {
         )}
 
         {/* ── Floating PM2.5 Heatmap Glass Capsule (Zero-CLS Overlay) ────── */}
-        <HeatmapControls
-          data={heatmap.data}
-          enabled={heatmap.enabled}
-          onToggle={heatmap.setEnabled}
-          opacity={heatmap.opacity}
-          onOpacity={heatmap.setOpacity}
-          onFit={webGlSupported ? heatmap.fit : undefined}
-          bounds={webGlSupported ? heatmap.bounds : null}
-          loading={loading}
-          error={feedErrors.aqi}
-        />
+        {!satelliteCheck.isOpen && (
+          <HeatmapControls
+            data={heatmap.data}
+            enabled={heatmap.enabled}
+            onToggle={heatmap.setEnabled}
+            opacity={heatmap.opacity}
+            onOpacity={heatmap.setOpacity}
+            onFit={webGlSupported ? heatmap.fit : undefined}
+            bounds={webGlSupported ? heatmap.bounds : null}
+            loading={loading}
+            error={feedErrors.aqi}
+          />
+        )}
+
+        {satelliteCheck.isOpen && webGlSupported && (
+          <Suspense fallback={null}>
+            <SatelliteCheckOverlay
+              mainMap={mapRef.current}
+              mapContainer={mapContainerRef.current}
+              corridor={corridor}
+              sources={sources}
+              timeHorizon={timeHorizon}
+              setTimeHorizon={setTimeHorizon}
+              basemapMode={basemapMode}
+              setBasemapMode={setBasemapMode}
+              effectiveTheme={effectiveTheme}
+              onClose={satelliteCheck.closeSatelliteCheck}
+            />
+          </Suspense>
+        )}
 
         {/* ── Top Floating Command HUD Capsule ────────────────────────────── */}
-        <div className="map-floating-hud" onClick={(e) => e.stopPropagation()}>
+        {!satelliteCheck.isOpen && (
+          <div className="map-floating-hud" onClick={(e) => e.stopPropagation()}>
           {/* Camera Presets: Segmented Quick Chips + Regional Dropdown */}
           <div className="hud-presets-group">
             <button
@@ -663,6 +686,27 @@ export default function MapExplorerView() {
             >
               <span>🗺️ Topo</span>
             </button>
+            <button
+              className={`hud-basemap-btn satellite-check-hud-btn satellite-check-trigger-btn ${satelliteCheck.isOpen ? 'active' : ''}`}
+              data-testid="satellite-check-btn"
+              onClick={(e) => {
+                if (satelliteCheck.isOpen) {
+                  satelliteCheck.closeSatelliteCheck()
+                } else {
+                  satelliteCheck.openSatelliteCheck(e.currentTarget)
+                }
+              }}
+              disabled={!satelliteCheck.isOnline}
+              title={
+                satelliteCheck.isOnline
+                  ? "Satellite check: compare real NASA satellite imagery beside modelled plume"
+                  : "Satellite check unavailable while offline. Real NASA satellite imagery requires an active internet connection."
+              }
+              aria-label="Satellite check"
+              type="button"
+            >
+              <span>🛰️ Satellite check</span>
+            </button>
           </div>
 
           <div className="hud-divider" />
@@ -709,22 +753,25 @@ export default function MapExplorerView() {
             {isFullscreen ? <Minimize2 size={15} /> : <Maximize2 size={15} />}
           </button>
         </div>
+        )}
 
         {/* ── Left Floating Controls: Layer FAB ────────────────────────────── */}
-        <button
-          className={`map-floating-fab ${isLayerPanelOpen ? 'active' : ''}`}
-          onClick={(e) => {
-            e.stopPropagation()
-            setIsLayerPanelOpen(!isLayerPanelOpen)
-            setIsRegionsOpen(false)
-          }}
-          title="Toggle Map Layers & Intelligence"
-          type="button"
-        >
-          <Layers size={15} />
-          <span>Layers</span>
-          <span className="fab-layer-badge">{activeLayerCount}</span>
-        </button>
+        {!satelliteCheck.isOpen && (
+          <button
+            className={`map-floating-fab ${isLayerPanelOpen ? 'active' : ''}`}
+            onClick={(e) => {
+              e.stopPropagation()
+              setIsLayerPanelOpen(!isLayerPanelOpen)
+              setIsRegionsOpen(false)
+            }}
+            title="Toggle Map Layers & Intelligence"
+            type="button"
+          >
+            <Layers size={15} />
+            <span>Layers</span>
+            <span className="fab-layer-badge">{activeLayerCount}</span>
+          </button>
+        )}
 
         {/* ── Left Floating Drawer: Layer Panel ────────────────────────────── */}
         {isLayerPanelOpen && (
@@ -966,54 +1013,56 @@ export default function MapExplorerView() {
         )}
 
         {/* ── Left Bottom Floating Geospatial Intelligence Legend ─────────── */}
-        <div className="map-floating-legend" onClick={(e) => e.stopPropagation()}>
-          <div className="legend-head">
-            <div className="legend-title">
-              <span className="legend-badge-dot" />
-              <span>Map Intelligence Legend</span>
+        {!satelliteCheck.isOpen && (
+          <div className="map-floating-legend" onClick={(e) => e.stopPropagation()}>
+            <div className="legend-head">
+              <div className="legend-title">
+                <span className="legend-badge-dot" />
+                <span>Map Intelligence Legend</span>
+              </div>
+              <button
+                className="legend-toggle-btn"
+                onClick={() => setShowLegend(!showLegend)}
+                aria-expanded={showLegend}
+                type="button"
+                title={showLegend ? "Collapse legend" : "Expand legend"}
+              >
+                {showLegend ? '−' : '+'}
+              </button>
             </div>
-            <button
-              className="legend-toggle-btn"
-              onClick={() => setShowLegend(!showLegend)}
-              aria-expanded={showLegend}
-              type="button"
-              title={showLegend ? "Collapse legend" : "Expand legend"}
-            >
-              {showLegend ? '−' : '+'}
-            </button>
+
+            {showLegend && (
+              <div className="legend-body">
+                <div className="legend-group">
+                  <span className="legend-group-title">🔥 Fire FRP display tiers</span>
+                  <div className="legend-items">
+                    <div className="legend-item"><span className="legend-swatch severe" /><span>Severe (≥200 MW)</span></div>
+                    <div className="legend-item"><span className="legend-swatch high" /><span>High (50–&lt;200 MW)</span></div>
+                    <div className="legend-item"><span className="legend-swatch moderate" /><span>Moderate (&lt;50 MW)</span></div>
+                  </div>
+                </div>
+
+                <div className="legend-group">
+                  <span className="legend-group-title">💨 Smoke Plume (ETA)</span>
+                  <div className="legend-items">
+                    <div className="legend-item"><span className="legend-swatch plume-acute" /><span>0–2h band start</span></div>
+                    <div className="legend-item"><span className="legend-swatch plume-mid" /><span>2–4h band start</span></div>
+                    <div className="legend-item"><span className="legend-swatch plume-receptor" /><span>4–8h band start; 8–24h also available</span></div>
+                  </div>
+                </div>
+
+                <div className="legend-group">
+                  <span className="legend-group-title">📡 Monitoring Stations (AQI)</span>
+                  <div className="legend-items">
+                    <div className="legend-item"><span className="legend-swatch aqi-severe" /><span>Reported index &gt;300</span></div>
+                    <div className="legend-item"><span className="legend-swatch aqi-poor" /><span>Reported index 200–300</span></div>
+                    <div className="legend-item"><span className="legend-swatch aqi-mod" /><span>Reported index &lt;200</span></div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
-
-          {showLegend && (
-            <div className="legend-body">
-              <div className="legend-group">
-                <span className="legend-group-title">🔥 Fire FRP display tiers</span>
-                <div className="legend-items">
-                  <div className="legend-item"><span className="legend-swatch severe" /><span>Severe (≥200 MW)</span></div>
-                  <div className="legend-item"><span className="legend-swatch high" /><span>High (50–&lt;200 MW)</span></div>
-                  <div className="legend-item"><span className="legend-swatch moderate" /><span>Moderate (&lt;50 MW)</span></div>
-                </div>
-              </div>
-
-              <div className="legend-group">
-                <span className="legend-group-title">💨 Smoke Plume (ETA)</span>
-                <div className="legend-items">
-                  <div className="legend-item"><span className="legend-swatch plume-acute" /><span>0–2h band start</span></div>
-                  <div className="legend-item"><span className="legend-swatch plume-mid" /><span>2–4h band start</span></div>
-                  <div className="legend-item"><span className="legend-swatch plume-receptor" /><span>4–8h band start; 8–24h also available</span></div>
-                </div>
-              </div>
-
-              <div className="legend-group">
-                <span className="legend-group-title">📡 Monitoring Stations (AQI)</span>
-                <div className="legend-items">
-                  <div className="legend-item"><span className="legend-swatch aqi-severe" /><span>Reported index &gt;300</span></div>
-                  <div className="legend-item"><span className="legend-swatch aqi-poor" /><span>Reported index 200–300</span></div>
-                  <div className="legend-item"><span className="legend-swatch aqi-mod" /><span>Reported index &lt;200</span></div>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
+        )}
 
         {/* ── Right Bottom Zoom & Camera Navigation Control ────────────────── */}
         <div className="explorer-nav-dock" onClick={(e) => e.stopPropagation()}>
@@ -1046,18 +1095,20 @@ export default function MapExplorerView() {
       </div>
 
       {/* ── Interactive Collapsible Telemetry & Facility Tray ───────────── */}
-      <ExplorerTelemetryTray
-        isExpanded={isTrayExpanded}
-        onToggleExpanded={() => setIsTrayExpanded(!isTrayExpanded)}
-        rankedSites={rankedSites}
-        sources={sources}
-        stations={aqi?.stations ?? null}
-        corridor={corridor}
-        etaHours={etaHours}
-        exposedPopulation={exposedPopulation}
-        onFlyTo={flyToPreset}
-        onSelectFeature={setSelectedFeature}
-      />
+      {!satelliteCheck.isOpen && (
+        <ExplorerTelemetryTray
+          isExpanded={isTrayExpanded}
+          onToggleExpanded={() => setIsTrayExpanded(!isTrayExpanded)}
+          rankedSites={rankedSites}
+          sources={sources}
+          stations={aqi?.stations ?? null}
+          corridor={corridor}
+          etaHours={etaHours}
+          exposedPopulation={exposedPopulation}
+          onFlyTo={flyToPreset}
+          onSelectFeature={setSelectedFeature}
+        />
+      )}
     </div>
   )
 }

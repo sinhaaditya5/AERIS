@@ -1479,6 +1479,59 @@ export default function SettingsView() {
       {(activeTab === 'all' || activeTab === 'provenance') && (
         <div id="section-provenance" className="provenance-wrap">
           <ModelProvenanceNotice />
+
+          {/* Keyless External Data Sources: NASA GIBS */}
+          <section className="settings-card" id="section-external-sources" style={{ marginTop: '16px' }}>
+            <div className="card-header">
+              <Globe size={18} />
+              <div className="header-text-group">
+                <h2>External data sources &amp; satellite telemetry</h2>
+                <span className="card-desc-text">
+                  Direct browser-to-provider keyless telemetry feeds for visual cross-checking.
+                </span>
+              </div>
+            </div>
+
+            <div
+              id="source-nasa-gibs"
+              className="external-source-card"
+              style={{
+                padding: '16px',
+                borderRadius: 'var(--radius-card-sm, 12px)',
+                background: 'var(--surface-subtle, rgba(0, 40, 20, 0.03))',
+                border: '1px solid var(--border-subtle, rgba(0, 40, 20, 0.08))',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '10px',
+                marginTop: '12px',
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+                <strong style={{ fontSize: '14px', color: 'var(--text-primary)' }}>NASA Global Imagery Browse Services (GIBS)</strong>
+                <span
+                  style={{
+                    fontSize: '11px',
+                    fontWeight: 600,
+                    padding: '3px 8px',
+                    borderRadius: 'var(--radius-pill, 9999px)',
+                    background: 'var(--accent-surface, #E6F2EB)',
+                    color: 'var(--accent-text, #1A4433)',
+                    border: '1px solid var(--accent-primary, #22734F)',
+                  }}
+                >
+                  Keyless External Source
+                </span>
+              </div>
+              <p style={{ fontSize: '12.5px', color: 'var(--text-secondary)', lineHeight: 1.45, margin: 0 }}>
+                Serves full-resolution Web Mercator (EPSG:3857) true-colour satellite reflectance composites from VIIRS (NOAA-20, NOAA-21, Suomi NPP) and MODIS (Terra, Aqua) sensors.
+              </p>
+              <div style={{ fontSize: '11.5px', color: 'var(--text-secondary)', lineHeight: 1.4, display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                <div><strong>Direct Browser Architecture:</strong> Tile requests go directly from the viewer&apos;s browser to NASA Earthdata (<code>gibs.earthdata.nasa.gov</code>). No API key, account registration, or intermediary backend proxy required.</div>
+                <div><strong>Attribution Policy:</strong> &ldquo;We acknowledge the use of imagery provided by services from NASA&apos;s Global Imagery Browse Services (GIBS), part of NASA&apos;s Earth Science Data and Information System (ESDIS).&rdquo;</div>
+              </div>
+            </div>
+          </section>
+
           <div className="system-about-card">
             <div className="about-col">
               <strong>AERIS Environmental Risk AI</strong>

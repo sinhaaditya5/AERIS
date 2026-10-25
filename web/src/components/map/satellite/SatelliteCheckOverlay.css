@@ -1,0 +1,1051 @@
+/* =========================================================
+   AERIS — Satellite Check Overlay Styles
+   Vanilla CSS using AERIS Design System tokens
+   ========================================================= */
+
+.satellite-check-root {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 35;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  overflow: hidden;
+  font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  color: var(--text-primary);
+}
+
+/* ── Secondary Map Instance (Observed Side) ────────────── */
+.satellite-observed-map-viewport {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 5;
+  overflow: hidden;
+}
+
+.satellite-observed-map-canvas {
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* ── Anchor hotspot marker on observed satellite canvas ── */
+.satellite-anchor-marker {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: rgba(220, 38, 38, 0.25);
+  border: 1.5px solid #EF4444;
+  color: #FFFFFF;
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1;
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.6);
+  pointer-events: auto;
+  cursor: default;
+}
+
+/* ── High-Contrast Draggable Split Handle ───────────────── */
+.satellite-split-divider {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 44px;
+  margin-left: -22px;
+  cursor: ew-resize;
+  pointer-events: auto;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  touch-action: none;
+  user-select: none;
+  outline: none;
+}
+
+.satellite-split-line {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 21px;
+  width: 2px;
+  background: linear-gradient(180deg, #38BDF8 0%, #FFFFFF 50%, #38BDF8 100%);
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.8), 0 0 2px #000000;
+}
+
+.satellite-split-pill {
+  position: relative;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 12px;
+  background: rgba(11, 20, 32, 0.95);
+  color: #FFFFFF;
+  border: 2px solid #38BDF8;
+  border-radius: var(--radius-pill, 9999px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6), 0 0 16px rgba(56, 189, 248, 0.45);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: -0.2px;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  transition: transform 0.12s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.12s ease, border-color 0.12s ease;
+}
+
+html[data-theme="field-daylight"] .satellite-split-pill {
+  background: rgba(255, 255, 255, 0.98);
+  color: #0F172A;
+  border-color: var(--accent-primary, #22734F);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.15), 0 0 12px rgba(34, 115, 79, 0.3);
+}
+
+.satellite-split-center-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #38BDF8;
+  box-shadow: 0 0 8px #38BDF8;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+html[data-theme="field-daylight"] .satellite-split-center-dot {
+  background: var(--accent-primary, #22734F);
+  box-shadow: 0 0 6px var(--accent-primary, #22734F);
+}
+
+.satellite-split-divider:focus-visible .satellite-split-pill {
+  outline: 2px solid var(--focus-ring, #38BDF8);
+  outline-offset: 2px;
+  transform: scale(1.12);
+}
+
+.satellite-split-divider:hover .satellite-split-pill,
+.satellite-split-divider.is-dragging .satellite-split-pill {
+  transform: scale(1.12);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.7), 0 0 22px rgba(56, 189, 248, 0.65);
+  border-color: #38BDF8;
+}
+
+.satellite-split-grip-icon {
+  display: inline-flex;
+  align-items: center;
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: -0.3px;
+  opacity: 0.95;
+}
+
+/* ── Top Floating Comparison Header Bar (Dual-Side Badges) ── */
+.satellite-top-banner {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  right: 10px;
+  z-index: 35;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  pointer-events: none;
+  width: auto;
+  box-sizing: border-box;
+}
+
+.satellite-side-pill {
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 5px 10px;
+  border-radius: 12px;
+  background: rgba(11, 20, 32, 0.90);
+  color: #FFFFFF;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.45);
+  box-sizing: border-box;
+  overflow: hidden;
+  transition: transform 0.15s ease;
+}
+
+html[data-theme="night-watch"] .satellite-side-pill {
+  background: rgba(10, 22, 34, 0.92);
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+html[data-theme="forest"] .satellite-side-pill {
+  background: rgba(12, 28, 22, 0.92);
+  border-color: rgba(34, 197, 94, 0.22);
+}
+
+html[data-theme="field-daylight"] .satellite-side-pill {
+  background: rgba(255, 255, 255, 0.96);
+  color: #0F172A;
+  border-color: rgba(0, 40, 20, 0.14);
+  box-shadow: 0 4px 18px rgba(18, 50, 30, 0.12);
+}
+
+.satellite-side-pill.observed {
+  flex: 0 1 auto;
+  max-width: calc(50% - 10px);
+  min-width: 0;
+  border-left: 3.5px solid #38BDF8;
+  border-color: rgba(56, 189, 248, 0.45);
+}
+
+.satellite-top-right-cluster {
+  flex: 0 1 auto;
+  max-width: calc(50% - 10px);
+  min-width: 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+  gap: 6px;
+  pointer-events: auto;
+  box-sizing: border-box;
+}
+
+.satellite-side-pill.modelled {
+  flex: 1 1 auto;
+  min-width: 0;
+  border-right: 3.5px solid #F97316;
+  border-color: rgba(249, 115, 22, 0.45);
+  text-align: right;
+  align-items: flex-end;
+}
+
+.satellite-pill-primary {
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.3;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  width: 100%;
+  overflow: hidden;
+}
+
+.satellite-pill-title {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.satellite-pill-secondary {
+  font-size: 9.5px;
+  opacity: 0.75;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+  width: 100%;
+}
+
+.satellite-pill-tag {
+  font-size: 8.5px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  padding: 1px 5px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+
+.satellite-pill-tag.observed {
+  background: rgba(56, 189, 248, 0.2);
+  color: #38BDF8;
+  border: 1px solid rgba(56, 189, 248, 0.4);
+}
+
+.satellite-pill-tag.modelled {
+  background: rgba(249, 115, 22, 0.2);
+  color: #F97316;
+  border: 1px solid rgba(249, 115, 22, 0.4);
+}
+
+.satellite-pill-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.satellite-pill-dot.observed {
+  background: #38BDF8;
+  box-shadow: 0 0 8px #38BDF8;
+}
+
+.satellite-pill-dot.modelled {
+  background: #F97316;
+  box-shadow: 0 0 8px #F97316;
+}
+
+.satellite-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+  pointer-events: auto;
+}
+
+.satellite-expand-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 8px;
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(11, 20, 32, 0.88);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  color: #FFFFFF;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+html[data-theme="forest"] .satellite-expand-btn {
+  background: rgba(12, 28, 22, 0.88);
+  border-color: rgba(34, 197, 94, 0.22);
+}
+
+html[data-theme="field-daylight"] .satellite-expand-btn {
+  background: rgba(255, 255, 255, 0.94);
+  color: #0F172A;
+  border-color: rgba(0, 40, 20, 0.16);
+}
+
+.satellite-expand-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-0.5px);
+}
+
+html[data-theme="field-daylight"] .satellite-expand-btn:hover {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+.satellite-close-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 10px;
+  background: rgba(11, 20, 32, 0.88);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  color: #FFFFFF;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 12;
+  pointer-events: auto;
+}
+
+html[data-theme="forest"] .satellite-close-btn {
+  background: rgba(12, 28, 22, 0.88);
+  border-color: rgba(34, 197, 94, 0.22);
+}
+
+html[data-theme="field-daylight"] .satellite-close-btn {
+  background: rgba(255, 255, 255, 0.94);
+  color: #0F172A;
+  border-color: rgba(0, 40, 20, 0.16);
+}
+
+.satellite-close-btn:hover {
+  transform: scale(1.06);
+  background: #EF4444;
+  color: #FFFFFF;
+  border-color: transparent;
+}
+
+/* ── Status Banners (Offline, Missing, Error) ───────────── */
+.satellite-state-banner {
+  pointer-events: auto;
+  position: absolute;
+  top: 60px;
+  left: 14px;
+  max-width: 420px;
+  padding: 8px 12px;
+  border-radius: var(--radius-card-sm, 12px);
+  background: rgba(11, 20, 32, 0.94);
+  color: #FFFFFF;
+  backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+  z-index: 35;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+html[data-theme="field-daylight"] .satellite-state-banner {
+  background: rgba(255, 255, 255, 0.96);
+  color: #1A2421;
+  border-color: rgba(0, 40, 20, 0.16);
+}
+
+.satellite-state-content {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 11.5px;
+  line-height: 1.35;
+}
+
+.satellite-state-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+.satellite-btn-action {
+  padding: 4px 8px;
+  font-size: 10.5px;
+  font-weight: 600;
+  border-radius: var(--radius-btn, 8px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.12);
+  color: inherit;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.satellite-btn-action:hover {
+  background: rgba(255, 255, 255, 0.22);
+}
+
+/* ── Bottom Floating Controls Dock (Glass Island + Micro-Bar) ── */
+.satellite-bottom-dock {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(100% - 24px);
+  max-width: 860px;
+  z-index: 35;
+  pointer-events: auto;
+  padding: 7px 12px 6px 12px;
+  border-radius: 16px;
+  background: rgba(11, 20, 32, 0.92);
+  color: #FFFFFF;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+html[data-theme="night-watch"] .satellite-bottom-dock {
+  background: rgba(10, 22, 34, 0.94);
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+html[data-theme="field-daylight"] .satellite-bottom-dock {
+  background: rgba(255, 255, 255, 0.96);
+  color: #0F172A;
+  border-color: rgba(0, 40, 20, 0.14);
+  box-shadow: 0 12px 36px rgba(18, 50, 30, 0.15);
+}
+
+/* Row 1: Command Capsule */
+.satellite-command-capsule {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-height: 32px;
+}
+
+.satellite-capsule-divider {
+  width: 1px;
+  height: 18px;
+  background: rgba(255, 255, 255, 0.14);
+  flex-shrink: 0;
+}
+
+html[data-theme="field-daylight"] .satellite-capsule-divider {
+  background: rgba(0, 40, 20, 0.12);
+}
+
+/* Mode toggle: Swipe vs Fade */
+.satellite-mode-toggle {
+  display: inline-flex;
+  padding: 2px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: var(--radius-pill, 9999px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+html[data-theme="field-daylight"] .satellite-mode-toggle {
+  background: rgba(0, 0, 0, 0.06);
+  border-color: rgba(0, 40, 20, 0.08);
+}
+
+.satellite-mode-btn {
+  padding: 4px 11px;
+  font-size: 11px;
+  font-weight: 700;
+  border: none;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.7);
+  border-radius: var(--radius-pill, 9999px);
+  cursor: pointer;
+  min-height: 24px;
+  transition: all 0.15s ease;
+}
+
+html[data-theme="field-daylight"] .satellite-mode-btn {
+  color: var(--text-secondary);
+}
+
+.satellite-mode-btn.active {
+  background: #38BDF8;
+  color: #0B1420;
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.45);
+}
+
+html[data-theme="field-daylight"] .satellite-mode-btn.active {
+  background: var(--accent-primary, #22734F);
+  color: #FFFFFF;
+}
+
+/* Date Stepper Controls */
+.satellite-date-stepper {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-pill, 9999px);
+  padding: 1px 4px;
+}
+
+html[data-theme="field-daylight"] .satellite-date-stepper {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 40, 20, 0.08);
+}
+
+.satellite-step-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.satellite-step-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+html[data-theme="field-daylight"] .satellite-step-btn:hover:not(:disabled) {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+.satellite-step-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.satellite-date-input {
+  border: none;
+  background: transparent;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  color: inherit;
+  padding: 2px 4px;
+  cursor: pointer;
+  outline: none;
+}
+
+.satellite-date-input:focus-visible {
+  border-radius: 4px;
+  outline: 2px solid var(--focus-ring, #38BDF8);
+}
+
+/* Reset to model time button */
+.satellite-btn-reset-time {
+  padding: 3px 9px;
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: var(--radius-pill, 9999px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+  color: inherit;
+  cursor: pointer;
+  min-height: 24px;
+  display: inline-flex;
+  align-items: center;
+  transition: all 0.15s ease;
+}
+
+html[data-theme="field-daylight"] .satellite-btn-reset-time {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 40, 20, 0.1);
+}
+
+.satellite-btn-reset-time:hover {
+  background: rgba(56, 189, 248, 0.2);
+  color: #38BDF8;
+  border-color: #38BDF8;
+}
+
+html[data-theme="field-daylight"] .satellite-btn-reset-time:hover {
+  background: rgba(34, 115, 79, 0.15);
+  color: var(--accent-text, #1A4433);
+  border-color: var(--accent-primary, #22734F);
+}
+
+/* Horizon hours selector */
+.satellite-horizon-chips {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.satellite-horizon-btn {
+  padding: 3px 8px;
+  font-size: 10.5px;
+  font-weight: 700;
+  border-radius: var(--radius-pill, 9999px);
+  min-width: 28px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.05);
+  color: inherit;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+html[data-theme="field-daylight"] .satellite-horizon-btn {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 40, 20, 0.08);
+}
+
+.satellite-horizon-btn:hover {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.satellite-horizon-btn.active {
+  background: rgba(249, 115, 22, 0.3);
+  border-color: #F97316;
+  color: #FFEDD5;
+  box-shadow: 0 0 10px rgba(249, 115, 22, 0.4);
+}
+
+html[data-theme="field-daylight"] .satellite-horizon-btn.active {
+  background: #F97316;
+  color: #FFFFFF;
+}
+
+/* Sensor dropdown selector */
+.satellite-sensor-select {
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  color: inherit;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 8px;
+  padding: 3px 8px;
+  cursor: pointer;
+  min-height: 26px;
+  outline: none;
+}
+
+html[data-theme="field-daylight"] .satellite-sensor-select {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 40, 20, 0.1);
+}
+
+.satellite-sensor-select:focus-visible {
+  outline: 2px solid var(--focus-ring, #38BDF8);
+}
+
+/* Fade mode Opacity Slider */
+.satellite-fade-slider-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 3px 4px;
+  width: 100%;
+}
+
+.satellite-fade-label {
+  font-size: 10.5px;
+  font-weight: 700;
+  opacity: 0.85;
+  white-space: nowrap;
+}
+
+.satellite-fade-range {
+  flex: 1;
+  height: 5px;
+  border-radius: var(--radius-pill, 9999px);
+  background: rgba(255, 255, 255, 0.18);
+  cursor: pointer;
+  accent-color: #38BDF8;
+}
+
+html[data-theme="field-daylight"] .satellite-fade-range {
+  background: rgba(0, 0, 0, 0.1);
+  accent-color: var(--accent-primary, #22734F);
+}
+
+/* Row 2: Quiet Micro-Bar */
+.satellite-micro-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding-top: 5px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 10px;
+  color: var(--text-tertiary, #94A3B8);
+  line-height: 1.25;
+}
+
+html[data-theme="field-daylight"] .satellite-micro-bar {
+  border-color: rgba(0, 40, 20, 0.07);
+}
+
+.satellite-micro-bar-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.satellite-composite-notice {
+  font-size: 10px;
+  opacity: 0.9;
+}
+
+.satellite-info-trigger-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 1px 6px;
+  border-radius: var(--radius-pill, 9999px);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.06);
+  color: inherit;
+  cursor: pointer;
+  font-size: 10px;
+  font-weight: 700;
+  transition: all 0.15s ease;
+}
+
+html[data-theme="field-daylight"] .satellite-info-trigger-btn {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 40, 20, 0.1);
+}
+
+.satellite-info-trigger-btn:hover {
+  background: rgba(56, 189, 248, 0.2);
+  color: #38BDF8;
+}
+
+.satellite-worldview-link {
+  color: #38BDF8;
+  text-decoration: none;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  transition: opacity 0.15s ease;
+}
+
+html[data-theme="field-daylight"] .satellite-worldview-link {
+  color: var(--accent-primary, #22734F);
+}
+
+.satellite-worldview-link:hover {
+  text-decoration: underline;
+  opacity: 0.85;
+}
+
+/* Official NASA GIBS Acknowledgement text */
+.satellite-gibs-acknowledgement-line {
+  font-size: 9.5px;
+  line-height: 1.25;
+  opacity: 0.75;
+  text-align: right;
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.satellite-gibs-acknowledgement-line a {
+  color: inherit;
+  text-decoration: underline;
+}
+
+/* ── Honesty Info Popover ───────────────────────────────── */
+.satellite-info-popover {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 12px;
+  right: 12px;
+  max-width: 520px;
+  padding: 14px 16px;
+  border-radius: var(--radius-card-sm, 12px);
+  background: rgba(11, 20, 32, 0.98);
+  color: #FFFFFF;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 11.5px;
+  line-height: 1.45;
+}
+
+html[data-theme="night-watch"] .satellite-info-popover {
+  background: rgba(10, 22, 34, 0.98);
+}
+
+html[data-theme="field-daylight"] .satellite-info-popover {
+  background: rgba(255, 255, 255, 0.98);
+  color: #0F172A;
+  border-color: rgba(0, 40, 20, 0.16);
+  box-shadow: 0 16px 40px rgba(18, 50, 30, 0.18);
+}
+
+.satellite-popover-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.satellite-popover-title {
+  font-weight: 700;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.satellite-popover-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  opacity: 0.75;
+}
+
+.satellite-popover-close:hover {
+  background: rgba(255, 255, 255, 0.1);
+  opacity: 1;
+}
+
+.satellite-popover-citation {
+  margin-top: 4px;
+  padding-top: 6px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: 10px;
+  opacity: 0.8;
+  line-height: 1.35;
+}
+
+/* ── Mid-size / Dashboard Card Container Adaptations (< 900px) ── */
+@media (max-width: 900px) {
+  .satellite-btn-text {
+    display: none;
+  }
+  .satellite-expand-btn {
+    padding: 5px 7px;
+  }
+  .satellite-side-pill {
+    padding: 4px 8px;
+  }
+  .satellite-pill-primary {
+    font-size: 10px;
+    gap: 4px;
+  }
+  .satellite-pill-tag {
+    font-size: 8px;
+    padding: 1px 4px;
+  }
+  .satellite-pill-secondary {
+    font-size: 9px;
+  }
+  .satellite-bottom-dock {
+    padding: 5px 8px 4px 8px;
+  }
+  .satellite-command-capsule {
+    gap: 4px 6px;
+  }
+  .satellite-mode-btn {
+    padding: 3px 8px;
+    font-size: 10px;
+  }
+  .satellite-date-input {
+    font-size: 10px;
+  }
+  .satellite-btn-reset-time {
+    font-size: 10px;
+    padding: 2px 7px;
+  }
+  .satellite-horizon-chips {
+    gap: 2px;
+  }
+  .satellite-horizon-btn {
+    font-size: 10px;
+    padding: 2px 6px;
+    min-width: 24px;
+  }
+  .satellite-sensor-select {
+    font-size: 10px;
+    padding: 2px 6px;
+  }
+}
+
+/* ── Responsive Mobile (390 px) Adaptations ─────────────── */
+@media (max-width: 640px) {
+  .satellite-top-banner {
+    padding: 8px 10px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+  }
+
+  .satellite-side-pill {
+    max-width: 100%;
+    width: 100%;
+  }
+
+  .satellite-top-right-cluster {
+    max-width: 100%;
+    width: 100%;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .satellite-side-pill.modelled {
+    text-align: left;
+    align-items: flex-start;
+    border-right: none;
+    border-left: 3.5px solid #F97316;
+  }
+
+  .satellite-pill-primary {
+    font-size: 10.5px;
+  }
+
+  .satellite-pill-secondary {
+    display: none;
+  }
+
+  .satellite-btn-text {
+    display: none;
+  }
+
+  .satellite-expand-btn {
+    padding: 5px 8px;
+  }
+
+  .satellite-bottom-dock {
+    left: 6px;
+    right: 6px;
+    bottom: 6px;
+    width: auto;
+    transform: none;
+    padding: 6px 8px;
+    border-radius: 14px;
+    gap: 6px;
+  }
+
+  .satellite-command-capsule {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+  }
+
+  .satellite-capsule-divider {
+    display: none;
+  }
+
+  .satellite-horizon-chips {
+    justify-content: space-between;
+    width: 100%;
+  }
+
+  .satellite-horizon-btn {
+    flex: 1;
+    text-align: center;
+    padding: 3px 4px;
+  }
+
+  .satellite-sensor-select {
+    width: 100%;
+  }
+
+  .satellite-micro-bar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .satellite-gibs-acknowledgement-line {
+    white-space: normal;
+    text-align: left;
+  }
+
+  .satellite-info-popover {
+    left: 6px;
+    right: 6px;
+    bottom: calc(100% + 4px);
+  }
+}
+
+/* ── Reduced Motion ─────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .satellite-split-pill,
+  .satellite-close-btn,
+  .satellite-expand-btn,
+  .satellite-btn-action,
+  .satellite-btn-reset-time,
+  .satellite-mode-btn,
+  .satellite-horizon-btn {
+    transition: none !important;
+  }
+}
