@@ -497,8 +497,9 @@ export default function MapContainer() {
 
       <HeatmapControls data={heatmap.data} enabled={heatmap.enabled} onToggle={heatmap.setEnabled} opacity={heatmap.opacity} onOpacity={heatmap.setOpacity} onFit={webGlSupported ? heatmap.fit : undefined} bounds={webGlSupported ? heatmap.bounds : null} loading={loading} error={feedErrors.aqi} />
 
-      {/* Executive 3-Step Airshed Storyline Ribbon */}
-      <div className="map-storyline-ribbon" role="region" aria-label="Airshed Flow Storyline">
+      {/* Executive 3-Step Airshed Storyline Ribbon (hidden during Satellite Check for full canvas immersion) */}
+      {!satelliteCheck.isOpen && (
+        <div className="map-storyline-ribbon" role="region" aria-label="Airshed Flow Storyline">
         <div className="storyline-node origin" title="Active fire clusters identified by thermal satellite detections">
           <span className="story-step-badge">1. Origin</span>
           <div className="story-step-text">
@@ -593,6 +594,7 @@ export default function MapContainer() {
           </div>
         </div>
       </div>
+    )}
 
       {showMapGuide && (
         <div className="map-guide-overlay" onClick={() => setShowMapGuide(false)}>
@@ -677,6 +679,7 @@ export default function MapContainer() {
               setBasemapMode={setBasemapMode}
               effectiveTheme={effectiveTheme}
               onClose={satelliteCheck.closeSatelliteCheck}
+              onExpandFullMap={() => setActiveTab('map')}
             />
           </Suspense>
         )}
@@ -769,48 +772,50 @@ export default function MapContainer() {
         </div>
 
         {/* Micro-compact translucent legend with clear 4-band corridor color ramp & ETA */}
-        <div className="map-micro-legend">
-          <button
-            className={`micro-legend-scope-btn ${scopeFilter === 'india' ? 'active' : ''}`}
-            onClick={(e) => {
-              e.stopPropagation()
-              setScopeFilter(prev => prev === 'india' ? 'all' : 'india')
-            }}
-            title={scopeFilter === 'india' ? "Viewing India Scope — click for Full Regional Airshed" : "Viewing Full Airshed — click for India Scope"}
-            type="button"
-          >
-            <span>{scopeFilter === 'india' ? '🇮🇳 India Scope' : '🌐 Full Airshed'}</span>
-          </button>
-          <div className="micro-legend-divider" />
-          <div className="micro-legend-item">
-            <span className="micro-legend-glyph" style={{ color: 'var(--risk-critical, #EF4444)', fontWeight: 800 }}>⊕</span>
-            <span>{sources?.sources.filter(s => isValidSubcontinentCoord(s.lat, s.lon) && (scopeFilter === 'all' || s.territory === 'india')).length ?? 0} source candidates</span>
+        {!satelliteCheck.isOpen && (
+          <div className="map-micro-legend">
+            <button
+              className={`micro-legend-scope-btn ${scopeFilter === 'india' ? 'active' : ''}`}
+              onClick={(e) => {
+                e.stopPropagation()
+                setScopeFilter(prev => prev === 'india' ? 'all' : 'india')
+              }}
+              title={scopeFilter === 'india' ? "Viewing India Scope — click for Full Regional Airshed" : "Viewing Full Airshed — click for India Scope"}
+              type="button"
+            >
+              <span>{scopeFilter === 'india' ? '🇮🇳 India Scope' : '🌐 Full Airshed'}</span>
+            </button>
+            <div className="micro-legend-divider" />
+            <div className="micro-legend-item">
+              <span className="micro-legend-glyph" style={{ color: 'var(--risk-critical, #EF4444)', fontWeight: 800 }}>⊕</span>
+              <span>{sources?.sources.filter(s => isValidSubcontinentCoord(s.lat, s.lon) && (scopeFilter === 'all' || s.territory === 'india')).length ?? 0} source candidates</span>
+            </div>
+            <div className="micro-legend-item" title="0–2h immediate plume arrival band">
+              <span className="micro-legend-swatch" style={{ background: 'var(--plume-h0-2, #DC2626)', width: 8, height: 7 }} />
+              <span>0-2h</span>
+            </div>
+            <div className="micro-legend-item" title="2–4h dispersion corridor band">
+              <span className="micro-legend-swatch" style={{ background: 'var(--plume-h2-4, #EA580C)', width: 8, height: 7 }} />
+              <span>2-4h</span>
+            </div>
+            <div className="micro-legend-item" title="4–8h forward plume band">
+              <span className="micro-legend-swatch" style={{ background: 'var(--plume-h4-8, #D97706)', width: 8, height: 7 }} />
+              <span>4-8h</span>
+            </div>
+            <div className="micro-legend-item" title="8–24h downstream dispersion band">
+              <span className="micro-legend-swatch" style={{ background: 'var(--plume-h8-24, #CA8A04)', width: 8, height: 7 }} />
+              <span>8-24h</span>
+            </div>
+            <div className="micro-legend-item" title="Centerline with milestone ETA ticks">
+              <span style={{ color: 'var(--accent-hover, var(--brand-dark))', fontWeight: 800, fontSize: '9px', letterSpacing: '-1px' }}>---</span>
+              <span>ETA</span>
+            </div>
+            <div className="micro-legend-item">
+              <div className="micro-legend-swatch soi" />
+              <span>Repository boundary</span>
+            </div>
           </div>
-          <div className="micro-legend-item" title="0–2h immediate plume arrival band">
-            <span className="micro-legend-swatch" style={{ background: 'var(--plume-h0-2, #DC2626)', width: 8, height: 7 }} />
-            <span>0-2h</span>
-          </div>
-          <div className="micro-legend-item" title="2–4h dispersion corridor band">
-            <span className="micro-legend-swatch" style={{ background: 'var(--plume-h2-4, #EA580C)', width: 8, height: 7 }} />
-            <span>2-4h</span>
-          </div>
-          <div className="micro-legend-item" title="4–8h forward plume band">
-            <span className="micro-legend-swatch" style={{ background: 'var(--plume-h4-8, #D97706)', width: 8, height: 7 }} />
-            <span>4-8h</span>
-          </div>
-          <div className="micro-legend-item" title="8–24h downstream dispersion band">
-            <span className="micro-legend-swatch" style={{ background: 'var(--plume-h8-24, #CA8A04)', width: 8, height: 7 }} />
-            <span>8-24h</span>
-          </div>
-          <div className="micro-legend-item" title="Centerline with milestone ETA ticks">
-            <span style={{ color: 'var(--accent-hover, var(--brand-dark))', fontWeight: 800, fontSize: '9px', letterSpacing: '-1px' }}>---</span>
-            <span>ETA</span>
-          </div>
-          <div className="micro-legend-item">
-            <div className="micro-legend-swatch soi" />
-            <span>Repository boundary</span>
-          </div>
-        </div>
+        )}
       </div>
 
       {/* Sleek Bottom Status Strip */}

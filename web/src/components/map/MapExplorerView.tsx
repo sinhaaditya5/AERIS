@@ -1011,54 +1011,56 @@ export default function MapExplorerView() {
         )}
 
         {/* ── Left Bottom Floating Geospatial Intelligence Legend ─────────── */}
-        <div className="map-floating-legend" onClick={(e) => e.stopPropagation()}>
-          <div className="legend-head">
-            <div className="legend-title">
-              <span className="legend-badge-dot" />
-              <span>Map Intelligence Legend</span>
+        {!satelliteCheck.isOpen && (
+          <div className="map-floating-legend" onClick={(e) => e.stopPropagation()}>
+            <div className="legend-head">
+              <div className="legend-title">
+                <span className="legend-badge-dot" />
+                <span>Map Intelligence Legend</span>
+              </div>
+              <button
+                className="legend-toggle-btn"
+                onClick={() => setShowLegend(!showLegend)}
+                aria-expanded={showLegend}
+                type="button"
+                title={showLegend ? "Collapse legend" : "Expand legend"}
+              >
+                {showLegend ? '−' : '+'}
+              </button>
             </div>
-            <button
-              className="legend-toggle-btn"
-              onClick={() => setShowLegend(!showLegend)}
-              aria-expanded={showLegend}
-              type="button"
-              title={showLegend ? "Collapse legend" : "Expand legend"}
-            >
-              {showLegend ? '−' : '+'}
-            </button>
+
+            {showLegend && (
+              <div className="legend-body">
+                <div className="legend-group">
+                  <span className="legend-group-title">🔥 Fire FRP display tiers</span>
+                  <div className="legend-items">
+                    <div className="legend-item"><span className="legend-swatch severe" /><span>Severe (≥200 MW)</span></div>
+                    <div className="legend-item"><span className="legend-swatch high" /><span>High (50–&lt;200 MW)</span></div>
+                    <div className="legend-item"><span className="legend-swatch moderate" /><span>Moderate (&lt;50 MW)</span></div>
+                  </div>
+                </div>
+
+                <div className="legend-group">
+                  <span className="legend-group-title">💨 Smoke Plume (ETA)</span>
+                  <div className="legend-items">
+                    <div className="legend-item"><span className="legend-swatch plume-acute" /><span>0–2h band start</span></div>
+                    <div className="legend-item"><span className="legend-swatch plume-mid" /><span>2–4h band start</span></div>
+                    <div className="legend-item"><span className="legend-swatch plume-receptor" /><span>4–8h band start; 8–24h also available</span></div>
+                  </div>
+                </div>
+
+                <div className="legend-group">
+                  <span className="legend-group-title">📡 Monitoring Stations (AQI)</span>
+                  <div className="legend-items">
+                    <div className="legend-item"><span className="legend-swatch aqi-severe" /><span>Reported index &gt;300</span></div>
+                    <div className="legend-item"><span className="legend-swatch aqi-poor" /><span>Reported index 200–300</span></div>
+                    <div className="legend-item"><span className="legend-swatch aqi-mod" /><span>Reported index &lt;200</span></div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
-
-          {showLegend && (
-            <div className="legend-body">
-              <div className="legend-group">
-                <span className="legend-group-title">🔥 Fire FRP display tiers</span>
-                <div className="legend-items">
-                  <div className="legend-item"><span className="legend-swatch severe" /><span>Severe (≥200 MW)</span></div>
-                  <div className="legend-item"><span className="legend-swatch high" /><span>High (50–&lt;200 MW)</span></div>
-                  <div className="legend-item"><span className="legend-swatch moderate" /><span>Moderate (&lt;50 MW)</span></div>
-                </div>
-              </div>
-
-              <div className="legend-group">
-                <span className="legend-group-title">💨 Smoke Plume (ETA)</span>
-                <div className="legend-items">
-                  <div className="legend-item"><span className="legend-swatch plume-acute" /><span>0–2h band start</span></div>
-                  <div className="legend-item"><span className="legend-swatch plume-mid" /><span>2–4h band start</span></div>
-                  <div className="legend-item"><span className="legend-swatch plume-receptor" /><span>4–8h band start; 8–24h also available</span></div>
-                </div>
-              </div>
-
-              <div className="legend-group">
-                <span className="legend-group-title">📡 Monitoring Stations (AQI)</span>
-                <div className="legend-items">
-                  <div className="legend-item"><span className="legend-swatch aqi-severe" /><span>Reported index &gt;300</span></div>
-                  <div className="legend-item"><span className="legend-swatch aqi-poor" /><span>Reported index 200–300</span></div>
-                  <div className="legend-item"><span className="legend-swatch aqi-mod" /><span>Reported index &lt;200</span></div>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
+        )}
 
         {/* ── Right Bottom Zoom & Camera Navigation Control ────────────────── */}
         <div className="explorer-nav-dock" onClick={(e) => e.stopPropagation()}>
@@ -1091,18 +1093,20 @@ export default function MapExplorerView() {
       </div>
 
       {/* ── Interactive Collapsible Telemetry & Facility Tray ───────────── */}
-      <ExplorerTelemetryTray
-        isExpanded={isTrayExpanded}
-        onToggleExpanded={() => setIsTrayExpanded(!isTrayExpanded)}
-        rankedSites={rankedSites}
-        sources={sources}
-        stations={aqi?.stations ?? null}
-        corridor={corridor}
-        etaHours={etaHours}
-        exposedPopulation={exposedPopulation}
-        onFlyTo={flyToPreset}
-        onSelectFeature={setSelectedFeature}
-      />
+      {!satelliteCheck.isOpen && (
+        <ExplorerTelemetryTray
+          isExpanded={isTrayExpanded}
+          onToggleExpanded={() => setIsTrayExpanded(!isTrayExpanded)}
+          rankedSites={rankedSites}
+          sources={sources}
+          stations={aqi?.stations ?? null}
+          corridor={corridor}
+          etaHours={etaHours}
+          exposedPopulation={exposedPopulation}
+          onFlyTo={flyToPreset}
+          onSelectFeature={setSelectedFeature}
+        />
+      )}
     </div>
   )
 }

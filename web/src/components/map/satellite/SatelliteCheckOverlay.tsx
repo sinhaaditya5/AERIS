@@ -26,6 +26,8 @@ import {
   X,
   AlertCircle,
   HelpCircle,
+  Maximize2,
+  Minimize2,
 } from 'lucide-react'
 import './SatelliteCheckOverlay.css'
 
@@ -40,6 +42,7 @@ interface SatelliteCheckOverlayProps {
   setBasemapMode: (mode: BasemapMode) => void
   effectiveTheme: 'forest' | 'night-watch' | 'field-daylight'
   onClose: () => void
+  onExpandFullMap?: () => void
 }
 
 export default function SatelliteCheckOverlay({
@@ -53,6 +56,7 @@ export default function SatelliteCheckOverlay({
   setBasemapMode,
   effectiveTheme,
   onClose,
+  onExpandFullMap,
 }: SatelliteCheckOverlayProps) {
   const {
     mode,
@@ -89,6 +93,30 @@ export default function SatelliteCheckOverlay({
   const activeLayer = resolveGibsLayer(layerId)
   const todayUtc = useMemo(() => formatUtcDateString(new Date()), [])
   const isToday = date >= todayUtc
+
+  const [isFullscreen, setIsFullscreen] = useState(false)
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(Boolean(document.fullscreenElement))
+    }
+    document.addEventListener('fullscreenchange', handleFullscreenChange)
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange)
+  }, [])
+
+  const handleToggleExpand = useCallback(() => {
+    if (onExpandFullMap) {
+      onExpandFullMap()
+      return
+    }
+    if (mapContainer) {
+      if (document.fullscreenElement) {
+        document.exitFullscreen().catch(() => {})
+      } else {
+        mapContainer.requestFullscreen().catch(() => {})
+      }
+    }
+  }, [onExpandFullMap, mapContainer])
 
   // ── 1. Basemap Neutralization on Entry, Restoration on Exit ─────────────────
   useEffect(() => {
@@ -431,6 +459,7 @@ export default function SatelliteCheckOverlay({
         >
           <div className="satellite-split-line" />
           <div className="satellite-split-pill">
+            <span className="satellite-split-center-dot" aria-hidden="true" />
             <span className="satellite-split-grip-icon" aria-hidden="true">
               ◄ ║ ►
             </span>
@@ -440,35 +469,55 @@ export default function SatelliteCheckOverlay({
 
       {/* ── Top Comparison Banner ────────────────────────────────────────── */}
       <header className="satellite-top-banner">
-        <div className="satellite-labels-row">
-          <div className="satellite-side-pill observed">
-            <span className="satellite-pill-primary">
-              🛰️ Observed: NASA {activeLayer.sensor} true colour, {date} UTC
-            </span>
-            <span className="satellite-pill-secondary">
-              Daily daytime composite • {activeLayer.satellite}
-            </span>
+        <div className="satellite-unified-header-capsule">
+          <div className="satellite-labels-row">
+            <div className="satellite-side-pill observed">
+              <span className="satellite-pill-primary">
+                <span className="satellite-pill-dot observed" aria-hidden="true" />
+                🛰️ Observed: NASA {activeLayer.sensor} true colour, {date} UTC
+              </span>
+              <span className="satellite-pill-secondary">
+                Daily daytime composite • {activeLayer.satellite}
+              </span>
+            </div>
+
+            <div className="satellite-header-divider" aria-hidden="true" />
+
+            <div className="satellite-side-pill modelled">
+              <span className="satellite-pill-primary">
+                <span className="satellite-pill-dot modelled" aria-hidden="true" />
+                Modelled: plume at T+{timeHorizon}h, uncalibrated baseline
+              </span>
+              <span className="satellite-pill-secondary">
+                Dispersion corridor • neutral basemap
+              </span>
+            </div>
           </div>
 
-          <div className="satellite-side-pill modelled">
-            <span className="satellite-pill-primary">
-              Modelled: plume at T+{timeHorizon}h, uncalibrated baseline
-            </span>
-            <span className="satellite-pill-secondary">
-              Dispersion corridor • neutral basemap
-            </span>
+          <div className="satellite-header-actions">
+            {(onExpandFullMap || mapContainer) && (
+              <button
+                type="button"
+                className="satellite-expand-btn"
+                onClick={handleToggleExpand}
+                title={onExpandFullMap ? "Expand into Full Map Explorer" : isFullscreen ? "Exit full screen" : "Toggle full screen immersion"}
+                aria-label={onExpandFullMap ? "Expand to full map" : isFullscreen ? "Exit full screen" : "Toggle full screen immersion"}
+              >
+                {isFullscreen ? <Minimize2 size={13} /> : <Maximize2 size={13} />}
+                <span className="satellite-btn-text">{onExpandFullMap ? 'Full Map' : isFullscreen ? 'Exit Full' : 'Fullscreen'}</span>
+              </button>
+            )}
+            <button
+              type="button"
+              className="satellite-close-btn"
+              onClick={onClose}
+              title="Exit Satellite Check (Esc)"
+              aria-label="Exit Satellite Check"
+            >
+              <X size={15} />
+            </button>
           </div>
         </div>
-
-        <button
-          type="button"
-          className="satellite-close-btn"
-          onClick={onClose}
-          title="Exit Satellite Check (Esc)"
-          aria-label="Exit Satellite Check"
-        >
-          <X size={18} />
-        </button>
       </header>
 
       {/* ── Offline / No Imagery / Error Banners ───────────────────────────── */}
@@ -515,107 +564,108 @@ export default function SatelliteCheckOverlay({
 
       {/* ── Bottom Controls Dock / Sheet ──────────────────────────────────── */}
       <footer className="satellite-bottom-dock">
-        {/* Row 1: Mode toggle, Date stepper, Match model time, Sensor select */}
-        <div className="satellite-controls-primary-row">
-          <div className="satellite-control-cluster">
-            {/* Swipe vs Fade Segmented Control */}
-            <div className="satellite-mode-toggle" role="group" aria-label="Comparison display mode">
-              <button
-                type="button"
-                className={`satellite-mode-btn ${mode === 'swipe' ? 'active' : ''}`}
-                onClick={() => setMode('swipe')}
-                aria-pressed={mode === 'swipe'}
-                title="Swipe comparison mode: drag handle left/right"
-              >
-                Swipe
-              </button>
-              <button
-                type="button"
-                className={`satellite-mode-btn ${mode === 'fade' ? 'active' : ''}`}
-                onClick={() => setMode('fade')}
-                aria-pressed={mode === 'fade'}
-                title="Fade comparison mode: blend between Observed and Modelled"
-              >
-                Fade
-              </button>
-            </div>
-
-            {/* Date Stepper */}
-            <div className="satellite-date-stepper">
-              <button
-                type="button"
-                className="satellite-step-btn"
-                onClick={() => stepDate(-1)}
-                title="Previous day"
-                aria-label="Previous day"
-              >
-                <ChevronLeft size={16} />
-              </button>
-              <input
-                type="date"
-                className="satellite-date-input"
-                value={date}
-                max={todayUtc}
-                min={activeLayer.startDate}
-                onChange={(e) => setDate(e.target.value)}
-                aria-label="Select satellite observation date"
-              />
-              <button
-                type="button"
-                className="satellite-step-btn"
-                onClick={() => stepDate(1)}
-                disabled={date >= todayUtc}
-                title={date >= todayUtc ? "Cannot view future satellite dates" : "Next day"}
-                aria-label="Next day"
-              >
-                <ChevronRight size={16} />
-              </button>
-            </div>
-
-            {/* Reset to Model Time Button */}
+        {/* Row 1: Streamlined Command Capsule */}
+        <div className="satellite-command-capsule">
+          {/* Swipe vs Fade Segmented Control */}
+          <div className="satellite-mode-toggle" role="group" aria-label="Comparison display mode">
             <button
               type="button"
-              className="satellite-btn-reset-time"
-              onClick={() => resetToModelTime(corridor?.forecast_start, timeHorizon)}
-              title="Reset date to match model run forecast time"
+              className={`satellite-mode-btn ${mode === 'swipe' ? 'active' : ''}`}
+              onClick={() => setMode('swipe')}
+              aria-pressed={mode === 'swipe'}
+              title="Swipe comparison mode: drag handle left/right"
             >
-              <RotateCcw size={12} style={{ display: 'inline', marginRight: 4 }} />
-              Match model time
+              Swipe
+            </button>
+            <button
+              type="button"
+              className={`satellite-mode-btn ${mode === 'fade' ? 'active' : ''}`}
+              onClick={() => setMode('fade')}
+              aria-pressed={mode === 'fade'}
+              title="Fade comparison mode: blend between Observed and Modelled"
+            >
+              Fade
             </button>
           </div>
 
-          <div className="satellite-control-cluster">
-            {/* Horizon hours selector (+0h, +2h, +4h, +8h, +24h) */}
-            <div className="satellite-date-stepper" role="group" aria-label="Forecast horizon hours">
-              {[0, 2, 4, 8, 24].map((h) => (
-                <button
-                  key={h}
-                  type="button"
-                  className={`satellite-mode-btn ${timeHorizon === h ? 'active' : ''}`}
-                  onClick={() => setTimeHorizon(h as TimeHorizon)}
-                  aria-pressed={timeHorizon === h}
-                  title={`Focus model plume at T+${h}h`}
-                  style={{ padding: '4px 8px', minWidth: '32px' }}
-                >
-                  {h === 0 ? 'T+0' : `+${h}h`}
-                </button>
-              ))}
-            </div>
+          <div className="satellite-capsule-divider" aria-hidden="true" />
 
-            {/* Sensor Selection Dropdown */}
-            <select
-              className="satellite-sensor-select"
-              value={layerId}
-              onChange={(e) => setLayerId(e.target.value)}
-              aria-label="Select satellite sensor"
+          {/* Date Stepper */}
+          <div className="satellite-date-stepper">
+            <button
+              type="button"
+              className="satellite-step-btn"
+              onClick={() => stepDate(-1)}
+              title="Previous day"
+              aria-label="Previous day"
             >
-              {Object.values(GIBS_LAYERS).map((l) => (
-                <option key={l.id} value={l.id}>
-                  {l.name} ({l.nominalPassTime})
-                </option>
-              ))}
-            </select>
+              <ChevronLeft size={15} />
+            </button>
+            <input
+              type="date"
+              className="satellite-date-input"
+              value={date}
+              max={todayUtc}
+              min={activeLayer.startDate}
+              onChange={(e) => setDate(e.target.value)}
+              aria-label="Select satellite observation date"
+            />
+            <button
+              type="button"
+              className="satellite-step-btn"
+              onClick={() => stepDate(1)}
+              disabled={date >= todayUtc}
+              title={date >= todayUtc ? "Cannot view future satellite dates" : "Next day"}
+              aria-label="Next day"
+            >
+              <ChevronRight size={15} />
+            </button>
           </div>
+
+          {/* Reset to Model Time Button */}
+          <button
+            type="button"
+            className="satellite-btn-reset-time"
+            onClick={() => resetToModelTime(corridor?.forecast_start, timeHorizon)}
+            title="Reset date to match model run forecast time"
+          >
+            <RotateCcw size={11} style={{ display: 'inline', marginRight: 4 }} />
+            <span>Match model time</span>
+          </button>
+
+          <div className="satellite-capsule-divider" aria-hidden="true" />
+
+          {/* Horizon hours selector (+0h, +2h, +4h, +8h, +24h) */}
+          <div className="satellite-horizon-chips" role="group" aria-label="Forecast horizon hours">
+            {[0, 2, 4, 8, 24].map((h) => (
+              <button
+                key={h}
+                type="button"
+                className={`satellite-horizon-btn ${timeHorizon === h ? 'active' : ''}`}
+                onClick={() => setTimeHorizon(h as TimeHorizon)}
+                aria-pressed={timeHorizon === h}
+                title={`Focus model plume at T+${h}h`}
+              >
+                {h === 0 ? 'T+0' : `+${h}h`}
+              </button>
+            ))}
+          </div>
+
+          <div className="satellite-capsule-divider" aria-hidden="true" />
+
+          {/* Sensor Selection Dropdown */}
+          <select
+            className="satellite-sensor-select"
+            value={layerId}
+            onChange={(e) => setLayerId(e.target.value)}
+            aria-label="Select satellite sensor"
+          >
+            {Object.values(GIBS_LAYERS).map((l) => (
+              <option key={l.id} value={l.id}>
+                {l.name} ({l.nominalPassTime})
+              </option>
+            ))}
+          </select>
         </div>
 
         {/* Fade mode Opacity Slider */}
@@ -641,9 +691,9 @@ export default function SatelliteCheckOverlay({
           </div>
         )}
 
-        {/* Row 2: Honesty note, Info popover trigger, Worldview link, GIBS Acknowledgement */}
-        <div className="satellite-meta-row">
-          <div className="satellite-honesty-note">
+        {/* Row 2: Quiet Micro-Bar */}
+        <div className="satellite-micro-bar">
+          <div className="satellite-micro-bar-left">
             <span className="satellite-composite-notice">Daily composite of that UTC day. Compare by eye; not validation.</span>
             <button
               type="button"
@@ -653,21 +703,20 @@ export default function SatelliteCheckOverlay({
               aria-label="Scientific honesty notes regarding satellite imagery"
               aria-expanded={isInfoOpen}
             >
-              <Info size={12} />
+              <Info size={11} />
               <span>Info</span>
             </button>
+            <a
+              href={worldviewUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="satellite-worldview-link"
+              title="Open this date and region in official NASA Worldview"
+            >
+              <span>NASA Worldview</span>
+              <ExternalLink size={10} />
+            </a>
           </div>
-
-          <a
-            href={worldviewUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="satellite-worldview-link"
-            title="Open this date and region in official NASA Worldview"
-          >
-            <span>Open in NASA Worldview</span>
-            <ExternalLink size={12} />
-          </a>
 
           {/* Official NASA GIBS Acknowledgement */}
           <div className="satellite-gibs-acknowledgement-line satellite-ack-text">
@@ -710,6 +759,9 @@ export default function SatelliteCheckOverlay({
               <strong>Cloud cover:</strong> Meteorological cloud banks, low fog, and nocturnal inversions can obscure
               smoke trails from orbit. Compare what you see by eye; never assume lack of visible smoke equates to clean air.
             </p>
+            <div className="satellite-popover-citation">
+              <strong>Official Acknowledgement:</strong> {NASA_GIBS_ACKNOWLEDGEMENT}
+            </div>
           </div>
         )}
       </footer>
