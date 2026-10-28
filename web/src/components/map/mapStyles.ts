@@ -264,5 +264,104 @@ export function setupMapLayers(map: Map, mode: BasemapMode) {
       },
     })
   }
+
+  // 3. Atmospheric wind flow vectors
+  if (!map.getSource('wind-vectors')) {
+    map.addSource('wind-vectors', {
+      type: 'geojson',
+      data: { type: 'FeatureCollection', features: [] },
+    })
+  }
+
+  if (!map.getLayer('wind-vectors-line')) {
+    map.addLayer({
+      id: 'wind-vectors-line',
+      type: 'line',
+      source: 'wind-vectors',
+      paint: {
+        'line-color': isDarkOrSat ? '#38BDF8' : '#0284C7',
+        'line-width': 1.4,
+        'line-opacity': isDarkOrSat ? 0.45 : 0.40,
+        'line-dasharray': [3, 3],
+      },
+    })
+  }
+
+  // 4. Sensitive receptor facilities (Schools & Hospitals) WebGL layer
+  if (!map.getSource('ranked-receptors')) {
+    map.addSource('ranked-receptors', {
+      type: 'geojson',
+      data: { type: 'FeatureCollection', features: [] },
+    })
+  }
+
+  // Selected site pulse/focus halo
+  if (!map.getLayer('receptor-selection-halo')) {
+    map.addLayer({
+      id: 'receptor-selection-halo',
+      type: 'circle',
+      source: 'ranked-receptors',
+      filter: ['==', ['get', 'site_id'], ''],
+      paint: {
+        'circle-radius': [
+          'interpolate', ['linear'], ['zoom'],
+          5, 8,
+          8, 12,
+          12, 16,
+        ],
+        'circle-color': 'transparent',
+        'circle-stroke-width': 2.5,
+        'circle-stroke-color': '#38BDF8',
+        'circle-stroke-opacity': 0.95,
+      },
+    })
+  }
+
+  // High-performance receptor circle markers
+  if (!map.getLayer('receptor-circles')) {
+    map.addLayer({
+      id: 'receptor-circles',
+      type: 'circle',
+      source: 'ranked-receptors',
+      paint: {
+        'circle-radius': [
+          'interpolate', ['linear'], ['zoom'],
+          5, 3.2,
+          8, 5.0,
+          12, 7.5,
+        ],
+        'circle-color': [
+          'match',
+          ['get', 'risk_tier'],
+          'very-high', '#DC2626',
+          'high', '#EA580C',
+          'medium', '#D97706',
+          '#16A34A',
+        ],
+        'circle-stroke-width': 1.2,
+        'circle-stroke-color': isDarkOrSat ? '#0F172A' : '#FFFFFF',
+        'circle-opacity': 0.88,
+      },
+    })
+  }
+
+  // Symbol badges at higher zoom levels
+  if (!map.getLayer('receptor-symbols')) {
+    map.addLayer({
+      id: 'receptor-symbols',
+      type: 'symbol',
+      source: 'ranked-receptors',
+      minzoom: 8.5,
+      layout: {
+        'text-field': ['case', ['==', ['get', 'type'], 'hospital'], '🏥', '🏫'],
+        'text-size': 13,
+        'text-offset': [0, -1.2],
+        'text-anchor': 'bottom',
+        'text-allow-overlap': false,
+        'text-ignore-placement': false,
+        'text-padding': 6,
+      },
+    })
+  }
 }
 

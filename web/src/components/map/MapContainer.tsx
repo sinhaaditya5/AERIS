@@ -4,7 +4,7 @@ import { Map, Marker, Popup, setWorkerUrl } from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?url'
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Layers, Maximize2, Info, HelpCircle, X } from 'lucide-react'
+import { Layers, Maximize2, Info, HelpCircle, X, Compass } from 'lucide-react'
 import { useAeris } from '@/services/dataContext'
 import { getRiskLevel, riskLabel, WindFileSchema } from '@/types/schemas'
 import { getFeedFreshness } from '@/services/api'
@@ -18,6 +18,7 @@ import { useScientificLayers } from './useScientificLayers'
 import { escapeHtml } from './html'
 import { useTheme } from '@/services/themeContext'
 import { applyThemeToMap } from './mapThemeBridge'
+import MapInspectorHud, { type InspectorTarget } from './MapInspectorHud'
 import './MapContainer.css'
 import { useSatelliteCheck } from '@/services/satellite/satelliteContext'
 
@@ -40,6 +41,9 @@ export default function MapContainer() {
   const [isLayerMenuOpen, setIsLayerMenuOpen] = useState(false)
   const [showMapGuide, setShowMapGuide]       = useState(false)
   const [isTelemetryOpen, setIsTelemetryOpen] = useState(false)
+  const [activeTarget, setActiveTarget]       = useState<InspectorTarget | null>(null)
+  const [showWind, setShowWind]               = useState(true)
+  const [showReceptors, setShowReceptors]     = useState(true)
 
   // Close telemetry modal on outside click or Escape
   useEffect(() => {
@@ -71,8 +75,10 @@ export default function MapContainer() {
     setTimeHorizon,
     selectedSiteId,
     rankedSites,
+    actions,
     setSelectedSiteId,
     setActiveTab,
+    setShowActionsModal,
     flyToLocation,
     basemapMode,
     setBasemapMode,
@@ -80,6 +86,11 @@ export default function MapContainer() {
     etaHours,
     staleFeeds,
   } = useAeris()
+
+  const rankedSitesRef = useRef(rankedSites)
+  rankedSitesRef.current = rankedSites
+  const actionsRef = useRef(actions)
+  actionsRef.current = actions
 
   const { settings, effectiveTheme } = useTheme()
   const satelliteCheck = useSatelliteCheck()
@@ -119,6 +130,14 @@ export default function MapContainer() {
   useEffect(() => {
     if (!mapContainerRef.current || mapInitRef.current || !webGlSupported) return
     mapInitRef.current = true
+
+    let onReceptorClick: ((e: any) => void) | undefined
+    let onWaypointClick: ((e: any) => void) | undefined
+    let onPointerEnter: (() => void) | undefined
+    let onPointerLeave: (() => void) | undefined
+    let onContextLost: ((e: Event) => void) | undefined
+    let onContextRestored: (() => void) | undefined
+    let canvas: HTMLCanvasElement | undefined
 
     try {
       const container = mapContainerRef.current
@@ -166,6 +185,59 @@ export default function MapContainer() {
 
       mapRef.current = map
 
+      // Interactive WebGL receptor and ETA milestone click handlers
+      onReceptorClick = (e: any) => {
+        const feature = e.features?.[0]
+        if (!feature) return
+        const siteId = feature.properties?.site_id
+        const site = rankedSitesRef.current?.sites.find(s => s.site_id === siteId)
+        if (site) {
+          const actionDirective = actionsRef.current?.actions.find(a => a.site_id === site.site_id)
+          setActiveTarget({ type: 'site', site, actionDirective })
+          setSelectedSiteId(site.site_id)
+          map.flyTo({ center: [site.lon, site.lat], zoom: Math.max(map.getZoom(), 11), speed: 1.1 })
+        }
+      }
+
+      onWaypointClick = (e: any) => {
+        const feature = e.features?.[0]
+        if (!feature) return
+        const eta = feature.properties?.eta
+        if (typeof eta === 'number') {
+          setActiveTarget({ type: 'waypoint', eta })
+        }
+      }
+
+      onPointerEnter = () => {
+        const c = map.getCanvas?.()
+        if (c?.style) c.style.cursor = 'pointer'
+      }
+
+      onPointerLeave = () => {
+        const c = map.getCanvas?.()
+        if (c?.style) c.style.cursor = ''
+      }
+
+      map.on('click', 'receptor-circles', onReceptorClick)
+      map.on('click', 'corridor-eta-circles', onWaypointClick)
+      map.on('mouseenter', 'receptor-circles', onPointerEnter)
+      map.on('mouseleave', 'receptor-circles', onPointerLeave)
+      map.on('mouseenter', 'corridor-eta-circles', onPointerEnter)
+      map.on('mouseleave', 'corridor-eta-circles', onPointerLeave)
+
+      // WebGL context resilience
+      canvas = map.getCanvas?.()
+      onContextLost = (e: Event) => {
+        e.preventDefault()
+        console.warn('[AERIS] MapLibre WebGL context lost; standing by for recovery...')
+      }
+      onContextRestored = () => {
+        console.info('[AERIS] MapLibre WebGL context restored; re-synchronizing layers...')
+        setupMapLayers(map, appliedStyleMode.current)
+      }
+      canvas?.addEventListener?.('webglcontextlost', onContextLost)
+      canvas?.addEventListener?.('webglcontextrestored', onContextRestored)
+
       map.on('load', () => {
         setupMapLayers(map, initialMode.current)
         applyProjectionAndPitch(map, initialMode.current)
@@ -178,7 +250,20 @@ export default function MapContainer() {
     }
 
     return () => {
-      mapRef.current?.remove()
+      const map = mapRef.current
+      if (canvas && onContextLost) canvas.removeEventListener?.('webglcontextlost', onContextLost)
+      if (canvas && onContextRestored) canvas.removeEventListener?.('webglcontextrestored', onContextRestored)
+      if (map && onReceptorClick) map.off('click', 'receptor-circles', onReceptorClick)
+      if (map && onWaypointClick) map.off('click', 'corridor-eta-circles', onWaypointClick)
+      if (map && onPointerEnter) {
+        map.off('mouseenter', 'receptor-circles', onPointerEnter)
+        map.off('mouseenter', 'corridor-eta-circles', onPointerEnter)
+      }
+      if (map && onPointerLeave) {
+        map.off('mouseleave', 'receptor-circles', onPointerLeave)
+        map.off('mouseleave', 'corridor-eta-circles', onPointerLeave)
+      }
+      map?.remove()
       mapRef.current = null
       mapInitRef.current = false
     }
@@ -286,7 +371,20 @@ export default function MapContainer() {
   }, [sources, corridor, fitAirshedBounds, webGlSupported])
 
   const heatmap = useObservationHeatmap(aqi, mapRef, webGlSupported)
-  useScientificLayers(mapRef, { mode: basemapMode, corridor, horizon: timeHorizon, heatmap: heatmap.data, heatmapEnabled: heatmap.enabled, opacity: heatmap.opacity, supported: webGlSupported })
+  useScientificLayers(mapRef, {
+    mode: basemapMode,
+    corridor,
+    horizon: timeHorizon,
+    heatmap: heatmap.data,
+    heatmapEnabled: heatmap.enabled,
+    opacity: heatmap.opacity,
+    supported: webGlSupported,
+    wind: parsedWind?.success ? parsedWind.data : null,
+    rankedSites,
+    selectedSiteId,
+    showWind,
+    showReceptors,
+  })
 
   // ── 3. Place fire source and receptor site markers ──────────────────────
   useEffect(() => {
@@ -313,7 +411,15 @@ export default function MapContainer() {
 
       activeSources.forEach(src => {
         const isPeak = src.id === peakSourceId
-        const el = createThermalMarkerElement(src, { isPeak })
+        const isSelected = activeTarget?.type === 'source' && activeTarget.source.id === src.id
+        const el = createThermalMarkerElement(src, {
+          isPeak,
+          isSelected,
+          onClick: () => {
+            setActiveTarget({ type: 'source', source: src, isPeak })
+            map.flyTo({ center: [src.lon, src.lat], zoom: Math.max(map.getZoom(), 8.5), speed: 1.1 })
+          },
+        })
         const popupHtml = createThermalPopupHtml(src)
 
         const marker = new Marker({ element: el, anchor: 'center' })
@@ -329,7 +435,7 @@ export default function MapContainer() {
     }
 
     // 2. Sensitive Receptor Sites (Schools & Hospitals)
-    if (rankedSites) {
+    if (rankedSites && showReceptors) {
       rankedSites.sites
         .filter(site => isValidSubcontinentCoord(site.lat, site.lon))
         .slice(0, 8)
@@ -347,6 +453,14 @@ export default function MapContainer() {
             ${isImminent ? `<span class="d-site-eta-pill">~${site.eta_hours.toFixed(0)}h</span>` : ''}
           `
           el.title = `${site.name} (${label} relative risk (uncalibrated))`
+
+          el.addEventListener('click', (e) => {
+            e.stopPropagation()
+            const actionDirective = actionsRef.current?.actions.find(a => a.site_id === site.site_id)
+            setActiveTarget({ type: 'site', site, actionDirective })
+            setSelectedSiteId(site.site_id)
+            map.flyTo({ center: [site.lon, site.lat], zoom: Math.max(map.getZoom(), 11), speed: 1.1 })
+          })
 
           const marker = new Marker({ element: el, anchor: 'center' })
             .setLngLat([site.lon, site.lat])
@@ -367,9 +481,9 @@ export default function MapContainer() {
         })
     }
     return () => { markersRef.current.forEach(m => m.remove()); markersRef.current = [] }
-  }, [sources, rankedSites, scopeFilter, webGlSupported])
+  }, [sources, rankedSites, scopeFilter, webGlSupported, activeTarget, showReceptors, setSelectedSiteId])
 
-  // ── 4. Fly to selected site ───────────────────────────────────────────────
+  // ── 4. Fly to selected site & show Inspector ──────────────────────────────
   useEffect(() => {
     const map = mapRef.current
     if (!map || !selectedSiteId || !rankedSites || !webGlSupported) return
@@ -377,14 +491,16 @@ export default function MapContainer() {
     const site = rankedSites.sites.find(s => s.site_id === selectedSiteId)
     if (!site || !isValidSubcontinentCoord(site.lat, site.lon)) return
 
+    const actionDirective = actionsRef.current?.actions.find(a => a.site_id === site.site_id)
+    setActiveTarget({ type: 'site', site, actionDirective })
+
     map.flyTo({
       center: [site.lon, site.lat],
       zoom: 12,
       speed: 1.2,
       curve: 1.4,
     })
-    setSelectedSiteId(null)
-  }, [selectedSiteId, rankedSites, setSelectedSiteId, webGlSupported])
+  }, [selectedSiteId, rankedSites, webGlSupported])
 
   // ── 5. Fly to global search location ──────────────────────────────────────
   useEffect(() => {
@@ -669,6 +785,36 @@ export default function MapContainer() {
           </Suspense>
         )}
 
+        {/* Docked Micro-Inspector HUD (active when a site, fire cluster, or waypoint is selected) */}
+        {activeTarget && !satelliteCheck.isOpen && (
+          <MapInspectorHud
+            target={activeTarget}
+            onClose={() => {
+              setActiveTarget(null)
+              setSelectedSiteId(null)
+            }}
+            onFocus={() => {
+              if (activeTarget.type === 'site') {
+                mapRef.current?.flyTo({
+                  center: [activeTarget.site.lon, activeTarget.site.lat],
+                  zoom: 13,
+                  speed: 1.2,
+                })
+              } else if (activeTarget.type === 'source') {
+                mapRef.current?.flyTo({
+                  center: [activeTarget.source.lon, activeTarget.source.lat],
+                  zoom: 9.5,
+                  speed: 1.2,
+                })
+              } else {
+                fitAirshedBounds()
+              }
+            }}
+            onOpenActionsModal={() => setShowActionsModal(true)}
+            onOpenFullMap={() => setActiveTab('map')}
+          />
+        )}
+
         {satelliteCheck.isOpen && webGlSupported && (
           <Suspense fallback={null}>
             <SatelliteCheckOverlay
@@ -748,6 +894,37 @@ export default function MapContainer() {
                     <small>Cartographic roads</small>
                   </div>
                 </button>
+
+                <div className="layer-dropdown-divider" />
+                <div className="layer-dropdown-header">Airshed Overlays</div>
+                <button
+                  className={`layer-dropdown-toggle ${showWind ? 'active' : ''}`}
+                  onClick={() => setShowWind(prev => !prev)}
+                  type="button"
+                  title="Toggle atmospheric wind vector field"
+                >
+                  <span className="toggle-label">
+                    <span>🌬️</span>
+                    <span>Wind Vectors</span>
+                  </span>
+                  <span className="toggle-indicator">
+                    {showWind && <span className="toggle-check">✓</span>}
+                  </span>
+                </button>
+                <button
+                  className={`layer-dropdown-toggle ${showReceptors ? 'active' : ''}`}
+                  onClick={() => setShowReceptors(prev => !prev)}
+                  type="button"
+                  title="Toggle sensitive receptor facilities"
+                >
+                  <span className="toggle-label">
+                    <span>🏫</span>
+                    <span>Receptors</span>
+                  </span>
+                  <span className="toggle-indicator">
+                    {showReceptors && <span className="toggle-check">✓</span>}
+                  </span>
+                </button>
               </div>
             )}
           </div>
@@ -774,6 +951,21 @@ export default function MapContainer() {
             >
               −
             </button>
+            <button
+              className="map-zoom-btn map-compass-btn"
+              onClick={() => {
+                mapRef.current?.easeTo({
+                  bearing: 0,
+                  pitch: basemapMode === 'globe' ? 32 : 0,
+                  duration: 500,
+                })
+              }}
+              title="Reset to True North (0°)"
+              aria-label="Reset North orientation"
+              type="button"
+            >
+              <Compass size={13} />
+            </button>
           </div>
         )}
 
@@ -796,6 +988,12 @@ export default function MapContainer() {
               <span className="micro-legend-glyph" style={{ color: 'var(--risk-critical, #EF4444)', fontWeight: 800 }}>⊕</span>
               <span>{sources?.sources.filter(s => isValidSubcontinentCoord(s.lat, s.lon) && (scopeFilter === 'all' || s.territory === 'india')).length ?? 0} source candidates</span>
             </div>
+            {showWind && (
+              <div className="micro-legend-item" title="Atmospheric wind flow direction vector">
+                <span style={{ color: '#38BDF8', fontWeight: 800, fontSize: '10px' }}>⇢</span>
+                <span>Wind flow</span>
+              </div>
+            )}
             <div className="micro-legend-item" title="0–2h immediate plume arrival band">
               <span className="micro-legend-swatch" style={{ background: 'var(--plume-h0-2, #DC2626)', width: 8, height: 7 }} />
               <span>0-2h</span>
