@@ -1,0 +1,252 @@
+/* ReplayInspectorHud.css — Docked Micro-HUD for Forecast Replay Map */
+
+.replay-inspector-hud {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  width: calc(100% - 24px);
+  max-width: 320px;
+  background: rgba(15, 23, 42, 0.94);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
+  padding: 10px 12px;
+  z-index: 25;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  color: #F8FAFC;
+  animation: replayHudPop 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  pointer-events: auto;
+}
+
+@keyframes replayHudPop {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.r-hud-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.r-hud-title-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.r-hud-type-badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(56, 189, 248, 0.15);
+  color: #38BDF8;
+  border: 1px solid rgba(56, 189, 248, 0.3);
+}
+
+.r-hud-type-badge.source-badge {
+  background: rgba(239, 68, 68, 0.15);
+  color: #EF4444;
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+.r-hud-type-badge.waypoint-badge {
+  background: rgba(245, 158, 11, 0.15);
+  color: #F59E0B;
+  border-color: rgba(245, 158, 11, 0.3);
+}
+
+.r-hud-peak-badge {
+  font-size: 9px;
+  font-weight: 800;
+  padding: 2px 5px;
+  border-radius: 4px;
+  background: #DC2626;
+  color: #FFFFFF;
+  letter-spacing: 0.3px;
+}
+
+.r-hud-close-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: #94A3B8;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.r-hud-close-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #FFFFFF;
+}
+
+.r-hud-name-block {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.r-hud-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: #F8FAFC;
+  margin: 0;
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.r-hud-coords {
+  font-size: 10px;
+  color: #94A3B8;
+}
+
+.r-hud-arrival-status {
+  padding: 5px 8px;
+  border-radius: 5px;
+  font-size: 10.5px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.r-hud-arrival-status.arrived {
+  background: rgba(220, 38, 38, 0.2);
+  border: 1px solid rgba(220, 38, 38, 0.4);
+  color: #FCA5A5;
+}
+
+.r-hud-arrival-status.en-route {
+  background: rgba(56, 189, 248, 0.12);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  color: #BAE6FD;
+}
+
+.r-hud-metrics-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 5px;
+}
+
+.r-metric-pill {
+  display: flex;
+  flex-direction: column;
+  padding: 4px 6px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 5px;
+}
+
+.r-metric-pill .m-lbl {
+  font-size: 8.5px;
+  font-weight: 600;
+  color: #94A3B8;
+  text-transform: uppercase;
+}
+
+.r-metric-pill .m-val {
+  font-size: 11px;
+  font-weight: 700;
+  color: #F8FAFC;
+  margin-top: 1px;
+}
+
+.r-hud-directive {
+  padding: 6px 8px;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-left: 3px solid #EF4444;
+  border-radius: 5px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.r-directive-header {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 9.5px;
+  font-weight: 800;
+  color: #FCA5A5;
+}
+
+.r-directive-icon {
+  color: #EF4444;
+  flex-shrink: 0;
+}
+
+.r-directive-text {
+  font-size: 10px;
+  font-weight: 600;
+  color: #F8FAFC;
+  margin: 0;
+  line-height: 1.3;
+}
+
+.r-directive-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 9px;
+  color: #CBD5E1;
+}
+
+.r-hud-footer {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.r-hud-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 10.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.12s ease;
+  border: 1px solid transparent;
+  flex: 1;
+}
+
+.r-hud-btn.focus-btn {
+  background: #0284C7;
+  color: #FFFFFF;
+}
+
+.r-hud-btn.focus-btn:hover {
+  background: #0369A1;
+}
+
+@media (max-width: 480px) {
+  .replay-inspector-hud {
+    bottom: 8px;
+    left: 8px;
+    width: calc(100% - 16px);
+    max-width: none;
+  }
+}
