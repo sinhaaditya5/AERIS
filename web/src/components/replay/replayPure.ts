@@ -210,7 +210,7 @@ export function topSitesBbox(
 /** GeoJSON FeatureCollection for top-N ranked site circles. */
 export function sitesGeoJSON(
   rankedSites: RankedSitesFile | null,
-  limit = 5,
+  limit = 8,
 ): GeoJSON.FeatureCollection {
   if (!rankedSites) return { type: 'FeatureCollection', features: [] }
   return {
@@ -219,6 +219,7 @@ export function sitesGeoJSON(
       type: 'Feature' as const,
       geometry: { type: 'Point' as const, coordinates: [s.lon, s.lat] },
       properties: {
+        site_id:       s.site_id,
         name:          s.name,
         type:          s.type,
         risk_score:    s.risk_score,

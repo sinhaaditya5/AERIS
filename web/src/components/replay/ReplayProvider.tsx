@@ -6,7 +6,7 @@
 import React, {
   createContext, useCallback, useContext, useEffect, useRef, useState,
 } from 'react'
-import { useAeris } from '@/services/dataContext'
+import { useAeris, type BasemapMode } from '@/services/dataContext'
 import type {
   SourcesFile, CorridorGeoJSON, RankedSitesFile, ActionsFile, WindFile,
 } from '@/types/schemas'
@@ -25,14 +25,16 @@ export interface ReplayData {
 }
 
 export interface ReplayState extends ReplayData {
-  packId:   string
-  chapter:  ReplayChapter
-  tHours:   number
-  playing:  boolean
+  packId:      string
+  chapter:     ReplayChapter
+  tHours:      number
+  playing:     boolean
+  basemapMode: BasemapMode
 
-  setChapter: (c: ReplayChapter) => void
-  setTHours:  (t: number) => void
-  setPlaying: (v: boolean) => void
+  setChapter:     (c: ReplayChapter) => void
+  setTHours:      (t: number) => void
+  setPlaying:     (v: boolean) => void
+  setBasemapMode: (mode: BasemapMode) => void
   /** Ref exposed for rAF loop to read tHours without causing re-renders */
   tHoursRef:  React.MutableRefObject<number>
   playingRef: React.MutableRefObject<boolean>
@@ -63,6 +65,7 @@ export function ReplayProvider({ children }: { children: React.ReactNode }) {
   const [chapter, setChapterState] = useState<ReplayChapter>('source')
   const [tHours,  setTHoursState]  = useState<number>(0)
   const [playing, setPlayingState] = useState(false)
+  const [basemapMode, setBasemapModeState] = useState<BasemapMode>('dark')
 
   const tHoursRef  = useRef(tHours)
   const playingRef = useRef(playing)
@@ -107,15 +110,21 @@ export function ReplayProvider({ children }: { children: React.ReactNode }) {
     playingRef.current = v
   }, [])
 
+  const setBasemapMode = useCallback((m: BasemapMode) => {
+    setBasemapModeState(m)
+  }, [])
+
   const value: ReplayState = {
     ...snap,
     packId:  'live',
     chapter,
     tHours,
     playing,
+    basemapMode,
     setChapter,
     setTHours,
     setPlaying,
+    setBasemapMode,
     tHoursRef,
     playingRef,
   }
