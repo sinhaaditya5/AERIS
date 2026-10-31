@@ -1,6 +1,6 @@
 /** Map explorer: feed layers, forecast-relative bands, camera controls and real-geometry fallback. */
 
-import { useEffect, useRef, useState, lazy, Suspense } from 'react'
+import { useEffect, useRef, useState, useMemo, lazy, Suspense } from 'react'
 import { Map, Marker, setWorkerUrl } from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?url'
@@ -13,6 +13,7 @@ import {
   Minimize2,
   Pause,
   Play,
+  Search,
   Shield,
   X,
   Zap,
@@ -47,6 +48,21 @@ interface InspectorData {
   actionText?: string
   siteId?: string
 }
+
+const REGIONAL_PLACES: Array<{ name: string; type: string; lon: number; lat: number; zoom: number; subtitle?: string }> = [
+  { name: 'Delhi NCR', type: '📍 City', lon: 77.2090, lat: 28.6139, zoom: 10, subtitle: 'National Capital Region' },
+  { name: 'Amritsar', type: '📍 City', lon: 74.8723, lat: 31.6340, zoom: 11, subtitle: 'Punjab' },
+  { name: 'Ludhiana', type: '📍 City', lon: 75.8573, lat: 30.9010, zoom: 11, subtitle: 'Central Punjab' },
+  { name: 'Patiala', type: '📍 City', lon: 76.3869, lat: 30.3398, zoom: 11, subtitle: 'Punjab' },
+  { name: 'Sangrur', type: '📍 City', lon: 75.8456, lat: 30.2458, zoom: 11, subtitle: 'High Fire Density' },
+  { name: 'Bathinda', type: '📍 City', lon: 74.9455, lat: 30.2110, zoom: 11, subtitle: 'Southern Punjab' },
+  { name: 'Karnal', type: '📍 City', lon: 76.9897, lat: 29.6857, zoom: 11, subtitle: 'Haryana Corridor' },
+  { name: 'Panipat', type: '📍 City', lon: 76.9635, lat: 29.3909, zoom: 11, subtitle: 'Haryana Corridor' },
+  { name: 'Rohtak', type: '📍 City', lon: 76.6066, lat: 28.8955, zoom: 11, subtitle: 'Haryana' },
+  { name: 'Chandigarh', type: '📍 City', lon: 76.7794, lat: 30.7333, zoom: 10.5, subtitle: 'Capital Territory' },
+  { name: 'Jalandhar', type: '📍 City', lon: 75.5762, lat: 31.3260, zoom: 11, subtitle: 'Punjab' },
+  { name: 'Firozpur', type: '📍 City', lon: 74.6154, lat: 30.9237, zoom: 11, subtitle: 'Border Region' },
+]
 
 export default function MapExplorerView() {
   const mapContainerRef = useRef<HTMLDivElement>(null)
@@ -84,6 +100,54 @@ export default function MapExplorerView() {
   const [isFullscreen, setIsFullscreen]     = useState(false)
   const [showLegend, setShowLegend]         = useState(true)
   const [isTrayExpanded, setIsTrayExpanded] = useState(false)
+  const [searchQuery, setSearchQuery]       = useState('')
+
+  const searchResults = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase()
+    if (!q || q.length < 2) return []
+
+    const matches: Array<{ name: string; type: string; lon: number; lat: number; zoom: number; subtitle?: string }> = []
+
+    for (const p of REGIONAL_PLACES) {
+      if (p.name.toLowerCase().includes(q) || (p.subtitle && p.subtitle.toLowerCase().includes(q))) {
+        matches.push(p)
+      }
+    }
+
+    if (rankedSites?.sites) {
+      for (const site of rankedSites.sites) {
+        if (site.name.toLowerCase().includes(q)) {
+          matches.push({
+            name: site.name,
+            type: site.type === 'school' ? '🏫 School' : '🏥 Hospital',
+            lon: site.lon,
+            lat: site.lat,
+            zoom: 12,
+            subtitle: `Model ETA ~${site.eta_hours.toFixed(1)}h · ${site.site_id}`,
+          })
+          if (matches.length >= 7) break
+        }
+      }
+    }
+
+    if (sources?.sources) {
+      for (const src of sources.sources) {
+        if (src.district && src.district.toLowerCase().includes(q)) {
+          matches.push({
+            name: `${src.district} Fire Cluster`,
+            type: '🔥 Hotspot',
+            lon: src.lon,
+            lat: src.lat,
+            zoom: 9.5,
+            subtitle: `${src.fire_count} fires (${src.total_frp_mw.toFixed(0)} MW FRP)`,
+          })
+          if (matches.length >= 7) break
+        }
+      }
+    }
+
+    return matches.slice(0, 7)
+  }, [searchQuery, rankedSites, sources])
 
   // Layer Visibility & Territory Scope
   const [showFires, setShowFires]             = useState(true)
@@ -487,6 +551,7 @@ export default function MapExplorerView() {
         setIsLayerPanelOpen(false)
         setIsRegionsOpen(false)
         setSelectedFeature(null)
+        setSearchQuery('')
       }
     }
     window.addEventListener('keydown', handleKeyDown)
@@ -648,6 +713,60 @@ export default function MapExplorerView() {
                 </div>
               )}
             </div>
+          </div>
+
+          <div className="hud-divider" />
+
+          {/* In-Map Quick Search */}
+          <div className="hud-search-wrap">
+            <Search size={12} className="hud-search-icon" />
+            <input
+              type="text"
+              placeholder="Find district or site…"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Escape') setSearchQuery('')
+                if (e.key === 'Enter' && searchResults.length > 0) {
+                  flyToPreset([searchResults[0].lon, searchResults[0].lat], searchResults[0].zoom)
+                  setSearchQuery('')
+                }
+              }}
+              className="hud-search-input"
+              aria-label="Search district or facility on map"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                className="hud-search-clear-btn"
+                onClick={() => setSearchQuery('')}
+                title="Clear search"
+                aria-label="Clear search"
+              >
+                <X size={11} />
+              </button>
+            )}
+            {searchResults.length > 0 && (
+              <div className="hud-search-dropdown-menu">
+                {searchResults.map((item, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    className="hud-search-result-item"
+                    onClick={() => {
+                      flyToPreset([item.lon, item.lat], item.zoom)
+                      setSearchQuery('')
+                    }}
+                  >
+                    <span className="search-result-badge">{item.type}</span>
+                    <div className="search-result-text">
+                      <strong>{item.name}</strong>
+                      {item.subtitle && <small>{item.subtitle}</small>}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="hud-divider" />

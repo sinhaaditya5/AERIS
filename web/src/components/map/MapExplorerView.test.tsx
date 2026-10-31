@@ -71,4 +71,19 @@ describe('map explorer facility visibility', () => {
     unmount()
     expect(activeMarkers.size).toBe(0)
   })
+
+  it('supports in-map search for regional districts and facilities', async () => {
+    state.rankedSites!.sites = [site(1, 'school')]
+    render(<MapExplorerView />)
+    const searchInput = screen.getByRole('textbox', { name: 'Search district or facility on map' })
+    expect(searchInput).toBeTruthy()
+
+    await userEvent.type(searchInput, 'Amritsar')
+    expect(screen.getByText('Amritsar')).toBeTruthy()
+    expect(screen.getByText('Punjab')).toBeTruthy()
+
+    await userEvent.clear(searchInput)
+    await userEvent.type(searchInput, 'Test school')
+    expect(screen.getByText('Test school 1')).toBeTruthy()
+  })
 })

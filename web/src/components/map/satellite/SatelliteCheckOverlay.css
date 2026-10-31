@@ -55,8 +55,8 @@
   position: absolute;
   top: 0;
   bottom: 0;
-  width: 44px;
-  margin-left: -22px;
+  width: 48px;
+  margin-left: -24px;
   cursor: ew-resize;
   pointer-events: auto;
   z-index: 30;
@@ -72,7 +72,7 @@
   position: absolute;
   top: 0;
   bottom: 0;
-  left: 21px;
+  left: 23px;
   width: 2px;
   background: linear-gradient(180deg, #38BDF8 0%, #FFFFFF 50%, #38BDF8 100%);
   box-shadow: 0 0 10px rgba(56, 189, 248, 0.8), 0 0 2px #000000;

@@ -4,7 +4,7 @@
   flex-direction: column;
   overflow: hidden;
   height: 100%;
-  min-height: 420px;
+  min-height: 520px;
   flex: 1 0 auto;
   position: relative;
   border-radius: var(--radius-card);
@@ -12,12 +12,12 @@
 }
 
 .map-wrapper.satellite-check-active {
-  min-height: 560px;
+  min-height: 600px;
 }
 
 .map-wrapper.satellite-check-active .map-canvas-area {
-  min-height: 480px;
-  flex: 1 1 480px;
+  min-height: 520px;
+  flex: 1 1 520px;
 }
 
 .map-card-footer {
@@ -186,9 +186,9 @@
 }
 
 .map-canvas-area {
-  flex: 1 1 340px;
+  flex: 1 1 400px;
   position: relative;
-  min-height: 320px;
+  min-height: 380px;
   width: 100%;
   overflow: hidden;
 }

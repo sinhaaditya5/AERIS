@@ -68,6 +68,7 @@ export function useScientificLayers(mapRef: RefObject<Map | null>, options: Opti
         ;(map.getSource('wind-vectors') as GeoJSONSource).setData(windData as Parameters<GeoJSONSource['setData']>[0])
         const windVis = showWind ? 'visible' : 'none'
         if (map.getLayer('wind-vectors-line')) map.setLayoutProperty('wind-vectors-line', 'visibility', windVis)
+        if (map.getLayer('wind-vectors-arrows')) map.setLayoutProperty('wind-vectors-arrows', 'visibility', windVis)
       }
 
       // Sensitive receptors WebGL layer

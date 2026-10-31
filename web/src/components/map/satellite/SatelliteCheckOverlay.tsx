@@ -12,6 +12,7 @@ import {
   buildWorldviewUrl,
   formatUtcDateString,
   getModelDerivedDate,
+  getSafeGibsObservationDate,
   resolveGibsLayer,
   shiftDateDays,
 } from '@/services/satellite/gibs'
@@ -166,11 +167,14 @@ export default function SatelliteCheckOverlay({
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [onClose, isInfoOpen, setIsInfoOpen])
 
-  // ── 3. Date auto-initialization from corridor if date is today ─────────────
+  // ── 3. Date auto-initialization from corridor with safe pass availability check ───
+  const [isYesterdayFallback, setIsYesterdayFallback] = useState(false)
+
   useEffect(() => {
     if (corridor?.forecast_start) {
-      const derived = getModelDerivedDate(corridor.forecast_start, timeHorizon, new Date())
-      setDate(derived)
+      const safe = getSafeGibsObservationDate(corridor.forecast_start, timeHorizon, new Date())
+      setDate(safe.date)
+      setIsYesterdayFallback(safe.isYesterdayFallback)
     }
   }, [corridor?.forecast_start, timeHorizon, setDate])
 
@@ -478,6 +482,9 @@ export default function SatelliteCheckOverlay({
           </div>
           <div className="satellite-pill-secondary">
             Daily daytime composite • {activeLayer.satellite}
+            {isYesterdayFallback && date < todayUtc && (
+              <span style={{ marginLeft: 6, color: '#38BDF8', fontWeight: 600 }}>• Latest verified orbital pass</span>
+            )}
           </div>
         </div>
 
@@ -536,26 +543,34 @@ export default function SatelliteCheckOverlay({
         <div className="satellite-state-banner" role="alert">
           <div className="satellite-state-content">
             <AlertCircle size={16} color="#EF4444" />
-            <span>{tileError} Network tile request failed.</span>
+            <span>
+              {isToday
+                ? "NASA GIBS daytime composite for today is not yet compiled (usually available after 15:00 UTC)."
+                : `${tileError} Network tile request failed.`}
+            </span>
           </div>
           <div className="satellite-state-actions">
-            <button
-              type="button"
-              className="satellite-btn-action"
-              onClick={() => {
-                setTileError(null)
-                setRetryKey((k) => k + 1)
-              }}
-            >
-              Retry
-            </button>
-            {isToday && (
+            {isToday ? (
+              <button
+                type="button"
+                className="satellite-btn-action highlight"
+                onClick={() => {
+                  setTileError(null)
+                  stepDate(-1)
+                }}
+              >
+                View yesterday's pass (verified)
+              </button>
+            ) : (
               <button
                 type="button"
                 className="satellite-btn-action"
-                onClick={() => stepDate(-1)}
+                onClick={() => {
+                  setTileError(null)
+                  setRetryKey((k) => k + 1)
+                }}
               >
-                Try previous day
+                Retry
               </button>
             )}
           </div>
