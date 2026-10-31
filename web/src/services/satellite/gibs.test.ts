@@ -6,6 +6,8 @@ import {
   buildGibsTileUrl,
   buildGibsTileTemplateUrls,
   getModelDerivedDate,
+  getSafeGibsObservationDate,
+  isTodayGibsCompositeLikelyReady,
   shiftDateDays,
   resolveGibsLayer,
   isValidDateString,
@@ -128,6 +130,25 @@ describe('Date Helpers & Default Date Logic', () => {
     expect(shiftDateDays('2026-10-01', -1, '2026-10-25')).toBe('2026-09-30')
     // Clamping to max date
     expect(shiftDateDays('2026-10-25', 1, '2026-10-25')).toBe('2026-10-25')
+  })
+
+  it('safely determines when today composite is published (after 15:00 UTC)', () => {
+    expect(isTodayGibsCompositeLikelyReady(new Date('2026-10-25T10:00:00Z'))).toBe(false)
+    expect(isTodayGibsCompositeLikelyReady(new Date('2026-10-25T14:59:59Z'))).toBe(false)
+    expect(isTodayGibsCompositeLikelyReady(new Date('2026-10-25T15:00:00Z'))).toBe(true)
+    expect(isTodayGibsCompositeLikelyReady(new Date('2026-10-25T20:00:00Z'))).toBe(true)
+  })
+
+  it('automatically falls back to yesterday when requesting today before 15:00 UTC', () => {
+    const morning = new Date('2026-10-25T08:00:00Z')
+    const safeMorning = getSafeGibsObservationDate('2026-10-25T06:00:00Z', 0, morning)
+    expect(safeMorning.date).toBe('2026-10-24')
+    expect(safeMorning.isYesterdayFallback).toBe(true)
+
+    const evening = new Date('2026-10-25T16:00:00Z')
+    const safeEvening = getSafeGibsObservationDate('2026-10-25T06:00:00Z', 0, evening)
+    expect(safeEvening.date).toBe('2026-10-25')
+    expect(safeEvening.isYesterdayFallback).toBe(false)
   })
 })
 

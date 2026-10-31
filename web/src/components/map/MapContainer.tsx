@@ -1,6 +1,6 @@
 /** Dashboard map: real candidate markers, uncalibrated corridors and observed station cells. */
 
-import { Map, Marker, Popup, setWorkerUrl } from 'maplibre-gl'
+import { Map, Marker, setWorkerUrl } from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?url'
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
@@ -9,7 +9,7 @@ import { useAeris } from '@/services/dataContext'
 import { getRiskLevel, riskLabel, WindFileSchema } from '@/types/schemas'
 import { getFeedFreshness } from '@/services/api'
 import { useClock } from '@/components/status/useClock'
-import { createThermalMarkerElement, createThermalPopupHtml } from './thermalMarker'
+import { createThermalMarkerElement } from './thermalMarker'
 import { getStyleForMode, setupMapLayers, applyProjectionAndPitch, isValidSubcontinentCoord } from './mapStyles'
 import TimeControls from './TimeControls'
 import HeatmapControls from './HeatmapControls'
@@ -420,14 +420,9 @@ export default function MapContainer() {
             map.flyTo({ center: [src.lon, src.lat], zoom: Math.max(map.getZoom(), 8.5), speed: 1.1 })
           },
         })
-        const popupHtml = createThermalPopupHtml(src)
 
         const marker = new Marker({ element: el, anchor: 'center' })
           .setLngLat([src.lon, src.lat])
-          .setPopup(
-            new Popup({ offset: 18, closeButton: false, className: 'aeris-popup' })
-              .setHTML(popupHtml)
-          )
           .addTo(map)
 
         markersRef.current.push(marker)
@@ -452,7 +447,7 @@ export default function MapContainer() {
             <span class="d-site-ico">${isSchool ? '🏫' : '🏥'}</span>
             ${isImminent ? `<span class="d-site-eta-pill">~${site.eta_hours.toFixed(0)}h</span>` : ''}
           `
-          el.title = `${site.name} (${label} relative risk (uncalibrated))`
+          el.title = `${site.name} (${label} relative risk) · Click to inspect`
 
           el.addEventListener('click', (e) => {
             e.stopPropagation()
@@ -464,17 +459,6 @@ export default function MapContainer() {
 
           const marker = new Marker({ element: el, anchor: 'center' })
             .setLngLat([site.lon, site.lat])
-            .setPopup(
-              new Popup({ offset: 16, closeButton: false, className: 'aeris-popup' })
-                .setHTML(`
-                  <div class="popup-content">
-                    <strong>${escapeHtml(site.name)}</strong>
-                    <div>${isSchool ? '🏫 School' : '🏥 Hospital'} • <span style="color:#C92A2A;font-weight:700">${label} relative risk (uncalibrated)</span></div>
-                    <div>⏱️ Model ETA (forecast-relative): ~${site.eta_hours.toFixed(1)}h</div>
-                    <div>💨 Modelled band peak PM2.5: +${site.pm25_delta_ugm3.toFixed(0)} µg/m³</div>
-                  </div>
-                `)
-            )
             .addTo(map)
 
           markersRef.current.push(marker)

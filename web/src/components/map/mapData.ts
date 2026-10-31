@@ -44,6 +44,22 @@ export function windVectorsGeoJson(wind: WindFile | null): FeatureCollection {
         ],
       },
       properties: {
+        kind: 'line',
+        speed_ms: hour.speed_ms,
+        speed_kmh: Math.round(hour.speed_ms * 3.6),
+        dir_from_deg: hour.dir_from_deg,
+        flow_angle: flowAngle,
+      },
+    })
+
+    features.push({
+      type: 'Feature',
+      geometry: {
+        type: 'Point',
+        coordinates: [pt.lon + dLon, pt.lat + dLat],
+      },
+      properties: {
+        kind: 'arrow',
         speed_ms: hour.speed_ms,
         speed_kmh: Math.round(hour.speed_ms * 3.6),
         dir_from_deg: hour.dir_from_deg,

@@ -170,6 +170,39 @@ export function getModelDerivedDate(
 }
 
 /**
+ * Checks whether today's NASA GIBS daytime composite is likely published and ready.
+ * VIIRS/MODIS daily composites over India generally complete ingestion by ~14:30 - 15:00 UTC.
+ */
+export function isTodayGibsCompositeLikelyReady(nowUtc: Date = new Date()): boolean {
+  return nowUtc.getUTCHours() >= 15
+}
+
+/**
+ * Returns the most reliable default observation date for GIBS:
+ * If the derived target date matches today's UTC date but the composite is not yet compiled
+ * (typically before 15:00 UTC), defaults to yesterday (T-1) to avoid blank/404 tiles.
+ */
+export function getSafeGibsObservationDate(
+  forecastStart: string | null | undefined,
+  horizonHours: number = 0,
+  nowUtc: Date = new Date(),
+): { date: string; isYesterdayFallback: boolean } {
+  const derived = getModelDerivedDate(forecastStart, horizonHours, nowUtc)
+  const todayUtcStr = formatUtcDateString(nowUtc)
+
+  if (derived === todayUtcStr && !isTodayGibsCompositeLikelyReady(nowUtc)) {
+    return {
+      date: shiftDateDays(todayUtcStr, -1),
+      isYesterdayFallback: true,
+    }
+  }
+  return {
+    date: derived,
+    isYesterdayFallback: false,
+  }
+}
+
+/**
  * Shifts a YYYY-MM-DD date by +/- n days, clamping to min (layer start) and max (today UTC).
  */
 export function shiftDateDays(

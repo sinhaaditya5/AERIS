@@ -36,6 +36,11 @@ export const SATELLITE_STYLE: any = {
       source: 'esri-satellite',
       minzoom: 0,
       maxzoom: 19,
+      paint: {
+        'raster-contrast': 0.10,
+        'raster-saturation': -0.22,
+        'raster-brightness-max': 0.90,
+      },
     },
     {
       id: 'satellite-reference-labels',
@@ -44,7 +49,7 @@ export const SATELLITE_STYLE: any = {
       minzoom: 0,
       maxzoom: 19,
       paint: {
-        'raster-opacity': 0.60,
+        'raster-opacity': 0.70,
       },
     },
   ],
@@ -278,11 +283,33 @@ export function setupMapLayers(map: Map, mode: BasemapMode) {
       id: 'wind-vectors-line',
       type: 'line',
       source: 'wind-vectors',
+      filter: ['!=', ['get', 'kind'], 'arrow'],
       paint: {
         'line-color': isDarkOrSat ? '#38BDF8' : '#0284C7',
         'line-width': 1.4,
         'line-opacity': isDarkOrSat ? 0.45 : 0.40,
         'line-dasharray': [3, 3],
+      },
+    })
+  }
+
+  if (!map.getLayer('wind-vectors-arrows')) {
+    map.addLayer({
+      id: 'wind-vectors-arrows',
+      type: 'symbol',
+      source: 'wind-vectors',
+      filter: ['==', ['get', 'kind'], 'arrow'],
+      layout: {
+        'text-field': '▶',
+        'text-size': 7,
+        'text-rotate': ['get', 'flow_angle'],
+        'text-rotation-alignment': 'map',
+        'text-allow-overlap': true,
+        'text-ignore-placement': true,
+      },
+      paint: {
+        'text-color': isDarkOrSat ? '#38BDF8' : '#0284C7',
+        'text-opacity': isDarkOrSat ? 0.70 : 0.60,
       },
     })
   }
