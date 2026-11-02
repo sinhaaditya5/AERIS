@@ -11,7 +11,7 @@
 ![Strands](https://img.shields.io/badge/Strands-Agents-00838f?style=flat-square)
 ![Status](https://img.shields.io/badge/status-live%20on%20AWS-2e7d32?style=flat-square)
 
-[Live demo](https://d2iyso2niquge7.cloudfront.net) · [Architecture](docs/assets/aeris-deployed-architecture.png) · [Data contracts](docs/data-contracts.md) · [API](docs/api-list.md)
+[Live demo](https://d2iyso2niquge7.cloudfront.net) · [Architecture](docs/assets/aeris-deployed-architecture.png) · [Data contracts](docs/data-contracts.md) · [API](docs/api-list.md) · [Field Specs](Saba/docs/README.md) · [Readiness Audit](Saba/reports/system-readiness-checklist-18-oct-2026.md)
 
 </div>
 
@@ -50,21 +50,29 @@ The SAM template configures the pipeline every 30 minutes, fires every 15 minute
 | 3. **Forecast the corridor** | Advects puffs from each source with the real forecast wind, giving time bands (0–2 h, 2–4 h, 4–8 h, 8–24 h) and a centreline with ETAs | `models/plume/` |
 | 4. **Rank exposure** | Intersects the corridor with schools, hospitals and the population grid. Scores each site by PM2.5 increase, ETA and vulnerability, and estimates the people exposed | `models/exposure/` |
 | 5. **Plan actions** | A Strands agent on Amazon Bedrock reads the results through tools and writes a prioritised plan for each site and for the authorities. Every site in the plan is checked against the ranking | `agent/` |
-| 6. **Serve and show** | An HTTP API serves every result with its age. An 8-view React 19 + MapLibre operator console visualizes source → corridor → sites → actions with multi-theme support (Forest, Night Watch, Field Daylight) | `api/`, `web/` |
+| 6. **Serve and show** | An HTTP API serves every result with its age. A 10-view React 19 + MapLibre operator console visualizes source → corridor → sites → actions with 4-chapter forecast replay, NASA GIBS visual cross-check, real-time alert triage, and multi-theme support (Forest, Night Watch, Field Daylight) | `api/`, `web/` |
 
 ### 🖥️ Operator Console & Web Views
 
 The AERIS web frontend (`web/`, React 19 + Vite + strict TypeScript + MapLibre GL) is a read-only emergency decision dashboard designed for CAQM and DPCC duty officers operating both in control rooms at night and on rugged laptops outdoors.
 
-#### 8 Dedicated Command Views
-1. **Executive Dashboard (`/dashboard`)**: Incident command overview featuring key metrics (active clusters, peak FRP, impacted population), earliest corridor arrival countdown, top vulnerable sites at risk, and Bedrock action recommendations.
-2. **GIS Map Explorer (`/map`)**: Full-canvas MapLibre GL visualization displaying multi-hour plume corridor bands (0–2 h, 2–4 h, 4–8 h, 8–24 h), candidate fire clusters, live AQI monitoring stations, wind vector streamlines, and sensitive receptor markers with a streamlined single-line HUD.
+#### 10 Dedicated Command Views
+1. **Executive Dashboard (`/dashboard`)**: Incident command overview featuring key metrics (active clusters, peak FRP, impacted population), earliest corridor arrival countdown, top vulnerable sites at risk, Bedrock action recommendations, and docked micro-inspector HUD.
+2. **GIS Map Explorer (`/map`)**: Full-canvas MapLibre GL visualization displaying multi-hour plume corridor bands (0–2 h, 2–4 h, 4–8 h, 8–24 h), candidate fire clusters, live AQI monitoring stations, directional wind vector streamlines, in-map regional search / quick-pan dropdown (Delhi NCR, Punjab, Haryana districts) with target receptor search, docked micro-inspector HUD (`MapInspectorHud`), interactive telemetry drawer (`ExplorerTelemetryTray`), and NASA GIBS satellite cross-check mode.
 3. **Analytics Hub (`/analytics`)**: Time-series concentration profiles, source emission intensity charts with progress meters, and monitoring station trends.
 4. **Wind & Atmospheric Flow (`/wind`)**: Real-time GFS 48-hour wind vectors, boundary-layer mixing heights, and forward trajectory dispersion pathways.
 5. **Source Clusters & Emissions (`/sources`)**: Detailed satellite cluster diagnostics, FRP energy distribution, and crop-residue confidence classification.
-6. **Demographic Exposure (`/population`)**: WorldPop 1 km demographic intersections, quantifying vulnerable children, elderly, and total exposed population per time band.
-7. **Vulnerability Shield (`/shield`)**: Receptor intelligence covering 3,132 schools and hospitals in Delhi NCR with exposure-ranked safety advisories.
-8. **Settings & Appearance Hub (`/settings`)**: Operational threshold tuning, data provenance diagnostics, cartographic style switchers, squircle status badges, AQI spectrum reference, and custom UI preferences.
+6. **Forecast Replay (`/replay`)**: Guided 4-chapter narrative playback mode (Chapter 1: Source detection, Chapter 2: Plume movement, Chapter 3: Exposure ranking, Chapter 4: Action dispatch) with an interactive temporal scrubber (T+0h to T+24h), dedicated multi-basemap replay canvas, animated wind streamlines, target inspection, docked tactical HUD (`ReplayInspectorHud`), and cryptographic SHA-256 provenance badges.
+7. **Demographic Exposure (`/population`)**: WorldPop 1 km demographic intersections, quantifying vulnerable children, elderly, and total exposed population per time band.
+8. **Vulnerability Shield (`/shield`)**: Receptor intelligence covering 3,132 schools and hospitals in Delhi NCR with exposure-ranked safety advisories and actionable intervention checklists.
+9. **Incident & Notifications Operations Console (`/notifications`)**: Dedicated environmental hazard triage console with category filtering (Fires, Air Quality, Wind Shift, Receptors, System), auditory alert chimes (`soundChime.ts`), live sliding toasts (`ToastContainer`), relative timestamps, unread tracking, progress indicators, and CSV/JSON log exports.
+10. **Settings & Appearance Hub (`/settings`)**: Operational threshold tuning, data provenance diagnostics, cartographic style switchers, squircle status badges, AQI spectrum reference, and custom UI preferences.
+
+#### 🛰️ Advanced GIS & Cross-Check Capabilities
+- **NASA GIBS Satellite Cross-Check**: Direct visual cross-referencing against NASA GIBS (Global Imagery Browse Services) satellite true-color imagery (VIIRS SNPP, NOAA-20, NOAA-21 and MODIS) with an interactive comparison slider and adjustable opacity controls directly synced to the MapLibre GL map canvas.
+- **Animated Directional Wind Vectors**: WebGL-accelerated directional wind vector streamlines reflecting Open-Meteo GFS 48-hour atmospheric flow across the Indo-Gangetic Plain.
+- **In-Map Search & Quick-Pan**: Regional quick navigation across Punjab, Haryana, and NCR hotspots (Amritsar, Ludhiana, Patiala, Sangrur, Bathinda, Karnal, Panipat, Rohtak, Chandigarh, Jalandhar, Firozpur, Delhi NCR) plus real-time fuzzy search across active clusters, monitoring stations, and receptors.
+- **Docked Micro-Inspector HUD & Telemetry Drawer**: Floating/docked contextual inspector HUD with precise coordinates, distance, FRP, ETA, PM2.5, and intervention guidance, backed by an expandable telemetry drawer for real-time edge SLAs and layer diagnostics.
 
 #### Multi-Theme System & Appearance Controls
 - **🌲 Forest (Default)**: `#F2F5F2` warm slate-grey canvas, crisp white cards, and `#22734F` pine/forest green accent for standard daytime operations.
@@ -116,12 +124,14 @@ AERIS/
 ├── agent/        # Strands tools, Bedrock agent with model fallback, rules plan, prompts
 ├── pipeline/     # One Lambda handler per pipeline step + contract checks
 ├── api/          # HTTP API handler (read routes, /summary, /run)
-├── web/          # React + Vite + TypeScript + MapLibre dashboard (8 command views, multi-theme)
+├── web/          # React 19 + Vite + TypeScript + MapLibre dashboard (10 command views, replay, NASA GIBS)
 ├── infra/        # CloudFormation/SAM template, Lambda build targets
 ├── scripts/      # deploy, deploy_web, smoke_test, local_api, cost_check, teardown
 ├── data/live/    # Real snapshots captured from live sources (source + time stamped)
-├── Saba/reports/ # Comprehensive frontend audit & architecture reviews
-└── docs/         # Architecture, data contracts, API list, member tasks, reports, audit
+├── artifacts/    # Satellite cross-check visual verification artifacts & UI captures
+├── video/        # Remotion video automation pipeline, narration scripts, and capture tools
+├── Saba/         # Field runbooks, engineering specifications (docs/) & operational readiness reports (reports/)
+└── docs/         # Architecture, data contracts, API list, member tasks, reports, audit, submission
 ```
 
 ## 🚀 Getting started
@@ -171,8 +181,11 @@ python3 scripts/local_api.py            # http://localhost:8000, same handler as
 ### 5. Test
 
 ```bash
-.venv/bin/python -m pytest              # ingest, models, agent, pipeline, api
-cd web && npm run build && npm run lint
+.venv/bin/python -m pytest                         # Python tests: ingest, models, agent, pipeline, api
+cd web && npm run test                             # Web unit tests via Vitest (20 suites, 276 tests)
+cd web && npm run build && npm run lint            # TypeScript compilation & oxlint
+cd web && npm run typecheck                        # Dual strict TypeScript verification
+cd video && npm run render                         # Optional: render Remotion programmatic demo video
 ```
 
 ### 6. Deploy to AWS
@@ -229,7 +242,7 @@ Region of interest: Punjab, Haryana and Delhi NCR (bbox `73.5, 28.0, 77.5, 32.5`
 - Evaluate and deploy the optional ML surrogate on SageMaker and serve it from a serverless endpoint
 - Confirm smoke with Sentinel-5P (NO₂, CO, aerosols), not only fires
 - Hindi summaries and SMS/WhatsApp alerts to school and hospital contacts
-- A history view: past forecasts against what stations measured
+- Historical ground-truth station vs forecast verification (Forecast Replay mode already provides 4-chapter temporal advection playback)
 
 ## 📚 Docs
 
@@ -243,6 +256,9 @@ Region of interest: Punjab, Haryana and Delhi NCR (bbox `73.5, 28.0, 77.5, 32.5`
 | [`models/README.md`](models/README.md) | Source detection, physics corridor, calibration readiness, optional ML surrogate and modelling evidence |
 | [`docs/demo-script.md`](docs/demo-script.md) | 3-minute demo video script |
 | [`docs/submission/`](docs/submission/) | Submission checklist and AWS Builder Center blog draft |
+| [`video/README.md`](video/README.md) | Programmatic Remotion video generation pipeline and capture automation |
+| [`Saba/docs/README.md`](Saba/docs/README.md) | Central engineering specifications & 24 field operational runbooks (emergency triage SOPs, CAP-IN alert dispatch, tactical UAV/drone reconnaissance, GIS tile caching, WCAG 2.1 accessibility, clean-air shelter routing) |
+| [`Saba/reports/system-readiness-checklist-18-oct-2026.md`](Saba/reports/system-readiness-checklist-18-oct-2026.md) | Pre-Season Operational Readiness & Verification Report (18-Oct-2026) |
 | [`Saba/reports/frontend-report-14-oct-2026.md`](Saba/reports/frontend-report-14-oct-2026.md) | Comprehensive Frontend Audit & Architecture Review (14-Oct-2026) |
 
 ## 👥 Team
@@ -252,7 +268,7 @@ Region of interest: Punjab, Haryana and Delhi NCR (bbox `73.5, 28.0, 77.5, 32.5`
 | **Aditya** ([@aditbytes](https://github.com/aditbytes)) | All AWS infrastructure, pipeline, API, hosting, monitoring, integration |
 | **Meenal Sinha** ([@MeenalSinha](https://github.com/MeenalSinha)) | Data ingestion and exposure ranking |
 | **Pritam Singh** ([@pritamsingh019](https://github.com/pritamsingh019)) | Source detection and plume models |
-| **Saba Saeed** ([@SabaSaiid](https://github.com/SabaSaiid)) | Action agent, multi-theme architecture, map dashboard and frontend engineering |
+| **Saba Saeed** ([@SabaSaiid](https://github.com/SabaSaiid)) | Action agent, 10-view operator console, Forecast Replay, NASA GIBS cross-check, notification engine, multi-theme system, and field operational runbooks |
 
 ## 🏆 Hackathon
 
