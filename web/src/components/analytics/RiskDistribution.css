@@ -1,0 +1,76 @@
+.risk-distribution {
+  display: flex;
+  flex-direction: column;
+}
+
+.risk-dist-bar-wrap {
+  margin-top: 14px;
+}
+
+.risk-dist-bar {
+  display: flex;
+  width: 100%;
+  height: 18px;
+  border-radius: var(--radius-pill, 9999px);
+  overflow: hidden;
+  background: var(--surface-subtle, #f0f4f1);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.risk-tier-seg {
+  height: 100%;
+  transition: width 0.3s ease;
+}
+
+.risk-table-wrap {
+  margin-top: 14px;
+  overflow-x: auto;
+}
+
+.risk-tier-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.risk-tier-table th {
+  text-align: left;
+  padding: 8px 10px;
+  background: var(--surface-subtle, #f0f4f1);
+  color: var(--text-secondary, #4A5E56);
+  font-weight: 700;
+  border-bottom: 1px solid var(--border-subtle, rgba(0, 40, 20, 0.07));
+}
+
+.risk-tier-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border-subtle, rgba(0, 40, 20, 0.07));
+  color: var(--text-primary, #1A2421);
+}
+
+.tier-cell-name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tier-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.tier-range {
+  color: var(--text-tertiary, #52665E);
+  font-size: 11px;
+}
+
+.risk-dist-note {
+  font-size: 11px;
+  color: var(--text-tertiary, #52665E);
+  margin-top: 12px;
+  line-height: 1.4;
+  font-style: italic;
+}
+
