@@ -55,6 +55,86 @@ export function formatScrubberLabel(tHours: number): string {
   return `T+${h}h ${m}m`
 }
 
+/**
+ * Format estimated real-world clock time based on forecast_start and fractional tHours.
+ * Returns null if forecastStart is not provided or invalid.
+ */
+export function formatWallClock(forecastStart: string | null | undefined, tHours: number): string | null {
+  if (!forecastStart) return null
+  const baseMs = Date.parse(forecastStart)
+  if (!Number.isFinite(baseMs)) return null
+  const currentMs = baseMs + tHours * 3600 * 1000
+  const d = new Date(currentMs)
+  return d.toLocaleString('en-IN', {
+    day: 'numeric',
+    month: 'short',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+    timeZone: 'Asia/Kolkata',
+  })
+}
+
+export interface RelativeArrival {
+  status: 'approaching' | 'arrived'
+  label: string
+  text: string
+  diffHours: number
+}
+
+/**
+ * Calculate dynamic arrival relative to current playhead tHours.
+ */
+export function formatRelativeArrival(siteEta: number, currentTHours: number): RelativeArrival {
+  if (!Number.isFinite(siteEta)) {
+    return { status: 'approaching', label: 'ETA unavailable', text: '—', diffHours: 0 }
+  }
+  const diff = siteEta - currentTHours
+  if (diff > 0.05) {
+    let text = ''
+    if (diff < 1) {
+      const mins = Math.max(1, Math.round(diff * 60))
+      text = `${mins}m`
+    } else {
+      const h = Math.floor(diff)
+      const m = Math.round((diff - h) * 60)
+      text = m === 0 ? `${h}h` : `${h}h ${m}m`
+    }
+    return {
+      status: 'approaching',
+      label: `In ${text}`,
+      text,
+      diffHours: diff,
+    }
+  }
+
+  // Smoke front reached
+  const elapsed = Math.abs(diff)
+  if (elapsed < 0.1) {
+    return {
+      status: 'arrived',
+      label: 'Arrived now',
+      text: 'now',
+      diffHours: diff,
+    }
+  }
+  let text = ''
+  if (elapsed < 1) {
+    const mins = Math.round(elapsed * 60)
+    text = `${mins}m ago`
+  } else {
+    const h = Math.floor(elapsed)
+    const m = Math.round((elapsed - h) * 60)
+    text = m === 0 ? `${h}h ago` : `${h}h ${m}m ago`
+  }
+  return {
+    status: 'arrived',
+    label: `Arrived ${text}`,
+    text,
+    diffHours: diff,
+  }
+}
+
 // ─── Occupancy / Generator safe rendering ─────────────────────────────────────
 
 /** Render occupancy: null occupancy is always "unrecorded", never 0. */
@@ -257,4 +337,91 @@ export function pulseRadius(tHours: number): number {
   const base = 7
   const wave = Math.sin((tHours % 2) * Math.PI) * 3
   return Math.max(4, Math.min(16, base + wave))
+}
+
+/**
+ * GeoJSON FeatureCollection containing interpolated wavefront points along each centerline
+ * at the given tHours.
+ */
+export function wavefrontGeoJSON(
+  corridor: CorridorGeoJSON | null,
+  tHours: number,
+): GeoJSON.FeatureCollection {
+  if (!corridor || corridor.features.length === 0 || tHours <= 0) {
+    return { type: 'FeatureCollection', features: [] }
+  }
+
+  const features: GeoJSON.Feature[] = []
+
+  for (const f of corridor.features) {
+    const p = f.properties as Record<string, unknown>
+    if (p['kind'] !== 'centerline' || f.geometry.type !== 'LineString') continue
+
+    const coords = f.geometry.coordinates as [number, number][]
+    const etas = (p['points_eta_hours'] as number[]) ?? []
+    if (coords.length === 0) continue
+
+    let pt: [number, number] = coords[0]
+    if (etas.length === coords.length && coords.length > 1) {
+      const maxEta = etas[etas.length - 1]
+      if (tHours >= maxEta) {
+        pt = coords[coords.length - 1]
+      } else {
+        for (let i = 0; i < etas.length - 1; i++) {
+          const e0 = etas[i]
+          const e1 = etas[i + 1]
+          if (tHours >= e0 && tHours <= e1) {
+            const span = e1 - e0
+            const frac = span > 0 ? (tHours - e0) / span : 0
+            const lon = coords[i][0] + (coords[i + 1][0] - coords[i][0]) * frac
+            const lat = coords[i][1] + (coords[i + 1][1] - coords[i][1]) * frac
+            pt = [lon, lat]
+            break
+          }
+        }
+      }
+    } else {
+      const frac = Math.min(1, Math.max(0, tHours / 24))
+      const idx = Math.min(coords.length - 1, Math.floor(frac * (coords.length - 1)))
+      pt = coords[idx]
+    }
+
+    features.push({
+      type: 'Feature',
+      geometry: { type: 'Point', coordinates: pt },
+      properties: {
+        source_id: p['source_id'] ?? 'unknown',
+        t_hours: tHours,
+      },
+    })
+  }
+
+  return { type: 'FeatureCollection', features }
+}
+
+export interface ExposureCurvePoint {
+  hour: number
+  peakPm25Delta: number
+}
+
+/**
+ * Computes regional peak PM2.5 delta progression over time bands for sparkline rendering.
+ */
+export function regionalExposureCurve(corridor: CorridorGeoJSON | null): ExposureCurvePoint[] {
+  if (!corridor) return []
+  const grouped = new Map<number, number>()
+  grouped.set(0, 0)
+  for (const f of corridor.features) {
+    const p = f.properties as Record<string, unknown>
+    if (p['kind'] !== 'band') continue
+    const hr = typeof p['hour_to'] === 'number' ? (p['hour_to'] as number) : null
+    const delta = typeof p['pm25_delta_ugm3'] === 'number' ? (p['pm25_delta_ugm3'] as number) : 0
+    if (hr != null) {
+      const cur = grouped.get(hr) ?? 0
+      grouped.set(hr, Math.max(cur, delta))
+    }
+  }
+  return [...grouped.entries()]
+    .map(([hour, peakPm25Delta]) => ({ hour, peakPm25Delta }))
+    .sort((a, b) => a.hour - b.hour)
 }

@@ -10,11 +10,13 @@ import { useEffect, useRef, useState, useCallback } from 'react'
 import { Layers, Compass, Focus } from 'lucide-react'
 import { getStyleForMode, setupMapLayers } from '@/components/map/mapStyles'
 import { windVectorsGeoJson, etaMilestones } from '@/components/map/mapData'
+import { resolveMapThemeTokens } from '@/components/map/mapThemeBridge'
+import { useTheme } from '@/services/themeContext'
 import { useReplay } from './ReplayProvider'
 import {
   filteredCorridorFeatures, sitesGeoJSON, sourcesGeoJSON,
   sourcesCentroid, corridorBbox, topSitesBbox, formatScrubberLabel,
-  CHAPTERS,
+  wavefrontGeoJSON, CHAPTERS,
 } from './replayPure'
 import ReplayInspectorHud, { type ReplayInspectorTarget } from './ReplayInspectorHud'
 
@@ -25,8 +27,11 @@ export default function ReplayMap() {
     corridor, sources, rankedSites, actions, wind,
     chapter, tHours, playing,
     basemapMode, setBasemapMode,
+    highlightedSiteId,
     tHoursRef,
   } = useReplay()
+
+  const theme = useTheme()
 
   const containerRef   = useRef<HTMLDivElement>(null)
   const mapRef         = useRef<Map | null>(null)
@@ -55,6 +60,7 @@ export default function ReplayMap() {
   // ── Setup Replay exclusive sources & layers ─────────────────────────────────
   const setupReplayExclusiveLayers = useCallback((map: Map) => {
     setupMapLayers(map, basemapMode)
+    const tokens = resolveMapThemeTokens()
 
     // 1. Wind flow vector streamlines
     if (!map.getSource('replay-wind-vectors')) {
@@ -69,7 +75,7 @@ export default function ReplayMap() {
         type: 'line',
         source: 'replay-wind-vectors',
         paint: {
-          'line-color': '#38BDF8',
+          'line-color': tokens.etaCircle,
           'line-width': 1.4,
           'line-opacity': 0.45,
           'line-dasharray': [3, 3],
@@ -95,11 +101,11 @@ export default function ReplayMap() {
         paint: {
           'fill-color': [
             'match', ['get', 'hour_from'],
-            0, '#FF7A6B',
-            2, '#FFA45C',
-            4, '#F5C451',
-            8, '#FDE047',
-            '#FF7A6B',
+            0, tokens.plumeH0,
+            2, tokens.plumeH2,
+            4, tokens.plumeH4,
+            8, tokens.plumeH8,
+            tokens.plumeH0,
           ],
           'fill-opacity': [
             'match', ['get', 'hour_from'],
@@ -135,7 +141,7 @@ export default function ReplayMap() {
         source: 'replay-corridor',
         filter: ['==', ['get', 'kind'], 'centerline'],
         paint: {
-          'line-color': '#38BDF8',
+          'line-color': tokens.plumeCenterline,
           'line-width': 2.2,
           'line-dasharray': [4, 3],
           'line-opacity': 0.85,
@@ -157,9 +163,9 @@ export default function ReplayMap() {
         source: 'replay-corridor-eta',
         paint: {
           'circle-radius': 3.2,
-          'circle-color': '#38BDF8',
+          'circle-color': tokens.etaCircle,
           'circle-stroke-width': 1.2,
-          'circle-stroke-color': '#0F172A',
+          'circle-stroke-color': tokens.etaCircleStroke,
           'circle-opacity': 0.9,
         },
       })
@@ -179,14 +185,50 @@ export default function ReplayMap() {
           'text-padding': 6,
         },
         paint: {
-          'text-color': '#F8FAFC',
-          'text-halo-color': '#0F172A',
+          'text-color': tokens.etaLabel,
+          'text-halo-color': tokens.etaHalo,
           'text-halo-width': 1.6,
         },
       })
     }
 
-    // 4. Fire source clusters
+    // 4. Plume Wavefront Leading-Edge Beacon
+    if (!map.getSource('replay-wavefront')) {
+      map.addSource('replay-wavefront', {
+        type: 'geojson',
+        data: wavefrontGeoJSON(corridorRef.current, tHoursRef.current),
+      })
+    }
+    if (!map.getLayer('replay-wavefront-halo')) {
+      map.addLayer({
+        id: 'replay-wavefront-halo',
+        type: 'circle',
+        source: 'replay-wavefront',
+        paint: {
+          'circle-radius': 14,
+          'circle-color': tokens.plumeCenterline,
+          'circle-opacity': 0.28,
+          'circle-stroke-width': 1.8,
+          'circle-stroke-color': tokens.plumeCenterline,
+          'circle-stroke-opacity': 0.8,
+        },
+      })
+    }
+    if (!map.getLayer('replay-wavefront-point')) {
+      map.addLayer({
+        id: 'replay-wavefront-point',
+        type: 'circle',
+        source: 'replay-wavefront',
+        paint: {
+          'circle-radius': 4.5,
+          'circle-color': '#FFFFFF',
+          'circle-stroke-width': 2,
+          'circle-stroke-color': tokens.plumeCenterline,
+        },
+      })
+    }
+
+    // 5. Fire source clusters
     if (!map.getSource('replay-fire-sources')) {
       map.addSource('replay-fire-sources', {
         type: 'geojson',
@@ -208,7 +250,7 @@ export default function ReplayMap() {
       })
     }
 
-    // 5. Sensitive receptor sites
+    // 6. Sensitive receptor sites
     if (!map.getSource('replay-sites')) {
       map.addSource('replay-sites', {
         type: 'geojson',
@@ -229,6 +271,23 @@ export default function ReplayMap() {
           'circle-stroke-width': 2.2,
           'circle-stroke-color': '#EF4444',
           'circle-stroke-opacity': 0.85,
+        },
+      })
+    }
+
+    // Highlighted site focus beacon ring (linked to sidebar hover)
+    if (!map.getLayer('replay-sites-highlight-ring')) {
+      map.addLayer({
+        id: 'replay-sites-highlight-ring',
+        type: 'circle',
+        source: 'replay-sites',
+        filter: ['==', ['get', 'site_id'], ''],
+        paint: {
+          'circle-radius': 20,
+          'circle-color': 'transparent',
+          'circle-stroke-width': 2.5,
+          'circle-stroke-color': tokens.etaCircle,
+          'circle-stroke-opacity': 0.95,
         },
       })
     }
@@ -487,6 +546,57 @@ export default function ReplayMap() {
     }
   }, [chapter, corridor, sources, rankedSites])
 
+  // ── Highlighted site focus link ─────────────────────────────────────────────
+  useEffect(() => {
+    const map = mapRef.current
+    if (!map || !mapReadyRef.current) return
+    if (map.getLayer('replay-sites-highlight-ring')) {
+      map.setFilter('replay-sites-highlight-ring', ['==', ['get', 'site_id'], highlightedSiteId ?? ''])
+    }
+  }, [highlightedSiteId])
+
+  // ── Dynamic Map Theme & Color-Blind Palette Bridge ─────────────────────────
+  useEffect(() => {
+    const map = mapRef.current
+    if (!map || !mapReadyRef.current) return
+    const tokens = resolveMapThemeTokens()
+    if (map.getLayer('replay-plume-fill')) {
+      map.setPaintProperty('replay-plume-fill', 'fill-color', [
+        'match', ['get', 'hour_from'],
+        0, tokens.plumeH0,
+        2, tokens.plumeH2,
+        4, tokens.plumeH4,
+        8, tokens.plumeH8,
+        tokens.plumeH0,
+      ])
+    }
+    if (map.getLayer('replay-plume-centerline')) {
+      map.setPaintProperty('replay-plume-centerline', 'line-color', tokens.plumeCenterline)
+    }
+    if (map.getLayer('replay-corridor-eta-circles')) {
+      map.setPaintProperty('replay-corridor-eta-circles', 'circle-color', tokens.etaCircle)
+      map.setPaintProperty('replay-corridor-eta-circles', 'circle-stroke-color', tokens.etaCircleStroke)
+    }
+    if (map.getLayer('replay-corridor-eta-labels')) {
+      map.setPaintProperty('replay-corridor-eta-labels', 'text-color', tokens.etaLabel)
+      map.setPaintProperty('replay-corridor-eta-labels', 'text-halo-color', tokens.etaHalo)
+    }
+    if (map.getLayer('replay-wavefront-halo')) {
+      map.setPaintProperty('replay-wavefront-halo', 'circle-color', tokens.plumeCenterline)
+      map.setPaintProperty('replay-wavefront-halo', 'circle-stroke-color', tokens.plumeCenterline)
+    }
+    if (map.getLayer('replay-wavefront-point')) {
+      map.setPaintProperty('replay-wavefront-point', 'circle-stroke-color', tokens.plumeCenterline)
+    }
+  }, [theme.effectiveTheme, theme.settings.colorBlindSafe])
+
+  // ── Auto-sync Basemap Mode with Theme Settings ──────────────────────────────
+  useEffect(() => {
+    if (theme.settings.matchBasemap) {
+      setBasemapMode(theme.isDark ? 'dark' : 'topo')
+    }
+  }, [theme.settings.matchBasemap, theme.isDark, setBasemapMode])
+
   // ── Helpers ─────────────────────────────────────────────────────────────────
 
   function updateMapData(map: Map, t: number) {
@@ -494,6 +604,12 @@ export default function ReplayMap() {
     const filtered = filteredCorridorFeatures(corridor, t)
     const fc: GeoJSON.FeatureCollection = { type: 'FeatureCollection', features: filtered as GeoJSON.Feature[] }
     ;(map.getSource('replay-corridor') as GeoJSONSource).setData(fc)
+
+    // Update leading plume wavefront marker
+    if (map.getSource('replay-wavefront')) {
+      const wf = wavefrontGeoJSON(corridorRef.current, t)
+      ;(map.getSource('replay-wavefront') as GeoJSONSource).setData(wf)
+    }
 
     // Update dynamic collision alert beacon for reached facilities
     if (typeof map.setFilter === 'function' && map.getLayer('replay-sites-impact-pulse')) {

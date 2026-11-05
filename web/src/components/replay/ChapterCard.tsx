@@ -7,10 +7,10 @@ import { useReplay } from './ReplayProvider'
 import { useAeris } from '@/services/dataContext'
 import {
   narrateSource, narrateMovement, narrateExposure, narrateAction,
-  formatOccupancy, formatGenerator, formatEta,
+  formatOccupancy, formatGenerator, formatEta, formatRelativeArrival,
   type ReplayChapter,
 } from './replayPure'
-import { getRiskLevel, riskLabel } from '@/types/schemas'
+import { getRiskLevel } from '@/types/schemas'
 
 const CHAPTER_HEADINGS: Record<ReplayChapter, { icon: string; title: string }> = {
   source:   { icon: '🔥', title: 'Fire Source' },
@@ -28,7 +28,10 @@ function riskAttr(lvl: string): string {
 }
 
 export default function ChapterCard() {
-  const { chapter, sources, corridor, rankedSites, actions, wind } = useReplay()
+  const {
+    chapter, sources, corridor, rankedSites, actions, wind, tHours,
+    highlightedSiteId, setHighlightedSiteId,
+  } = useReplay()
   const { setActiveTab } = useAeris()
 
   const heading = CHAPTER_HEADINGS[chapter]
@@ -198,11 +201,15 @@ export default function ChapterCard() {
               <ul className="replay-site-list" aria-label="Top-3 highest-risk sites">
                 {exposureCard.top3.map(site => {
                   const lvl = getRiskLevel(site.risk_score)
+                  const relArrival = formatRelativeArrival(site.eta_hours, tHours)
+                  const isHighlighted = highlightedSiteId === site.site_id
                   return (
                     <li
                       key={site.site_id}
-                      className="replay-site-row"
+                      className={`replay-site-row${isHighlighted ? ' is-highlighted' : ''}`}
                       data-risk={riskAttr(lvl)}
+                      onMouseEnter={() => setHighlightedSiteId(site.site_id)}
+                      onMouseLeave={() => setHighlightedSiteId(null)}
                     >
                       <span className="replay-site-icon">
                         {site.type === 'hospital' ? '🏥' : '🏫'}
@@ -215,8 +222,8 @@ export default function ChapterCard() {
                           PM2.5 +{site.pm25_delta_ugm3.toFixed(0)} µg/m³
                         </span>
                       </div>
-                      <span className="replay-eta-pill">
-                        ETA {formatEta(site.eta_hours)}
+                      <span className={`replay-eta-pill ${relArrival.status}`}>
+                        {relArrival.label}
                       </span>
                     </li>
                   )
@@ -268,8 +275,10 @@ export default function ChapterCard() {
                 {actionCard.top3actions.map(a => (
                   <li
                     key={`${a.site_id}-${a.priority}`}
-                    className="replay-action-row"
+                    className={`replay-action-row${highlightedSiteId === a.site_id ? ' is-highlighted' : ''}`}
                     data-priority={a.priority <= 3 ? a.priority : undefined}
+                    onMouseEnter={() => setHighlightedSiteId(a.site_id)}
+                    onMouseLeave={() => setHighlightedSiteId(null)}
                   >
                     <span className="replay-action-priority">#{a.priority}</span>
                     <div className="replay-action-info">

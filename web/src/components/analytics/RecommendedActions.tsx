@@ -102,7 +102,7 @@ export default function RecommendedActions() {
       )
       const allSchool = types.every(t => t === 'school')
       const allHosp   = types.every(t => t === 'hospital')
-      const facilityType = allSchool ? 'school' : allHosp ? 'hospital' : 'mixed'
+      const facilityType: 'school' | 'hospital' | 'mixed' = allSchool ? 'school' : allHosp ? 'hospital' : 'mixed'
       const earliestDeadline = Math.min(...items.map(i => i.deadline_hours))
       const highestPriority  = Math.min(...items.map(i => i.priority))
       return { actionText, title: getCondensedTitle(actionText, items.length, facilityType), facilityType, items, earliestDeadline, highestPriority }

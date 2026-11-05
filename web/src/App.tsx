@@ -120,7 +120,7 @@ function Dashboard() {
             .main-content is overflow:hidden so the scroll must live here.
             When viewing the Map Explorer, use .dedicated-map-mode to fill 100% viewport height. */}
         {isDedicatedView && (
-          <div className={`dedicated-view-scroll ${activeTab === 'map' ? 'dedicated-map-mode' : ''}`}>
+          <div className={`dedicated-view-scroll ${activeTab === 'map' || activeTab === 'replay' ? 'dedicated-map-mode' : ''}`}>
             <Suspense fallback={<ViewSkeleton />}>
               {activeTab === 'map' && <MapExplorerView />}
               {activeTab === 'analytics' && <AnalyticsView />}
