@@ -1,0 +1,243 @@
+.eta-urgency {
+  display: flex;
+  flex-direction: column;
+}
+
+.eta-title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.eta-alert-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: var(--risk-critical-bg, #FFF0F0);
+  border: 1px solid var(--risk-critical-border, #FFCDD2);
+  color: var(--risk-critical, #C92A2A);
+  padding: 2px 8px;
+  border-radius: var(--radius-pill, 9999px);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.eta-chart-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.eta-bars {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  height: 160px;
+  padding: 10px 10px 0 10px;
+  border-bottom: 2px solid var(--border-subtle, rgba(0, 40, 20, 0.07));
+  gap: 12px;
+}
+
+.eta-bar-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+.eta-bar-col:hover,
+.eta-bar-col.active {
+  transform: translateY(-2px);
+}
+
+.eta-bar-wrapper {
+  width: 100%;
+  height: 120px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  position: relative;
+}
+
+.eta-count {
+  position: absolute;
+  top: -18px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--brand-dark, #1A4433);
+}
+
+.eta-bar-total {
+  width: 100%;
+  max-width: 44px;
+  border-radius: 6px 6px 0 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface-subtle, #f0f4f1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+}
+
+.eta-seg.school-seg {
+  background: #2563eb;
+  transition: opacity 0.15s ease;
+}
+
+.eta-seg.hospital-seg {
+  background: var(--brand-primary, #22734F);
+  transition: opacity 0.15s ease;
+}
+
+.eta-bar-label-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.eta-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-primary, #1A2421);
+}
+
+.eta-sublabel {
+  font-size: 10px;
+  color: var(--text-tertiary, #52665E);
+}
+
+.eta-legend {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  font-size: 11px;
+  color: var(--text-secondary, #4A5E56);
+}
+
+.eta-sch-box {
+  background: #2563eb;
+}
+
+.eta-hosp-box {
+  background: var(--brand-primary, #22734F);
+}
+
+.eta-tooltip {
+  background: var(--surface-card, #ffffff);
+  border: 1px solid var(--border-strong, rgba(0, 40, 20, 0.16));
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 11px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.eta-tooltip-head {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 6px;
+  font-size: 11px;
+  color: var(--text-primary, #1A2421);
+}
+
+.eta-tooltip-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.eta-tooltip-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 3px 0;
+  border-top: 1px solid var(--border-subtle, rgba(0, 40, 20, 0.07));
+}
+
+.eta-tt-name {
+  font-weight: 600;
+  color: var(--text-primary, #1A2421);
+  max-width: 140px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.eta-tt-meta {
+  color: var(--text-tertiary, #52665E);
+  font-size: 10px;
+}
+
+.eta-tt-fly {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  background: var(--brand-light, #E6F2EB);
+  color: var(--brand-primary, #22734F);
+  border: none;
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.eta-tt-fly:hover {
+  background: var(--brand-primary, #22734F);
+  color: #ffffff;
+}
+
+.eta-quick-action {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  background: var(--surface-subtle, #f0f4f1);
+  padding: 8px 12px;
+  border-radius: 8px;
+  margin-top: 10px;
+  font-size: 11px;
+  color: var(--text-secondary, #4A5E56);
+}
+
+.eta-action-icon {
+  color: var(--risk-critical, #C92A2A);
+  flex-shrink: 0;
+}
+
+.btn-tiny {
+  display: inline-flex;
+  align-items: center;
+  background: var(--brand-primary, #22734F);
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.btn-tiny:hover {
+  background: var(--brand-dark, #1A4433);
+}
+
+.eta-disclaimer {
+  font-size: 11px;
+  color: var(--text-tertiary, #52665E);
+  margin-top: 10px;
+  line-height: 1.4;
+  font-style: italic;
+}
+

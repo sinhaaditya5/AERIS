@@ -32,6 +32,11 @@ function ReplayShell() {
       role="main"
       aria-label="Forecast Replay"
     >
+      {/* ── Accessible Live Status ────────────────────────────────────────── */}
+      <div className="replay-sr-only" aria-live="polite" aria-atomic="true">
+        Chapter {chapterNum} of 4: {chapterLabel}
+      </div>
+
       {/* ── Top bar ──────────────────────────────────────────────────────── */}
       <div className="replay-topbar">
         <button

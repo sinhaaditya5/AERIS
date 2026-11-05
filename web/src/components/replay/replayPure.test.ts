@@ -7,11 +7,15 @@ import {
   chapterFromTime,
   formatEta,
   formatScrubberLabel,
+  formatWallClock,
+  formatRelativeArrival,
   formatOccupancy,
   formatGenerator,
   compassLabel,
   filteredCorridorFeatures,
   sourcesCentroid,
+  wavefrontGeoJSON,
+  regionalExposureCurve,
 } from './replayPure'
 import type { CorridorGeoJSON, SourcesFile } from '@/types/schemas'
 
@@ -167,5 +171,82 @@ describe('sourcesCentroid', () => {
     expect(centroid).not.toBeNull()
     expect(centroid![0]).toBeCloseTo(75)
     expect(centroid![1]).toBeCloseTo(31)
+  })
+})
+
+// ── formatWallClock ───────────────────────────────────────────────────────────
+
+describe('formatWallClock', () => {
+  it('returns null for null forecastStart', () => {
+    expect(formatWallClock(null, 2)).toBeNull()
+    expect(formatWallClock(undefined, 2)).toBeNull()
+  })
+  it('returns formatted string for valid ISO timestamp', () => {
+    const formatted = formatWallClock('2026-10-07T18:00:00Z', 4)
+    expect(formatted).not.toBeNull()
+    expect(typeof formatted).toBe('string')
+    expect(formatted!.length).toBeGreaterThan(0)
+  })
+})
+
+// ── formatRelativeArrival ─────────────────────────────────────────────────────
+
+describe('formatRelativeArrival', () => {
+  it('handles invalid numbers gracefully', () => {
+    const res = formatRelativeArrival(NaN, 2)
+    expect(res.status).toBe('approaching')
+    expect(res.text).toBe('—')
+  })
+  it('formats approaching in minutes when diff < 1h', () => {
+    const res = formatRelativeArrival(2.5, 2.0)
+    expect(res.status).toBe('approaching')
+    expect(res.text).toBe('30m')
+    expect(res.label).toBe('In 30m')
+  })
+  it('formats approaching in hours when diff >= 1h', () => {
+    const res = formatRelativeArrival(4.0, 2.0)
+    expect(res.status).toBe('approaching')
+    expect(res.text).toBe('2h')
+    expect(res.label).toBe('In 2h')
+  })
+  it('formats arrived now when diff near zero', () => {
+    const res = formatRelativeArrival(2.0, 2.02)
+    expect(res.status).toBe('arrived')
+    expect(res.text).toBe('now')
+  })
+  it('formats arrived minutes ago', () => {
+    const res = formatRelativeArrival(2.0, 2.5)
+    expect(res.status).toBe('arrived')
+    expect(res.text).toBe('30m ago')
+  })
+  it('formats arrived hours ago', () => {
+    const res = formatRelativeArrival(2.0, 5.0)
+    expect(res.status).toBe('arrived')
+    expect(res.text).toBe('3h ago')
+  })
+})
+
+// ── wavefrontGeoJSON & regionalExposureCurve ──────────────────────────────────
+
+describe('wavefrontGeoJSON', () => {
+  it('returns empty for null corridor or t=0', () => {
+    expect(wavefrontGeoJSON(null, 5).features).toHaveLength(0)
+    expect(wavefrontGeoJSON(mockCorridor, 0).features).toHaveLength(0)
+  })
+  it('interpolates point along centerline at t=0.5', () => {
+    const fc = wavefrontGeoJSON(mockCorridor, 0.5)
+    expect(fc.features.length).toBe(1)
+    const pt = (fc.features[0].geometry as any).coordinates
+    expect(pt[0]).toBeCloseTo(0.5)
+    expect(pt[1]).toBeCloseTo(0.5)
+  })
+})
+
+describe('regionalExposureCurve', () => {
+  it('computes aggregated peak delta for each hour window', () => {
+    const curve = regionalExposureCurve(mockCorridor)
+    expect(curve.length).toBeGreaterThan(1)
+    expect(curve[0].hour).toBe(0)
+    expect(curve[1].hour).toBe(2)
   })
 })
