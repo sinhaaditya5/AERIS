@@ -28,3 +28,7 @@ infra/lambda/api/
 
 # Account-specific audit notes (never commit; repo is public)
 docs/audit/private/
+
+# Local browser and test artifacts
+playwright-report/
+test-results/
