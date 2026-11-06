@@ -1,6 +1,8 @@
 /**
  * "What If We Act?" — Counterfactual Impact Comparison modeled from real plume & site exposure
  */
+import { useState } from 'react'
+import { Info } from 'lucide-react'
 import { useAeris } from '@/services/dataContext'
 import './WhatIfWeAct.css'
 
@@ -12,6 +14,7 @@ function formatM(n: number): string {
 
 export default function WhatIfWeAct() {
   const { exposedPopulation, rankedSites, interventionScenario, setInterventionScenario } = useAeris()
+  const [showInfo, setShowInfo] = useState(false)
 
   const total = exposedPopulation
   const siteCount = rankedSites?.sites.length ?? 0
@@ -39,9 +42,25 @@ export default function WhatIfWeAct() {
   return (
     <div className="whatif card">
       <div className="whatif-header">
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', position: 'relative' }}>
           <h3 className="section-title">What If We Act?</h3>
           <span className="whatif-info-tag">Assumed scenario</span>
+          <button
+            type="button"
+            className="whatif-info-btn"
+            onClick={() => setShowInfo(!showInfo)}
+            aria-label="Scenario assumptions info"
+            title="Assumed scenario assumptions and multipliers"
+          >
+            <Info size={12} />
+          </button>
+          {showInfo && (
+            <div className="whatif-popover" role="dialog" aria-label="Scenario Assumptions">
+              <p className="popover-line"><strong>Assumed parameters:</strong> 35% reduction via school/hospital shielding; 55% via comprehensive NCR-wide intervention.</p>
+              <p className="popover-line"><strong>Limitation:</strong> Assumed multipliers; not measured or calibrated effectiveness.</p>
+              <button type="button" className="popover-close-btn" onClick={() => setShowInfo(false)}>Close</button>
+            </div>
+          )}
         </div>
         <div
           className="whatif-reduction"
@@ -54,7 +73,7 @@ export default function WhatIfWeAct() {
       </div>
 
       <div className="whatif-pop">
-        Corridor population estimate: <strong>{formatM(total)}</strong> ({siteCount} ranked facilities). Assumed reductions: 35% partial, 55% full; no validated intervention effect.
+        Corridor population estimate: <strong>{formatM(total)}</strong> ({siteCount} ranked facilities).
       </div>
 
       <div className="whatif-bars">

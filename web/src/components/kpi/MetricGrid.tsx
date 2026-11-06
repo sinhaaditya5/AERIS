@@ -12,73 +12,6 @@ function formatPopulation(n: number): string {
   return String(n)
 }
 
-// Real SVG bar sparkline using actual numerical values
-function RealBarSparkline({ values, color }: { values: number[]; color: string }) {
-  if (values.length === 0) return null
-  const max = Math.max(...values, 1)
-  const count = Math.min(values.length, 6)
-  const slice = values.slice(0, count)
-  const barWidth = 7
-  const gap = 3
-  const totalWidth = count * barWidth + (count - 1) * gap
-  const height = 28
-
-  return (
-    <svg width={totalWidth} height={height} viewBox={`0 0 ${totalWidth} ${height}`} fill="none" aria-hidden="true">
-      {slice.map((v, i) => {
-        const barH = Math.max(3, (v / max) * height)
-        return (
-          <rect
-            key={i}
-            x={i * (barWidth + gap)}
-            y={height - barH}
-            width={barWidth}
-            height={barH}
-            rx="1.5"
-            fill={color}
-            opacity={0.55 + (i / count) * 0.45}
-          />
-        )
-      })}
-    </svg>
-  )
-}
-
-// 3-Bar Scenario Comparison Sparkline (No Action / Partial / Full)
-function ScenarioSparkline({
-  activeScenario,
-  values,
-}: {
-  activeScenario: 'none' | 'partial' | 'full'
-  values: { id: 'none' | 'partial' | 'full'; val: number; color: string }[]
-}) {
-  const max = Math.max(...values.map(v => v.val), 1)
-  const height = 28
-
-  return (
-    <svg width={42} height={height} viewBox={`0 0 42 ${height}`} fill="none" aria-hidden="true">
-      {values.map((v, i) => {
-        const isSelected = activeScenario === v.id
-        const barH = Math.max(4, (v.val / max) * height)
-        return (
-          <rect
-            key={v.id}
-            x={i * 14}
-            y={height - barH}
-            width={10}
-            height={barH}
-            rx="2"
-            fill={v.color}
-            opacity={isSelected ? 1 : 0.4}
-            stroke={isSelected ? '#1A2421' : 'none'}
-            strokeWidth={isSelected ? 1 : 0}
-          />
-        )
-      })}
-    </svg>
-  )
-}
-
 export default function MetricGrid() {
   const { sources, rankedSites, activeExposedPopulation, interventionScenario } = useAeris()
 
@@ -91,11 +24,9 @@ export default function MetricGrid() {
   const sortedSources = [...rawSources].sort((a, b) => b.total_frp_mw - a.total_frp_mw)
   const topSource = sortedSources[0]
   const topFrpShare = totalFrp > 0 && topSource ? Math.round((topSource.total_frp_mw / totalFrp) * 100) : 0
-  const sourceFRPs = sortedSources.slice(0, 6).map(s => s.total_frp_mw)
 
   // 2. Population & Active Scenario metrics
   const exposure   = rankedSites?.exposed_population.data_available === false ? undefined : rankedSites?.exposed_population
-  const rawExposed = exposure?.estimate ?? 0
   const exposedDisplay = activeExposedPopulation != null ? formatPopulation(activeExposedPopulation) : '—'
 
   const scenarioMeta = {
@@ -119,16 +50,9 @@ export default function MetricGrid() {
     },
   }[interventionScenario]
 
-  const scenarioBars = [
-    { id: 'none' as const,    val: rawExposed,                      color: '#E03131' },
-    { id: 'partial' as const, val: Math.round(rawExposed * 0.65),   color: '#F59F00' },
-    { id: 'full' as const,    val: Math.round(rawExposed * 0.45),   color: '#22734F' },
-  ]
-
   // 3. Facility categorization
   const schoolsCount = rankedSites?.sites.filter(s => s.type === 'school').length ?? 0
   const hospCount    = rankedSites?.sites.filter(s => s.type === 'hospital').length ?? 0
-  const topSiteScores = rankedSites?.sites.slice(0, 6).map(s => s.risk_score * 100) ?? []
 
   return (
     <div className="metric-grid">
@@ -152,9 +76,6 @@ export default function MetricGrid() {
             </span>
           </div>
         </div>
-        <div className="metric-chart" title="Actual FRP distribution across top clusters">
-          <RealBarSparkline values={sourceFRPs} color="var(--accent-primary, #22734F)" />
-        </div>
       </div>
 
       {/* 2. People Potentially Exposed */}
@@ -174,9 +95,6 @@ export default function MetricGrid() {
               {scenarioMeta.deltaText}
             </span>
           </div>
-        </div>
-        <div className="metric-chart" title="Comparison across No Action, Partial, and Full Intervene scenarios">
-          {exposure && <ScenarioSparkline activeScenario={interventionScenario} values={scenarioBars} />}
         </div>
       </div>
 
@@ -199,9 +117,6 @@ export default function MetricGrid() {
               {schoolsCount > 0 ? `${schoolsCount} Sch · ${hospCount} Hosp` : 'Receptor Sites'}
             </span>
           </div>
-        </div>
-        <div className="metric-chart" title="Actual risk score distribution of top ranked facilities">
-          <RealBarSparkline values={topSiteScores} color="var(--risk-high, #D4620A)" />
         </div>
       </div>
 

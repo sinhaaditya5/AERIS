@@ -14,7 +14,7 @@ export default function TopAffectedAreas() {
   const allSites = rankedSites?.sites ?? []
   const sites = allSites
     .filter(s => filterType === 'all' || s.type === filterType)
-    .slice(0, 4)
+    .slice(0, 5)
 
   return (
     <div className="top-areas card">
@@ -56,6 +56,12 @@ export default function TopAffectedAreas() {
         >
           View All ({allSites.length}) →
         </button>
+      </div>
+
+      <div className="areas-table-header">
+        <span className="col-receptor">Receptor</span>
+        <span className="col-risk">Risk</span>
+        <span className="col-eta">ETA (T+h)</span>
       </div>
 
       {sites.length === 0 ? (

@@ -4,33 +4,37 @@
   grid-template-columns: repeat(4, 1fr);
   gap: 10px;
   flex-shrink: 0;
+  max-height: 100px;
 }
 
 .metric-card {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 8px 12px;
+  gap: 12px;
+  padding: 10px 14px;
   cursor: default;
   transition: transform 0.2s, box-shadow 0.2s;
+  background: var(--surface-card, #ffffff);
+  border: var(--border-width, 1px) solid var(--border-subtle, rgba(0, 0, 0, 0.08));
+  border-radius: var(--radius-card);
+  min-height: 72px;
+  box-sizing: border-box;
 }
 
 .metric-card:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-float);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
 }
 
 .metric-icon {
-  width: 34px;
-  height: 34px;
-  border-radius: 10px;
+  width: 36px;
+  height: 36px;
+  border-radius: 9px;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
 }
-
-
 
 .metric-body {
   flex: 1;
@@ -42,7 +46,7 @@
   font-size: 11px;
   color: var(--text-tertiary);
   font-weight: 500;
-  margin-bottom: 4px;
+  margin-bottom: 3px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -52,58 +56,57 @@
   display: flex;
   align-items: baseline;
   gap: 8px;
+  flex-wrap: wrap;
 }
 
 .metric-value {
-  font-size: 26px;
-  font-weight: 800;
+  font-size: 24px;
+  font-weight: 700;
   color: var(--text-primary);
   line-height: 1;
-  letter-spacing: -1px;
+  letter-spacing: -0.5px;
+  font-variant-numeric: tabular-nums;
 }
-
-.metric-chart {
-  display: flex;
-  align-items: flex-end;
-  flex-shrink: 0;
-}
-
-/* AQI Card overrides */
-.aqi-card {
-  background: var(--card-hero-bg, linear-gradient(135deg, #1A4433 0%, #237253 60%, #2D9765 100%)) !important;
-  border: var(--border-width, 1px) solid var(--card-hero-border, transparent) !important;
-}
-
-.aqi-card .metric-label { color: rgba(255, 255, 255, 0.75); }
-.aqi-card .metric-value  { color: var(--card-hero-text, white); }
 
 .aqi-status-badge {
   display: inline-flex;
   align-items: center;
-  padding: 2px 10px;
+  gap: 5px;
+  padding: 2px 8px;
   border-radius: var(--radius-pill);
-  background: rgba(255, 255, 255, 0.2);
-  color: white;
+  background: var(--surface-subtle, rgba(0, 0, 0, 0.04));
+  color: var(--text-secondary);
   font-size: 11px;
   font-weight: 600;
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  border: 1px solid var(--border-subtle, rgba(0, 0, 0, 0.08));
+}
+
+.aqi-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.aqi-label-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 3px;
 }
 
 @media (max-width: 1024px) {
   .metric-grid {
     grid-template-columns: repeat(2, 1fr);
+    max-height: none;
   }
 }
 
 @media (max-width: 640px) {
   .metric-grid {
     grid-template-columns: 1fr;
+    max-height: none;
   }
 }
-
-.metric-value-row { flex-wrap: wrap; }
-.metric-label { white-space: normal; }
-.aqi-card .metric-label { color: white; }
-.aqi-label-row { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
-.aqi-card .metric-chart { width: 50px; flex: 0 0 50px; }
-.aqi-card .metric-chart svg { max-width: 100%; height: auto; }

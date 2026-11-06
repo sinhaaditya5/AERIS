@@ -337,7 +337,7 @@ export default function SettingsView() {
         </div>
 
         {/* Category Navigation Pills */}
-        <div className="settings-nav-pills" role="tablist" aria-label="Settings section filter">
+        <div className="settings-nav-pills" role="group" aria-label="Settings section filter">
           <button
             type="button"
             className={`nav-pill ${activeTab === 'all' ? 'active' : ''}`}
@@ -1243,6 +1243,7 @@ export default function SettingsView() {
                     min="50"
                     max="300"
                     step="25"
+                    aria-label="Critical PM2.5 Alert Threshold"
                     className="threshold-range-slider"
                     value={settings.pm25CriticalThreshold}
                     onChange={e => updateSettings({ pm25CriticalThreshold: Number(e.target.value) })}

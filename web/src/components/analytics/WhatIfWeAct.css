@@ -17,6 +17,55 @@
   gap: 8px;
 }
 
+.whatif-info-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  padding: 2px;
+  display: flex;
+  align-items: center;
+  border-radius: 4px;
+}
+
+.whatif-info-btn:hover {
+  color: var(--text-primary);
+}
+
+.whatif-popover {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  width: 270px;
+  background: var(--surface-card, #ffffff);
+  border: 1px solid var(--border-strong, rgba(0, 0, 0, 0.16));
+  border-radius: 8px;
+  padding: 10px 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  z-index: 100;
+  font-size: 11.5px;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.whatif-popover .popover-line {
+  margin: 0 0 6px 0;
+}
+
+.whatif-popover .popover-line:last-of-type {
+  margin-bottom: 8px;
+}
+
+.whatif-popover .popover-close-btn {
+  font-size: 10px;
+  font-weight: 600;
+  background: var(--surface-subtle);
+  border: 1px solid var(--border-subtle);
+  border-radius: 4px;
+  padding: 2px 8px;
+  cursor: pointer;
+}
+
 .whatif-reduction {
   display: flex;
   align-items: center;

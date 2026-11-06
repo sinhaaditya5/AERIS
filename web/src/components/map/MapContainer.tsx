@@ -1,10 +1,10 @@
 /** Dashboard map: real candidate markers, uncalibrated corridors and observed station cells. */
 
-import { Map, Marker, Popup, setWorkerUrl } from 'maplibre-gl'
+import { Map, Marker, Popup, setWorkerUrl, AttributionControl } from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?url'
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Layers, Maximize2, Info, HelpCircle, X, Compass } from 'lucide-react'
+import { Layers, Maximize2, Info, HelpCircle, X, Compass, ChevronDown } from 'lucide-react'
 import { useAeris } from '@/services/dataContext'
 import { getRiskLevel, riskLabel, WindFileSchema } from '@/types/schemas'
 import { getFeedFreshness } from '@/services/api'
@@ -39,6 +39,7 @@ export default function MapContainer() {
   const [webGlSupported, setWebGlSupported] = useState(true)
   const [scopeFilter, setScopeFilter]       = useState<'all' | 'india'>('all')
   const [isLayerMenuOpen, setIsLayerMenuOpen] = useState(false)
+  const [isHeaderLayersOpen, setIsHeaderLayersOpen] = useState(false)
   const [showMapGuide, setShowMapGuide]       = useState(false)
   const [isTelemetryOpen, setIsTelemetryOpen] = useState(false)
   const [activeTarget, setActiveTarget]       = useState<InspectorTarget | null>(null)
@@ -152,13 +153,19 @@ export default function MapContainer() {
         maxBounds: [[52.0, 2.0], [104.0, 42.0]], // Comfortable, elastic subcontinent bounds
         pitch: initialMode.current === 'globe' ? 32 : 0,
         bearing: initialMode.current === 'globe' ? -6 : 0,
-        attributionControl: { compact: true },
+        attributionControl: false,
         dragPan: {
           linearity: 0.28,
           maxSpeed: 1400,
           deceleration: 2500,
         },
       })
+
+      try {
+        map.addControl(new AttributionControl({ compact: true }), 'bottom-left')
+      } catch {
+        // Non-blocking in headless mock environments
+      }
 
       const onMoveStart = () => container?.classList.add('map-moving')
       const onMoveEnd = () => container?.classList.remove('map-moving')
@@ -296,11 +303,24 @@ export default function MapContainer() {
   }, [effectiveTheme, settings.accent, settings.colorBlindSafe, webGlSupported])
 
   // ── 1d. Auto-sync basemap to theme when enabled ───────────────────────────
+  const prevThemeRef = useRef(effectiveTheme)
+  const prevMatchBasemapRef = useRef(settings.matchBasemap)
   useEffect(() => {
-    if (!settings.matchBasemap || satelliteCheck.isOpen) return
-    const targetMode = effectiveTheme === 'night-watch' ? 'dark' : effectiveTheme === 'field-daylight' ? 'topo' : 'satellite'
-    if (basemapMode !== targetMode) {
-      setBasemapMode(targetMode)
+    if (!settings.matchBasemap || satelliteCheck.isOpen) {
+      prevThemeRef.current = effectiveTheme
+      prevMatchBasemapRef.current = settings.matchBasemap
+      return
+    }
+    const themeChanged = prevThemeRef.current !== effectiveTheme
+    const matchChanged = !prevMatchBasemapRef.current && settings.matchBasemap
+    prevThemeRef.current = effectiveTheme
+    prevMatchBasemapRef.current = settings.matchBasemap
+
+    if (themeChanged || matchChanged) {
+      const targetMode = effectiveTheme === 'night-watch' ? 'dark' : effectiveTheme === 'field-daylight' ? 'topo' : 'satellite'
+      if (basemapMode !== targetMode) {
+        setBasemapMode(targetMode)
+      }
     }
   }, [effectiveTheme, settings.matchBasemap, basemapMode, setBasemapMode, satelliteCheck.isOpen])
 
@@ -526,201 +546,282 @@ export default function MapContainer() {
   const activeSourcesCount = sources?.sources.filter(s => isValidSubcontinentCoord(s.lat, s.lon) && (scopeFilter === 'all' || s.territory === 'india')).length ?? 0
   const reportedEta = etaHours ?? rankedSites?.sites[0]?.eta_hours
   const earliestEta = reportedEta != null && Number.isFinite(reportedEta) && reportedEta >= 0 ? (reportedEta === 0 ? '0.0' : reportedEta.toFixed(1)) : null
+  const [showMapInfoPopover, setShowMapInfoPopover] = useState(false)
 
   return (
     <div className={`map-wrapper card ${satelliteCheck.isOpen ? 'satellite-check-active' : ''}`}>
       <div className="map-header">
         <div className="map-title-group">
-          <div className="map-icon">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#22734F" strokeWidth="2.2">
+          <div className="map-icon" aria-hidden="true">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
               <path d="M3 7l6-3 6 3 6-3v13l-6 3-6-3-6 3V7z"/>
             </svg>
           </div>
-          <div className="map-title-wrapper">
-            <div className="map-title-row">
-              <span className="map-title">Modelled plume corridors</span>
-              <span className="map-baseline-badge">Uncalibrated baseline</span>
+          <div className="map-title-row">
+            <span className="map-title">Modelled plume corridors</span>
+            <span className="map-tier-tag" title="Modelled forward dispersion corridor, not an observed concentration field">Modelled</span>
+            <div className="map-info-popover-anchor">
+              <button
+                type="button"
+                className="map-info-trigger-btn"
+                onClick={() => setShowMapInfoPopover(prev => !prev)}
+                aria-label="Plume corridor model details"
+                title="Model information and forecast initialization"
+              >
+                <Info size={12} />
+              </button>
+              {showMapInfoPopover && (
+                <div className="map-info-popover" role="dialog" aria-label="Plume Corridor Model Information">
+                  <p className="popover-line"><strong>Modelled corridor:</strong> 0–24h forward dispersion initialized from satellite thermal detections.</p>
+                  <p className="popover-line"><strong>Method:</strong> Lagrangian forward particle transport with regional meteorological wind vectors.</p>
+                  <p className="popover-line"><strong>Limitation:</strong> Uncalibrated baseline; not a calibrated ground station observation field.</p>
+                  <button type="button" className="popover-close-btn" onClick={() => setShowMapInfoPopover(false)}>Close</button>
+                </div>
+              )}
             </div>
-            <div className="map-subtitle">Atmospheric forward trajectory · not an observed concentration field</div>
           </div>
         </div>
 
-        <div className="map-header-actions">
-          {/* Preset Camera Bookmarks in Card Header */}
-          <div className="map-header-presets">
-            <button
-              className="map-header-chip"
-              onClick={fitAirshedBounds}
-              title="Focus on Active Smoke Dispersion Airshed (Punjab to NCR)"
-              type="button"
-            >
-              <span>🎯 Airshed</span>
-            </button>
-            <button
-              className="map-header-chip"
-              onClick={() => mapRef.current?.flyTo({
-                center: [78.9, 22.8],
-                zoom: 4.4,
-                pitch: basemapMode === 'globe' ? 32 : 0,
-                bearing: basemapMode === 'globe' ? -6 : 0,
-                speed: 1.1,
-                curve: 1.3,
-              })}
-              title="Fit Entire India (repository boundary)"
-              type="button"
-            >
-              <span>🇮🇳 All India</span>
-            </button>
-            <button
-              className={`map-header-chip guide-chip ${showMapGuide ? 'active' : ''}`}
-              onClick={() => setShowMapGuide(prev => !prev)}
-              title="How to understand this map"
-              type="button"
-            >
-              <HelpCircle size={11} />
-              <span>Guide</span>
-            </button>
-            <button
-              className={`map-header-chip satellite-check-chip satellite-check-trigger-btn ${satelliteCheck.isOpen ? 'active' : ''}`}
-              data-testid="satellite-check-btn"
-              onClick={(e) => {
-                if (satelliteCheck.isOpen) {
-                  satelliteCheck.closeSatelliteCheck()
-                } else {
-                  satelliteCheck.openSatelliteCheck(e.currentTarget)
-                }
-              }}
-              disabled={!satelliteCheck.isOnline}
-              title={
-                satelliteCheck.isOnline
-                  ? "Satellite check: compare real NASA satellite imagery with modelled plume"
-                  : "Satellite check unavailable while offline. Real NASA satellite imagery requires an active internet connection."
-              }
-              aria-label="Satellite check"
-              type="button"
-            >
-              <span>🛰️ Satellite check</span>
-            </button>
-          </div>
+        <div className="map-toolbar-center">
+          {!satelliteCheck.isOpen && <TimeControls showPlayToggle={false} />}
+        </div>
 
-          {!satelliteCheck.isOpen && (
-            <>
-              <div className="map-header-divider" />
-              <TimeControls showPlayToggle={true} />
-            </>
-          )}
+        <div className="map-toolbar-right">
+          {/* Direct Satellite Check Trigger */}
           <button
-            className="map-header-expand-btn"
-            onClick={() => setActiveTab('map')}
-            title="Open Full GIS Map Explorer"
+            className={`map-header-chip satellite-check-chip satellite-check-trigger-btn ${satelliteCheck.isOpen ? 'active' : ''}`}
+            data-testid="satellite-check-btn"
+            onClick={(e) => {
+              if (satelliteCheck.isOpen) {
+                satelliteCheck.closeSatelliteCheck()
+              } else {
+                satelliteCheck.openSatelliteCheck(e.currentTarget)
+              }
+            }}
+            disabled={!satelliteCheck.isOnline}
+            title={
+              satelliteCheck.isOnline
+                ? "Satellite check: compare real NASA satellite imagery with modelled plume"
+                : "Satellite check unavailable while offline. Real NASA satellite imagery requires an active internet connection."
+            }
+            aria-label="Satellite check"
             type="button"
           >
-            <Maximize2 size={13} />
+            <span>🛰️ Satellite check</span>
+          </button>
+
+          {/* Preset Camera Bookmarks & Layer Controls */}
+          <div className="map-layers-menu-wrap">
+            <button
+              type="button"
+              className={`map-header-chip map-layers-trigger-btn ${isHeaderLayersOpen ? 'active' : ''}`}
+              onClick={() => setIsHeaderLayersOpen(prev => !prev)}
+              aria-label="Map layers and presets"
+              aria-expanded={isHeaderLayersOpen}
+            >
+              <Layers size={12} />
+              <span>Layers</span>
+              <ChevronDown size={11} />
+            </button>
+            {isHeaderLayersOpen && (
+              <div className="map-layers-dropdown" role="menu">
+                <div className="dropdown-section-title">Camera Presets</div>
+                <button
+                  type="button"
+                  className="dropdown-item-btn"
+                  onClick={() => { fitAirshedBounds(); setIsHeaderLayersOpen(false); }}
+                >
+                  🎯 Active Airshed
+                </button>
+                <button
+                  type="button"
+                  className="dropdown-item-btn"
+                  onClick={() => {
+                    mapRef.current?.flyTo({
+                      center: [78.9, 22.8],
+                      zoom: 4.4,
+                      pitch: basemapMode === 'globe' ? 32 : 0,
+                      bearing: basemapMode === 'globe' ? -6 : 0,
+                      speed: 1.1,
+                      curve: 1.3,
+                    })
+                    setIsHeaderLayersOpen(false)
+                  }}
+                >
+                  🇮🇳 All India Boundary
+                </button>
+                <div className="dropdown-divider" />
+                <div className="dropdown-section-title">Satellite Imagery</div>
+                <button
+                  type="button"
+                  className="dropdown-item-btn satellite-check-trigger-btn"
+                  data-testid="satellite-check-btn"
+                  onClick={(e) => {
+                    setIsHeaderLayersOpen(false)
+                    if (satelliteCheck.isOpen) satelliteCheck.closeSatelliteCheck()
+                    else satelliteCheck.openSatelliteCheck(e.currentTarget)
+                  }}
+                  disabled={!satelliteCheck.isOnline}
+                  aria-label="Satellite check"
+                >
+                  🛰️ Satellite check (NASA GIBS)
+                </button>
+                <div className="dropdown-divider" />
+                <div className="dropdown-section-title">Layer Overlays</div>
+                <label className="dropdown-checkbox-row">
+                  <input
+                    type="checkbox"
+                    checked={showWind}
+                    onChange={e => setShowWind(e.target.checked)}
+                  />
+                  <span>Wind transport vectors</span>
+                </label>
+                <label className="dropdown-checkbox-row">
+                  <input
+                    type="checkbox"
+                    checked={showReceptors}
+                    onChange={e => setShowReceptors(e.target.checked)}
+                  />
+                  <span>Sensitive receptors (schools &amp; hospitals)</span>
+                </label>
+              </div>
+            )}
+          </div>
+
+          <button
+            className={`map-header-chip guide-chip ${showMapGuide ? 'active' : ''}`}
+            onClick={() => setShowMapGuide(prev => !prev)}
+            title="How to understand this map"
+            aria-label="Map reading guide"
+            type="button"
+          >
+            <HelpCircle size={12} />
+            <span>Guide</span>
+          </button>
+
+          <button
+            className="map-header-chip map-header-expand-btn"
+            onClick={() => setActiveTab('map')}
+            title="Open Full GIS Map Explorer"
+            aria-label="Full Map"
+            type="button"
+          >
+            <Maximize2 size={12} />
             <span>Full Map</span>
           </button>
         </div>
       </div>
 
+      {/* Heatmap Controls: Natural Flow Strip above Map Canvas */}
       <HeatmapControls data={heatmap.data} enabled={heatmap.enabled} onToggle={heatmap.setEnabled} opacity={heatmap.opacity} onOpacity={heatmap.setOpacity} onFit={webGlSupported ? heatmap.fit : undefined} bounds={webGlSupported ? heatmap.bounds : null} loading={loading} error={feedErrors.aqi} />
 
-      {/* Executive 3-Step Airshed Storyline Ribbon (hidden during Satellite Check for full canvas immersion) */}
-      {!satelliteCheck.isOpen && (
-        <div className="map-storyline-ribbon" role="region" aria-label="Airshed Flow Storyline">
-        <div className="storyline-node origin" title="Active fire clusters identified by thermal satellite detections">
-          <span className="story-step-badge">1. Origin</span>
-          <div className="story-step-text">
-            <strong className="story-headline">🔥 {sources ? `${activeSourcesCount} Fires` : '—'}</strong>
-            <span className="story-sub">Punjab &amp; Regional</span>
-          </div>
-        </div>
+      <div className="map-canvas-area" onClick={() => isLayerMenuOpen && setIsLayerMenuOpen(false)}>
+        {webGlSupported ? (
+          <div ref={mapContainerRef} className="map-canvas" />
+        ) : (
+          <Suspense fallback={<div className="map-fallback-canvas" />}>
+            <SvgFallbackMap sources={sources} rankedSites={rankedSites} scopeFilter={scopeFilter} corridor={corridor} horizon={timeHorizon} heatmap={heatmap.data} heatmapEnabled={heatmap.enabled} opacity={heatmap.opacity} />
+          </Suspense>
+        )}
 
-        <div className="storyline-connector" aria-hidden="true">➔</div>
-
-        <div className="storyline-node flow" role="region" aria-label="Wind forecast sample">
-          <span className="story-step-badge">2. Flow</span>
-          <div className="story-step-text">
-            <div className="story-flow-summary">
-              {sample && samplePoint && windSpeedKmh != null ? (
-                <>
-                  <strong className="story-headline">{windSpeedKmh} km/h</strong>
-                  <span className="story-sub flow-direction">
-                    {sample.speed_ms === 0 ? 'Calm; direction undefined' : `Wind from ${compass} (${sample.dir_from_deg}°)`}
-                  </span>
-                  <button
-                    type="button"
-                    className={`flow-telemetry-toggle-btn ${isTelemetryOpen ? 'active' : ''}`}
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      setIsTelemetryOpen(prev => !prev)
-                    }}
-                    title="Toggle meteorological grid telemetry and forecast metadata"
-                    aria-label="Toggle wind forecast telemetry details"
-                    aria-expanded={isTelemetryOpen}
-                  >
-                    <Info size={10} />
-                    <span>Telemetry</span>
-                    <span className={`telemetry-dot ${windFreshness.stale ? 'stale' : 'live'}`} />
-                  </button>
-                </>
-              ) : (
-                <strong className="story-headline story-status-headline">
-                  {loading ? 'Loading wind data…' : windStatus}
-                </strong>
-              )}
+        {/* Executive 3-Step Airshed Storyline Floating Overlay */}
+        {!satelliteCheck.isOpen && (
+          <div className="map-storyline-ribbon floating-storyline" role="region" aria-label="Airshed Flow Storyline">
+            <div className="storyline-node origin" title="Active fire clusters identified by thermal satellite detections">
+              <span className="story-step-badge">1. Origin</span>
+              <div className="story-step-text">
+                <strong className="story-headline">🔥 {sources ? `${activeSourcesCount} Fires` : '—'}</strong>
+                <span className="story-sub">Punjab &amp; Regional</span>
+              </div>
             </div>
 
-            {/* Accessible & Collapsible Telemetry Popover */}
-            <div
-              className={`story-flow-telemetry-popover ${isTelemetryOpen ? 'open' : 'closed'}`}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="telemetry-popover-header">
-                <span className="telemetry-title">📡 Wind Forecast Model Telemetry</span>
-                <button
-                  type="button"
-                  className="telemetry-close-btn"
-                  onClick={() => setIsTelemetryOpen(false)}
-                  title="Close telemetry"
-                  aria-label="Close telemetry details"
+            <div className="storyline-connector" aria-hidden="true">➔</div>
+
+            <div className="storyline-node flow" role="region" aria-label="Wind forecast sample">
+              <span className="story-step-badge">2. Flow</span>
+              <div className="story-step-text">
+                <div className="story-flow-summary">
+                  {sample && samplePoint && windSpeedKmh != null ? (
+                    <>
+                      <strong className="story-headline">{windSpeedKmh} km/h</strong>
+                      <span className="story-sub flow-direction">
+                        {sample.speed_ms === 0 ? 'Calm; direction undefined' : `Wind from ${compass} (${sample.dir_from_deg}°)`}
+                      </span>
+                      <button
+                        type="button"
+                        className={`flow-telemetry-toggle-btn ${isTelemetryOpen ? 'active' : ''}`}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setIsTelemetryOpen(prev => !prev)
+                        }}
+                        title="Toggle meteorological grid telemetry and forecast metadata"
+                        aria-label="Toggle wind forecast telemetry details"
+                        aria-expanded={isTelemetryOpen}
+                      >
+                        <Info size={10} />
+                        <span>Telemetry</span>
+                        <span className={`telemetry-dot ${windFreshness.stale ? 'stale' : 'live'}`} />
+                      </button>
+                    </>
+                  ) : (
+                    <strong className="story-headline story-status-headline">
+                      {loading ? 'Loading wind data…' : windStatus}
+                    </strong>
+                  )}
+                </div>
+
+                {/* Accessible & Collapsible Telemetry Popover */}
+                <div
+                  className={`story-flow-telemetry-popover ${isTelemetryOpen ? 'open' : 'closed'}`}
+                  onClick={(e) => e.stopPropagation()}
                 >
-                  <X size={11} />
-                </button>
+                  <div className="telemetry-popover-header">
+                    <span className="telemetry-title">📡 Wind Forecast Model Telemetry</span>
+                    <button
+                      type="button"
+                      className="telemetry-close-btn"
+                      onClick={() => setIsTelemetryOpen(false)}
+                      title="Close telemetry"
+                      aria-label="Close telemetry details"
+                    >
+                      <X size={11} />
+                    </button>
+                  </div>
+
+                  <div className="telemetry-details-body">
+                    <span className="story-sub" role="status" aria-label="Wind data status">
+                      {loading && 'Loading wind data… '}{windStatus}
+                      {feedErrors.wind && ` Wind feed unavailable: ${feedErrors.wind}.${sample && windSpeedKmh != null ? ' Retained forecast sample shown.' : ''}`}
+                    </span>
+
+                    {sample && samplePoint && windSpeedKmh != null && (
+                      <>
+                        <span className="story-sub">
+                          {Date.parse(sample.t) < now ? 'Past forecast sample' : 'Forecast sample'}: <time dateTime={sample.t}>{sample.t}</time> at {samplePoint.lat}, {samplePoint.lon} (lat, lon). Source: {windData!.source}.
+                        </span>
+                        <span className="story-sub">
+                          Capture: <time dateTime={windData!.generated_at}>{windData!.generated_at}</time>.
+                        </span>
+                      </>
+                    )}
+
+                    {windData && <span className="story-sub">{windCoverage}</span>}
+                  </div>
+                </div>
               </div>
+            </div>
 
-              <div className="telemetry-details-body">
-                <span className="story-sub" role="status" aria-label="Wind data status">
-                  {loading && 'Loading wind data… '}{windStatus}
-                  {feedErrors.wind && ` Wind feed unavailable: ${feedErrors.wind}.${sample && windSpeedKmh != null ? ' Retained forecast sample shown.' : ''}`}
-                </span>
+            <div className="storyline-connector" aria-hidden="true">➔</div>
 
-                {sample && samplePoint && windSpeedKmh != null && (
-                  <>
-                    <span className="story-sub">
-                      {Date.parse(sample.t) < now ? 'Past forecast sample' : 'Forecast sample'}: <time dateTime={sample.t}>{sample.t}</time> at {samplePoint.lat}, {samplePoint.lon} (lat, lon). Source: {windData!.source}.
-                    </span>
-                    <span className="story-sub">
-                      Capture: <time dateTime={windData!.generated_at}>{windData!.generated_at}</time>.
-                    </span>
-                  </>
-                )}
-
-                {windData && <span className="story-sub">{windCoverage}</span>}
+            <div className="storyline-node impact" title="Uncalibrated forecast-relative arrival at a ranked receptor">
+              <span className="story-step-badge">3. Impact</span>
+              <div className="story-step-text">
+                <strong className="story-headline">{earliestEta == null ? 'ETA unavailable' : `~${earliestEta}h ETA`}</strong>
+                <span className="story-sub" title="Ranked receptor · uncalibrated · forecast-relative">Receptor arrival</span>
               </div>
             </div>
           </div>
-        </div>
-
-        <div className="storyline-connector" aria-hidden="true">➔</div>
-
-        <div className="storyline-node impact" title="Uncalibrated forecast-relative arrival at a ranked receptor">
-          <span className="story-step-badge">3. Impact</span>
-          <div className="story-step-text">
-            <strong className="story-headline">{earliestEta == null ? 'ETA unavailable' : `~${earliestEta}h ETA`}</strong>
-            <span className="story-sub" title="Ranked receptor · uncalibrated · forecast-relative">Receptor arrival</span>
-          </div>
-        </div>
-      </div>
-    )}
+        )}
 
       {showMapGuide && (
         <div className="map-guide-overlay" onClick={() => setShowMapGuide(false)}>
@@ -783,14 +884,6 @@ export default function MapContainer() {
           </div>
         </div>
       )}
-      <div className="map-canvas-area" onClick={() => isLayerMenuOpen && setIsLayerMenuOpen(false)}>
-        {webGlSupported ? (
-          <div ref={mapContainerRef} className="map-canvas" />
-        ) : (
-          <Suspense fallback={<div className="map-fallback-canvas" />}>
-            <SvgFallbackMap sources={sources} rankedSites={rankedSites} scopeFilter={scopeFilter} corridor={corridor} horizon={timeHorizon} heatmap={heatmap.data} heatmapEnabled={heatmap.enabled} opacity={heatmap.opacity} />
-          </Suspense>
-        )}
 
         {/* Docked Micro-Inspector HUD (active when a site, fire cluster, or waypoint is selected) */}
         {activeTarget && !satelliteCheck.isOpen && (

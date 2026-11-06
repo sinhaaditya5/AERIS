@@ -11,8 +11,7 @@ function formatPopK(n: number): string {
 }
 
 export default function AgentWidget() {
-  const { actions, sources, rankedSites, etaHours, setShowActionsModal } = useAeris()
-  const [showFullBriefing, setShowFullBriefing] = useState(false)
+  const { actions, sources, rankedSites, etaHours, setShowActionsModal, setShowNotesDrawer, setNotesDrawerSection } = useAeris()
 
   // Compute stats from real contracts
   // No data -> '—'; never a placeholder number
@@ -40,9 +39,26 @@ export default function AgentWidget() {
         </div>
       </div>
 
-      {/* Headline */}
+      {/* Headline & 2-line Clamped Summary with Full Briefing Link */}
       <div className="agent-headline-block">
         <h4 className="agent-headline">Model-informed Recommendations</h4>
+        {actions?.summary && (
+          <div className="agent-briefing-block">
+            <p className="briefing-clamped-text">{actions.summary}</p>
+            <button
+              type="button"
+              className="briefing-drawer-trigger-btn"
+              onClick={() => {
+                setNotesDrawerSection('agent')
+                setShowNotesDrawer(true)
+              }}
+              title="Open scientific limitations, model provenance and full advisory briefing"
+            >
+              <span>Read full briefing</span>
+              <ArrowRight size={11} />
+            </button>
+          </div>
+        )}
         <div className="agent-chips-grid">
           <span className="agent-chip" title="Fire detections represented by source candidates">
             <Flame size={11} color="#DC2626" />
@@ -60,7 +76,7 @@ export default function AgentWidget() {
             title={exposure ? (exposure.method || `Exposed population estimate: ${exposure.estimate.toLocaleString()} (Threshold sensitivity range: ${exposure.low.toLocaleString()} – ${exposure.high.toLocaleString()})`) : 'No exposure estimate available'}
           >
             <Users size={11} color="#C92A2A" />
-            {exposure ? <><strong>{formatPopK(exposure.estimate)}</strong> (threshold sensitivity range {formatPopK(exposure.low)}–{formatPopK(exposure.high)})</> : <strong>—</strong>}
+            {exposure ? <><strong>{formatPopK(exposure.estimate)}</strong> ({formatPopK(exposure.low)}–{formatPopK(exposure.high)})</> : <strong>—</strong>}
           </span>
         </div>
       </div>
@@ -90,26 +106,6 @@ export default function AgentWidget() {
           })}
         </ul>
       </div>
-
-      {/* Expandable Full Briefing */}
-      {actions?.summary && (
-        <div className="agent-briefing-accordion">
-          <button
-            type="button"
-            className="briefing-toggle-btn"
-            onClick={() => setShowFullBriefing(!showFullBriefing)}
-            aria-expanded={showFullBriefing}
-          >
-            <span>Full briefing</span>
-            {showFullBriefing ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
-          </button>
-          {showFullBriefing && (
-            <div className="briefing-expanded-text">
-              <p>{actions.summary}</p>
-            </div>
-          )}
-        </div>
-      )}
 
       {/* CTA */}
       <button

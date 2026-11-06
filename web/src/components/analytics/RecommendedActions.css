@@ -189,8 +189,35 @@
   overflow-x: hidden;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
   padding-right: 2px;
+}
+
+.view-all-actions-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  background: var(--surface-subtle, #f1f5f9);
+  border: 1px dashed var(--border-subtle, #cbd5e1);
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-family: inherit;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--brand-dark, #22734f);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  margin-top: 4px;
+  text-align: center;
+  width: 100%;
+  flex-shrink: 0;
+}
+
+.view-all-actions-btn:hover {
+  background: var(--brand-light, #eaf4ef);
+  border-style: solid;
+  border-color: var(--brand-dark, #22734f);
 }
 
 /* ── Directive group card — priority left border ── */
@@ -228,6 +255,12 @@
   gap: 8px;
   flex: 1;
   min-width: 0;
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  cursor: pointer;
+  text-align: left;
 }
 
 .group-expand-btn {

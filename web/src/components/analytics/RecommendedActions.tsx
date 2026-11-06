@@ -182,13 +182,7 @@ export default function RecommendedActions() {
         </div>
       </div>
 
-      {/* ── Summary strip (Hindi or English) ── */}
-      {actions?.summary && (
-        <p className="rec-summary-text">
-          {lang === 'hi' && actions.summary_hi ? actions.summary_hi : actions.summary}
-        </p>
-      )}
-
+      {/* Local checklist notice */}
       <p className="panel-sub">Local review checklist only; no alerts are sent.</p>
 
       {/* ── Progress bar ── */}
@@ -271,16 +265,14 @@ export default function RecommendedActions() {
           return (
             <div key={groupKey} className={`directive-group-card priority-${Math.min(group.highestPriority, 3)}`}>
               {/* Group header */}
-              <div
-                className="directive-group-header"
-                role="button"
-                tabIndex={0}
-                aria-expanded={isExpanded}
-                aria-label={`${isExpanded ? 'Collapse' : 'Expand'} group: ${group.title}`}
-                onClick={() => toggleGroup(groupKey)}
-                onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleGroup(groupKey) } }}
-              >
-                <div className="directive-header-left">
+              <div className="directive-group-header">
+                <button
+                  type="button"
+                  className="directive-header-left directive-expand-btn"
+                  aria-expanded={isExpanded}
+                  aria-label={`${isExpanded ? 'Collapse' : 'Expand'} group: ${group.title}`}
+                  onClick={() => toggleGroup(groupKey)}
+                >
                   <span className="group-expand-btn" aria-hidden="true">
                     {isExpanded ? <ChevronDown size={15} /> : <ChevronRight size={15} />}
                   </span>
@@ -298,9 +290,9 @@ export default function RecommendedActions() {
                       Priority #{group.highestPriority} · Scheduling value {group.earliestDeadline}h
                     </span>
                   </div>
-                </div>
+                </button>
 
-                <div className="directive-header-right" onClick={e => e.stopPropagation()}>
+                <div className="directive-header-right">
                   <button
                     type="button"
                     className={`group-batch-toggle ${isAllChecked ? 'all-done' : ''}`}
@@ -380,6 +372,16 @@ export default function RecommendedActions() {
           )
         })}
       </div>
+
+      {totalActionsCount > 5 && (
+        <button
+          type="button"
+          className="view-all-actions-btn"
+          onClick={() => setShowActionsModal(true)}
+        >
+          View all {totalActionsCount} recommendations →
+        </button>
+      )}
     </div>
   )
 }

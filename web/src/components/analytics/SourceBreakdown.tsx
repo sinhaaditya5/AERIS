@@ -85,10 +85,10 @@ function DonutChart({
         {/* Dynamic Center Hub Readout */}
         <text
           x={cx}
-          y={cy - 4}
+          y={cy - 3}
           textAnchor="middle"
-          fontSize={activeSegment ? "13" : "15"}
-          fontWeight="800"
+          fontSize={activeSegment ? "11" : "12"}
+          fontWeight="700"
           fill={activeSegment ? activeSegment.color : "var(--text-primary, #1e2924)"}
           fontFamily="Outfit, var(--font, sans-serif)"
           className="donut-center-main"
@@ -97,9 +97,9 @@ function DonutChart({
         </text>
         <text
           x={cx}
-          y={cy + 10}
+          y={cy + 9}
           textAnchor="middle"
-          fontSize="9"
+          fontSize="8"
           fontWeight="600"
           fill="var(--text-tertiary, #6c8077)"
           fontFamily="Outfit, var(--font, sans-serif)"
@@ -234,7 +234,9 @@ export default function SourceBreakdown() {
             <span className="breakdown-tag">% Total FRP</span>
           </div>
           <span className="text-xs text-tertiary breakdown-sub">
-            {totalFrp > 0 ? `Thermal emission share · ${Math.round(totalFrp)} MW total` : 'Satellite thermal emission'}
+            {totalFrp > 0
+              ? `Thermal emission share · ${Math.round(totalFrp)} MW · Peak ${Math.round(peakSource?.total_frp_mw ?? 0)} MW${!allUnclassified ? ` · Origin: ${originText}` : ''}`
+              : 'Satellite thermal emission'}
           </span>
         </div>
         <div className="breakdown-mode-toggle">
@@ -320,29 +322,6 @@ export default function SourceBreakdown() {
           })}
         </ul>
       </div>
-
-      {totalFrp > 0 && (
-        <div className="source-breakdown-ticker">
-          {peakSource && (
-            <span className="ticker-chip" title={`Peak emitter ID: ${peakSource.id} (${Math.round(peakSource.total_frp_mw)} MW)`}>
-              <span className="ticker-icon">⚡</span>
-              <span className="ticker-label">Peak:</span>
-              <strong className="ticker-val">{Math.round(peakSource.total_frp_mw)} MW</strong>
-              {peakDistrict && <span className="ticker-badge">{peakDistrict}</span>}
-            </span>
-          )}
-          {!allUnclassified && (
-            <>
-              <span className="ticker-divider" />
-              <span className="ticker-chip" title="Airshed origin distribution">
-                <span className="ticker-icon">{domesticPct > 0 ? '🇮🇳' : '🌐'}</span>
-                <span className="ticker-label">Origin:</span>
-                <strong className="ticker-val">{originText}</strong>
-              </span>
-            </>
-          )}
-        </div>
-      )}
     </div>
   )
 }

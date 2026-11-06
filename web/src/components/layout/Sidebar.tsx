@@ -22,7 +22,7 @@ interface NavItemConfig {
   icon: React.ComponentType<{ size?: number; className?: string; strokeWidth?: number }>
   shortcut: string
   badgeText?: string
-  badgeKey?: 'fires' | 'facilities' | 'actions' | 'wind' | 'alerts'
+  badgeKey?: 'alerts'
   badgeType?: 'primary' | 'warning' | 'alert' | 'neutral'
 }
 
@@ -36,23 +36,23 @@ const SECTIONS: NavSectionConfig[] = [
     section: 'Overview',
     items: [
       { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, shortcut: '1' },
-      { id: 'map', label: 'Map Explorer', icon: Map, shortcut: '2', badgeText: 'GIS', badgeType: 'neutral' },
+      { id: 'map', label: 'Map Explorer', icon: Map, shortcut: '2' },
     ],
   },
   {
     section: 'Intelligence',
     items: [
       { id: 'analytics', label: 'Analytics', icon: BarChart2, shortcut: '3' },
-      { id: 'wind', label: 'Wind & Weather', icon: Wind, shortcut: '4', badgeKey: 'wind', badgeType: 'neutral' },
-      { id: 'sources', label: 'Fire Sources', icon: Zap, shortcut: '5', badgeKey: 'fires', badgeType: 'alert' },
+      { id: 'wind', label: 'Wind & Weather', icon: Wind, shortcut: '4' },
+      { id: 'sources', label: 'Fire Sources', icon: Zap, shortcut: '5' },
       { id: 'replay', label: 'Forecast Replay', icon: Play, shortcut: '0', badgeText: 'NEW', badgeType: 'primary' },
     ],
   },
   {
     section: 'Operations',
     items: [
-      { id: 'population', label: 'Population Risk', icon: Users, shortcut: '6', badgeKey: 'facilities', badgeType: 'warning' },
-      { id: 'shield', label: 'Protective Actions', icon: Shield, shortcut: '7', badgeKey: 'actions', badgeType: 'primary' },
+      { id: 'population', label: 'Population Risk', icon: Users, shortcut: '6' },
+      { id: 'shield', label: 'Protective Actions', icon: Shield, shortcut: '7' },
       { id: 'notifications', label: 'Notifications', icon: Bell, shortcut: '8', badgeKey: 'alerts', badgeType: 'alert' },
     ],
   },
@@ -71,10 +71,6 @@ export default function Sidebar() {
     isSidebarCollapsed,
     toggleSidebar,
     setSidebarCollapsed,
-    sources,
-    rankedSites,
-    actions,
-    wind,
   } = useAeris()
   const { unreadCount } = useNotifications()
 
@@ -83,22 +79,6 @@ export default function Sidebar() {
     if (item.badgeText) return item.badgeText
     if (item.badgeKey === 'alerts') {
       return unreadCount > 0 ? `${unreadCount}` : null
-    }
-    if (item.badgeKey === 'fires') {
-      const count = sources?.sources?.length
-      return count != null ? `${count}` : '—'
-    }
-    if (item.badgeKey === 'facilities') {
-      const count = rankedSites?.sites?.length
-      return count != null ? `${count}` : '—'
-    }
-    if (item.badgeKey === 'actions') {
-      const count = actions?.actions?.length
-      return count != null ? `${count}` : '—'
-    }
-    if (item.badgeKey === 'wind') {
-      const firstSpeedMs = wind?.points?.[0]?.hours?.[0]?.speed_ms
-      return firstSpeedMs != null ? `${Math.round(firstSpeedMs * 3.6)} km/h` : null
     }
     return null
   }

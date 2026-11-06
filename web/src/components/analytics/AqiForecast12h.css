@@ -234,8 +234,83 @@
 .dispersion-band-col {
   display: flex;
   flex-direction: column;
-  gap: 2.5px;
+  gap: 4px;
   min-width: 0;
+}
+
+.band-bars-list {
+  display: flex;
+  flex-direction: column;
+  gap: 3.5px;
+  background: var(--surface-subtle, #f8fafc);
+  border: 1px solid var(--border-subtle, #e2e8f0);
+  border-radius: 6px;
+  padding: 5px 7px;
+}
+
+.band-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2.5px 4px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.12s ease;
+  user-select: none;
+}
+
+.band-bar-row:hover {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.band-bar-row.active {
+  background: rgba(34, 115, 79, 0.1);
+}
+
+.band-bar-label {
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--text-primary, #1e2924);
+  width: 32px;
+  flex-shrink: 0;
+}
+
+.band-bar-row.active .band-bar-label {
+  color: var(--brand-dark, #22734f);
+}
+
+.band-bar-track {
+  flex: 1;
+  height: 6px;
+  background: rgba(0, 0, 0, 0.06);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.band-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+.band-bar-val {
+  font-size: 9px;
+  font-weight: 700;
+  color: #ea580c;
+  min-width: 48px;
+  text-align: right;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.band-bar-row.active .band-bar-val {
+  color: var(--brand-dark, #22734f);
+}
+
+.forecast-compact-note {
+  font-size: 8px;
+  color: var(--text-tertiary, #64748b);
+  line-height: 1.25;
 }
 
 .status-banner {
@@ -329,7 +404,11 @@
 
 .forecast-band-table td {
   font-weight: 700;
-  color: #ea580c;
+  color: #c2410c;
+}
+
+.row-active-horizon td {
+  color: #9a3412;
 }
 
 .forecast-meta-notes {

@@ -175,7 +175,7 @@ export default function AnalyticsView() {
       </div>
 
       {/* Analytics Section Sub-Navigation Tabs */}
-      <div className="analytics-nav-strip" role="tablist" aria-label="Analytics Sections">
+      <div className="analytics-nav-strip" role="group" aria-label="Analytics Sections">
         <button
           type="button"
           className={`nav-tab-btn ${activeSection === 'all' ? 'active' : ''}`}
@@ -410,7 +410,12 @@ export default function AnalyticsView() {
               </div>
             </div>
 
-            <div className="district-table-wrapper">
+            <div
+              className="district-table-wrapper"
+              tabIndex={0}
+              role="region"
+              aria-label="Facilities by latitude band table; scroll with arrow keys"
+            >
               <table className="district-table">
                 <thead>
                   <tr>
