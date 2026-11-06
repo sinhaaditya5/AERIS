@@ -96,7 +96,7 @@ export default function TopAffectedAreas() {
                     {riskLabel(level)} ({site.risk_score.toFixed(2)})
                   </span>
                   <span className="area-eta text-xs text-tertiary" title="Model ETA is relative to its originating forecast; the ranked feed does not link its forecast origin.">
-                    Forecast-relative ETA +{site.eta_hours.toFixed(1)} h · Absolute arrival unavailable
+                    {site.eta_hours <= 0 ? 'Over receptors at forecast start' : `Forecast-relative ETA +${site.eta_hours.toFixed(1)} h · Absolute arrival unavailable`}
                   </span>
                 </div>
               </button></li>

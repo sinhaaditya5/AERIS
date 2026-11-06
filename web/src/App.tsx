@@ -10,6 +10,7 @@ import Header from '@/components/layout/Header'
 import Sidebar from '@/components/layout/Sidebar'
 import MapContainer from '@/components/map/MapContainer'
 import TopAffectedAreas from '@/components/sites/TopAffectedAreas'
+import DataModelNotesDrawer from '@/components/status/DataModelNotesDrawer'
 import ErrorBoundary from '@/components/ErrorBoundary'
 import './App.css'
 
@@ -101,7 +102,7 @@ function ErrorScreen({ message, onRetry }: { message: string; onRetry: () => voi
 }
 
 function Dashboard() {
-  const { loading, error, activeTab, hasData, refreshData, refreshing } = useAeris()
+  const { loading, error, activeTab, hasData, refreshData, refreshing, showNotesDrawer, setShowNotesDrawer, notesDrawerSection } = useAeris()
 
   if (error && !hasData) return <ErrorScreen message={error} onRetry={refreshData} />
 
@@ -173,6 +174,12 @@ function Dashboard() {
       <Suspense fallback={null}>
         <ActionsModal />
       </Suspense>
+
+      <DataModelNotesDrawer
+        isOpen={showNotesDrawer}
+        onClose={() => setShowNotesDrawer(false)}
+        activeSection={notesDrawerSection}
+      />
     </div>
   )
 }

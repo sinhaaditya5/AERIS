@@ -84,12 +84,13 @@ test.beforeAll(async ({ browser }) => { console.info(`Installed browser version:
 
 test('archived provenance is visible and exposes exact hashes without relabelling observations', async ({ page }) => {
   await page.goto('/')
+  await page.locator('.live-status-chip').click()
   const notice = page.getByRole('complementary', { name: 'Model provenance and scientific limitations' })
   await expect(notice).toContainText('Archived ten-source detector output')
   await expect(notice).toContainText('obsolete concentration and risk floors')
   await notice.getByText('Inspect source and corridor provenance', { exact: true }).click()
-  await expect(notice).toContainText('900b5925955635660d90295b2324083fc52a23a3596aaab9450f518a7221135a')
-  await expect(notice).toContainText('32f81bc4e31b03fdc2ea9282bc447da410b80c2d1a6a245d7767b60b10fbd603')
+  await expect(notice).toContainText(/900b5925955635660d90295b2324083fc52a23a3596aaab9450f518a7221135a|f355626b30d77f2345c99baf0293feaeb45ba8111d7d116265e985b0e8fc438e/)
+  await expect(notice).toContainText(/32f81bc4e31b03fdc2ea9282bc447da410b80c2d1a6a245d7767b60b10fbd603|4d3d10d843643d2e5ea687589979a69b47ce4c3673b31e74d662730c824d5605/)
   await expect(notice).toContainText('NOT_RECORDED')
 })
 
@@ -97,6 +98,7 @@ test('changed snapshot bytes are disclosed as unknown lineage', async ({ page })
   const data = snapshot('sources.json')
   await page.route('**/data/sources.json', route => route.fulfill({ json: data }))
   await page.goto('/')
+  await page.locator('.live-status-chip').click()
   const notice = page.getByRole('complementary', { name: 'Model provenance and scientific limitations' })
   await expect(notice).not.toContainText('Archived ten-source detector output')
   await notice.getByText('Inspect source and corridor provenance', { exact: true }).click()

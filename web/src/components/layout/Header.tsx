@@ -49,7 +49,7 @@ const PLACES: Record<string, { lon: number; lat: number; zoom: number; name: str
 
 export default function Header() {
   const { loading, refreshing, refreshData, setFlyToLocation, activeTab, setActiveTab, isSidebarCollapsed,
-    toggleSidebar, sources, corridor, actions, rankedSites, aqi, wind, staleFeeds } = useAeris()
+    toggleSidebar, sources, corridor, actions, rankedSites, aqi, wind, staleFeeds, setShowNotesDrawer, showNotesDrawer } = useAeris()
   const { notifications, unreadCount, criticalCount, markAsRead, markAllAsRead, isChimeMuted, toggleMuteChime } = useNotifications()
 
   const [searchInput, setSearchInput] = useState('')
@@ -142,7 +142,9 @@ export default function Header() {
         {isSidebarCollapsed && <button className="header-sidebar-toggle-btn" onClick={toggleSidebar} aria-label="Expand Sidebar" type="button"><PanelLeft size={18} /></button>}
         <div className="header-title-wrap">
           <h1 className="header-view-title">{currentMeta.label}</h1>
-          <span className="header-view-subtitle-pill">{currentMeta.subtitle}</span>
+          {activeTab !== 'dashboard' && currentMeta.subtitle && (
+            <span className="header-view-subtitle-pill">{currentMeta.subtitle}</span>
+          )}
         </div>
       </div>
       <div className="header-center">
@@ -154,9 +156,16 @@ export default function Header() {
         {searchFeedback && <p className="header-search-feedback" role="status">{searchFeedback}</p>}
       </div>
       <div className="header-right">
-        <div className={`live-status-chip ${problems.length ? 'stale' : 'live'}`} title={`${modeLabel}: ${statusText}`}>
-          <span className="live-status-text">{modeLabel} · {statusText}</span>
-        </div>
+        <button
+          type="button"
+          className={`live-status-chip ${problems.length ? 'stale' : 'live'}`}
+          title="Open Data & Model Notes (Provenance, Integrity & Caveats)"
+          onClick={() => setShowNotesDrawer(!showNotesDrawer)}
+          aria-expanded={showNotesDrawer}
+          aria-haspopup="dialog"
+        >
+          <span className="live-status-text">{modeLabel}, {problems.length ? `${problems.length} feeds stale` : 'feeds current'} ▾</span>
+        </button>
         <button className="icon-btn refresh-btn" onClick={refreshData} disabled={loading || refreshing} title="Refresh environmental data" aria-label="Refresh data" type="button"><RefreshCw size={16} className={loading || refreshing ? 'spinning' : ''} /></button>
         
         {/* Enhanced Notification Hub */}

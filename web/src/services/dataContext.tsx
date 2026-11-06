@@ -33,6 +33,8 @@ export interface AerisState extends TimeContextState {
   // UI State
   selectedSiteId:       string | null      // clicked site in Top Affected list
   showActionsModal:     boolean
+  showNotesDrawer:      boolean
+  notesDrawerSection:   string | null
   activeTab:            string
   searchTerm:           string
   flyToLocation:        { lon: number; lat: number; zoom?: number; name?: string } | null
@@ -63,6 +65,8 @@ export interface AerisState extends TimeContextState {
   // Actions
   setSelectedSiteId:       (id: string | null) => void
   setShowActionsModal:     (v: boolean) => void
+  setShowNotesDrawer:      (v: boolean) => void
+  setNotesDrawerSection:   (s: string | null) => void
   setActiveTab:            (tab: string) => void
   setSearchTerm:           (term: string) => void
   setFlyToLocation:        (loc: { lon: number; lat: number; zoom?: number; name?: string } | null) => void
@@ -94,6 +98,8 @@ export function AerisProvider({ children }: { children: React.ReactNode }) {
   const [timeHorizon,          setTimeHorizon]          = useState<TimeHorizon>(2)
   const [selectedSiteId,       setSelectedSiteId]       = useState<string | null>(null)
   const [showActionsModal,     setShowActionsModal]     = useState(false)
+  const [showNotesDrawer,      setShowNotesDrawer]      = useState(false)
+  const [notesDrawerSection,   setNotesDrawerSection]   = useState<string | null>(null)
   const [activeTab,            setActiveTab]            = useState('dashboard')
   const [searchTerm,           setSearchTerm]           = useState('')
   const [flyToLocation,        setFlyToLocation]        = useState<{ lon: number; lat: number; zoom?: number; name?: string } | null>(null)
@@ -277,24 +283,24 @@ export function AerisProvider({ children }: { children: React.ReactNode }) {
   // Main context value memoized to prevent redundant renders
   const value: AerisState = useMemo(() => ({
     sources, corridor, rankedSites, actions, aqi, wind,
-    timeHorizon, selectedSiteId, showActionsModal,
+    timeHorizon, selectedSiteId, showActionsModal, showNotesDrawer, notesDrawerSection,
     activeTab, searchTerm, flyToLocation, interventionScenario,
     basemapMode, setBasemapMode,
     loading, refreshing, hasData, error, feedErrors, staleFeeds,
     exposedPopulation, activeExposedPopulation, avertedExposures, etaHours, avgAqi,
     isSidebarCollapsed, toggleSidebar, setSidebarCollapsed,
-    setTimeHorizon, setSelectedSiteId, setShowActionsModal,
+    setTimeHorizon, setSelectedSiteId, setShowActionsModal, setShowNotesDrawer, setNotesDrawerSection,
     setActiveTab, setSearchTerm, setFlyToLocation, setInterventionScenario,
     refreshData: loadData,
   }), [
     sources, corridor, rankedSites, actions, aqi, wind,
-    timeHorizon, selectedSiteId, showActionsModal,
+    timeHorizon, selectedSiteId, showActionsModal, showNotesDrawer, notesDrawerSection,
     activeTab, searchTerm, flyToLocation, interventionScenario,
     basemapMode, setBasemapMode,
     loading, refreshing, hasData, error, feedErrors, staleFeeds,
     exposedPopulation, activeExposedPopulation, avertedExposures, etaHours, avgAqi,
     isSidebarCollapsed, toggleSidebar, setSidebarCollapsed,
-    setSelectedSiteId, setShowActionsModal,
+    setSelectedSiteId, setShowActionsModal, setShowNotesDrawer, setNotesDrawerSection,
     setActiveTab, setSearchTerm, setFlyToLocation, setInterventionScenario,
     loadData,
   ])

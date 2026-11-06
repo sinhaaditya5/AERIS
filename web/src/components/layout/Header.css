@@ -146,6 +146,20 @@
   background: var(--surface-subtle);
   border: 1px solid var(--border-subtle);
   border-radius: 999px;
+  cursor: pointer;
+  user-select: none;
+  font-family: inherit;
+  transition: opacity 0.15s, border-color 0.15s, background-color 0.15s;
+}
+
+.live-status-chip:hover {
+  border-color: var(--brand-medium);
+  background: var(--surface-card);
+}
+
+.live-status-chip:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 2px;
 }
 
 .live-status-dot {
@@ -596,6 +610,6 @@
   .header-right { gap: 5px; }
   .header-center { order: 3; flex-basis: 100%; max-width: none; }
   .header-search { max-width: none; }
-  .live-status-chip { display: none; }
+  .live-status-chip { font-size: 9.5px; padding: 3px 6px; }
   .notif-dropdown { position: fixed; top: 60px; right: 8px; width: min(340px, calc(100vw - 84px)); max-height: calc(100dvh - 76px); overflow-y: auto; }
 }

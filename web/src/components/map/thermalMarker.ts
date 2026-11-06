@@ -55,7 +55,7 @@ export function createThermalMarkerElement(
   }
 
   const frpFormatted = src.total_frp_mw.toFixed(0)
-  const territoryCode = isTransboundary ? 'Regional' : src.territory === 'india' ? 'India' : 'Unknown'
+  const territoryCode = isTransboundary ? 'Regional' : src.territory === 'india' ? 'India' : 'Not classified'
 
   el.innerHTML = `
     <div class="reticle-anchor" style="width: ${dims.width}px; height: ${dims.height}px;">
@@ -88,8 +88,7 @@ export function createThermalMarkerElement(
       </div>
     </div>
     <div class="reticle-telemetry-hud ${isTransboundary ? 'hud-transboundary' : 'hud-india'}">
-      ${isPeak ? '<span class="hud-peak-tag">⚡ PEAK</span>' : ''}
-      <span class="hud-territory-tag">${territoryCode}</span>
+      ${isPeak ? '<span class="hud-territory-tag">Peak</span>' : `<span class="hud-territory-tag">${territoryCode}</span>`}
       <span class="hud-mw-val">${frpFormatted} MW</span>
     </div>
   `
@@ -97,7 +96,6 @@ export function createThermalMarkerElement(
   if (options?.onClick) {
     el.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); el.click() } })
     el.addEventListener('click', (e) => {
-      e.stopPropagation()
       options.onClick!(e)
     })
   }

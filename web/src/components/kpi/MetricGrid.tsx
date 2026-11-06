@@ -165,7 +165,7 @@ export default function MetricGrid() {
           </svg>
         </div>
         <div className="metric-body">
-          <span className="metric-label" title={exposure ? `Threshold Sensitivity Range: ${formatPopulation(exposure.low)} – ${formatPopulation(exposure.high)}` : 'No exposure estimate available'}>
+          <span className="metric-label" title={exposure ? (exposure.method || `Threshold sensitivity range: ${formatPopulation(exposure.low)} – ${formatPopulation(exposure.high)}`) : 'No exposure estimate available'}>
             Population estimate · {scenarioMeta.label}
           </span>
           <div className="metric-value-row">

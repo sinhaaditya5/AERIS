@@ -96,7 +96,7 @@ export default function MapInspectorHud({
         <div className="inspector-metrics-grid">
           <div className="inspector-metric-card" title="Forecast-relative arrival at receptor">
             <span className="metric-label">Model ETA</span>
-            <strong className="metric-val">~{site.eta_hours.toFixed(1)}h</strong>
+            <strong className="metric-val">{site.eta_hours <= 0 ? 'Over receptors at start' : `~${site.eta_hours.toFixed(1)}h`}</strong>
           </div>
           <div className="inspector-metric-card" title="Modelled peak PM2.5 delta">
             <span className="metric-label">PM2.5 Delta</span>

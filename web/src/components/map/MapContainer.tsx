@@ -1,6 +1,6 @@
 /** Dashboard map: real candidate markers, uncalibrated corridors and observed station cells. */
 
-import { Map, Marker, setWorkerUrl } from 'maplibre-gl'
+import { Map, Marker, Popup, setWorkerUrl } from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?url'
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
@@ -9,7 +9,7 @@ import { useAeris } from '@/services/dataContext'
 import { getRiskLevel, riskLabel, WindFileSchema } from '@/types/schemas'
 import { getFeedFreshness } from '@/services/api'
 import { useClock } from '@/components/status/useClock'
-import { createThermalMarkerElement } from './thermalMarker'
+import { createThermalMarkerElement, createThermalPopupHtml } from './thermalMarker'
 import { getStyleForMode, setupMapLayers, applyProjectionAndPitch, isValidSubcontinentCoord } from './mapStyles'
 import TimeControls from './TimeControls'
 import HeatmapControls from './HeatmapControls'
@@ -421,8 +421,14 @@ export default function MapContainer() {
           },
         })
 
+        const popupHtml = createThermalPopupHtml(src)
+
         const marker = new Marker({ element: el, anchor: 'center' })
           .setLngLat([src.lon, src.lat])
+          .setPopup(
+            new Popup({ offset: 18, closeButton: false, className: 'aeris-popup' })
+              .setHTML(popupHtml)
+          )
           .addTo(map)
 
         markersRef.current.push(marker)
@@ -502,7 +508,7 @@ export default function MapContainer() {
 
   const activeSourcesCount = sources?.sources.filter(s => isValidSubcontinentCoord(s.lat, s.lon) && (scopeFilter === 'all' || s.territory === 'india')).length ?? 0
   const reportedEta = etaHours ?? rankedSites?.sites[0]?.eta_hours
-  const earliestEta = reportedEta != null && Number.isFinite(reportedEta) && reportedEta >= 0 ? reportedEta.toFixed(1) : null
+  const earliestEta = reportedEta != null && Number.isFinite(reportedEta) && reportedEta >= 0 ? (reportedEta === 0 ? '0.0' : reportedEta.toFixed(1)) : null
 
   return (
     <div className={`map-wrapper card ${satelliteCheck.isOpen ? 'satellite-check-active' : ''}`}>

@@ -131,6 +131,7 @@ export default function SourceBreakdown() {
   const indiaSources = rawSources.filter(s => s.territory === 'india')
   const transSources = rawSources.filter(s => s.territory === 'transboundary')
   const unknownSources = rawSources.filter(s => s.territory == null)
+  const allUnclassified = rawSources.length > 0 && unknownSources.length === rawSources.length
 
   const calcFrp = (arr: typeof rawSources) => arr.reduce((acc, s) => acc + s.total_frp_mw, 0)
   const share = (arr: typeof rawSources) => (totalFrp > 0 ? (calcFrp(arr) / totalFrp) * 100 : 0)
@@ -209,6 +210,13 @@ export default function SourceBreakdown() {
     : null
   const domesticFrp = calcFrp(indiaSources)
   const domesticPct = totalFrp > 0 ? Math.round((domesticFrp / totalFrp) * 100) : 0
+  const transFrp = calcFrp(transSources)
+  const transPct = totalFrp > 0 ? Math.round((transFrp / totalFrp) * 100) : 0
+  const originText = domesticPct > 0
+    ? `${domesticPct}% Domestic`
+    : transPct > 0
+      ? `${transPct}% Cross-Border`
+      : 'Not classified'
   const peakDistrict = peakSource?.district && peakSource.district !== 'Unassigned'
     ? peakSource.district
     : peakSource?.territory === 'transboundary'
@@ -323,12 +331,16 @@ export default function SourceBreakdown() {
               {peakDistrict && <span className="ticker-badge">{peakDistrict}</span>}
             </span>
           )}
-          <span className="ticker-divider" />
-          <span className="ticker-chip" title="Airshed origin distribution">
-            <span className="ticker-icon">{domesticPct > 0 ? '🇮🇳' : '🌐'}</span>
-            <span className="ticker-label">Origin:</span>
-            <strong className="ticker-val">{domesticPct > 0 ? `${domesticPct}% Domestic` : 'Cross-Border (100%)'}</strong>
-          </span>
+          {!allUnclassified && (
+            <>
+              <span className="ticker-divider" />
+              <span className="ticker-chip" title="Airshed origin distribution">
+                <span className="ticker-icon">{domesticPct > 0 ? '🇮🇳' : '🌐'}</span>
+                <span className="ticker-label">Origin:</span>
+                <strong className="ticker-val">{originText}</strong>
+              </span>
+            </>
+          )}
         </div>
       )}
     </div>

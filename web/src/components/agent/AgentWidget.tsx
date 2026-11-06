@@ -19,7 +19,7 @@ export default function AgentWidget() {
   const totalFires = sources?.sources.reduce((acc, s) => acc + s.fire_count, 0)
   const totalFrp   = sources?.sources.reduce((acc, s) => acc + s.total_frp_mw, 0)
   const exposure   = rankedSites?.exposed_population.data_available === false ? undefined : rankedSites?.exposed_population
-  const etaVal     = etaHours != null ? `${etaHours.toFixed(1)}h` : '—'
+  const etaVal     = etaHours != null ? (etaHours <= 0 ? 'Over receptors at forecast start' : `~${etaHours.toFixed(1)}h`) : '—'
 
   const topActions = actions?.actions.slice(0, 3) ?? []
 
@@ -53,14 +53,14 @@ export default function AgentWidget() {
             <strong>{totalFrp != null ? Math.round(totalFrp) : '—'}</strong> MW FRP
           </span>
           <span className="agent-chip highlight" title="Model-relative ETA from the ranked snapshot; not a live countdown">
-            ⏱️ ETA <strong>~{etaVal}</strong>
+            ⏱️ ETA <strong>{etaVal}</strong>
           </span>
           <span
             className="agent-chip pop"
-            title={exposure ? `Exposed population estimate: ${exposure.estimate.toLocaleString()} (Threshold Sensitivity Range: ${exposure.low.toLocaleString()} – ${exposure.high.toLocaleString()})` : 'No exposure estimate available'}
+            title={exposure ? (exposure.method || `Exposed population estimate: ${exposure.estimate.toLocaleString()} (Threshold sensitivity range: ${exposure.low.toLocaleString()} – ${exposure.high.toLocaleString()})`) : 'No exposure estimate available'}
           >
             <Users size={11} color="#C92A2A" />
-            {exposure ? <><strong>{formatPopK(exposure.estimate)}</strong> (range {formatPopK(exposure.low)}–{formatPopK(exposure.high)})</> : <strong>—</strong>}
+            {exposure ? <><strong>{formatPopK(exposure.estimate)}</strong> (threshold sensitivity range {formatPopK(exposure.low)}–{formatPopK(exposure.high)})</> : <strong>—</strong>}
           </span>
         </div>
       </div>
