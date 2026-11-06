@@ -113,7 +113,7 @@ export default function AqiForecast12h() {
           </div>
           <span className="forecast-sub">Reported plume band peaks and station AQI</span>
         </div>
-        <div className="forecast-mode-toggle" role="tablist">
+        <div className="forecast-mode-toggle" role="group" aria-label="Forecast view mode">
           <button
             type="button"
             className={`mode-btn ${activeTab === 'dispersion' ? 'active' : ''}`}

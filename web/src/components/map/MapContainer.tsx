@@ -386,6 +386,21 @@ export default function MapContainer() {
     showReceptors,
   })
 
+  const activeTargetRef = useRef(activeTarget)
+  activeTargetRef.current = activeTarget
+
+  // Update selected state on markers without destroying/recreating them
+  useEffect(() => {
+    markersRef.current.forEach(m => {
+      const el = m.getElement()
+      if (el?.classList?.contains('aeris-sensor-reticle')) {
+        const idSpan = el.querySelector('.sensor-id-mono')
+        const isSelected = activeTarget?.type === 'source' && idSpan?.textContent === activeTarget.source.id
+        el.classList.toggle('is-selected', !!isSelected)
+      }
+    })
+  }, [activeTarget])
+
   // ── 3. Place fire source and receptor site markers ──────────────────────
   useEffect(() => {
     const map = mapRef.current
@@ -411,7 +426,11 @@ export default function MapContainer() {
 
       activeSources.forEach(src => {
         const isPeak = src.id === peakSourceId
-        const isSelected = activeTarget?.type === 'source' && activeTarget.source.id === src.id
+        const isSelected = activeTargetRef.current?.type === 'source' && activeTargetRef.current.source.id === src.id
+        const popupHtml = createThermalPopupHtml(src)
+        const popup = new Popup({ offset: 18, closeButton: false, closeOnClick: false, className: 'aeris-popup' })
+          .setHTML(popupHtml)
+
         const el = createThermalMarkerElement(src, {
           isPeak,
           isSelected,
@@ -421,14 +440,9 @@ export default function MapContainer() {
           },
         })
 
-        const popupHtml = createThermalPopupHtml(src)
-
         const marker = new Marker({ element: el, anchor: 'center' })
           .setLngLat([src.lon, src.lat])
-          .setPopup(
-            new Popup({ offset: 18, closeButton: false, className: 'aeris-popup' })
-              .setHTML(popupHtml)
-          )
+          .setPopup(popup)
           .addTo(map)
 
         markersRef.current.push(marker)
@@ -470,8 +484,11 @@ export default function MapContainer() {
           markersRef.current.push(marker)
         })
     }
-    return () => { markersRef.current.forEach(m => m.remove()); markersRef.current = [] }
-  }, [sources, rankedSites, scopeFilter, webGlSupported, activeTarget, showReceptors, setSelectedSiteId])
+    return () => {
+      markersRef.current.forEach(m => m.remove())
+      markersRef.current = []
+    }
+  }, [sources, rankedSites, scopeFilter, webGlSupported, showReceptors, setSelectedSiteId])
 
   // ── 4. Fly to selected site & show Inspector ──────────────────────────────
   useEffect(() => {

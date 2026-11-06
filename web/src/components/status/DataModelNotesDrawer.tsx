@@ -28,7 +28,7 @@ export default function DataModelNotesDrawer({ isOpen, onClose, activeSection }:
     }
   }, [isOpen, onClose])
 
-  if (!sources && !corridor && !isOpen) return null
+  if (!isOpen) return null
 
   const legacySources = sources?.provenance?.artifact_status === 'ARCHIVED_LEGACY'
   const legacyCorridor = corridor?.provenance?.artifact_status === 'ARCHIVED_LEGACY'
@@ -192,3 +192,4 @@ export default function DataModelNotesDrawer({ isOpen, onClose, activeSection }:
     </>
   )
 }
+

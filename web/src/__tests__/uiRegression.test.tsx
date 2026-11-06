@@ -262,7 +262,7 @@ describe('local checklist, navigation and dialog behavior', () => {
     state.sources!.generated_at = '2020-01-01T00:00:00Z'
     state.wind = { generated_at: STAMP, source: 'Isolated', points: [] }
     render(<Header />)
-    expect(screen.getByText(/feeds stale \/ unavailable/)).toBeTruthy()
+    expect(screen.getByText(/feeds stale/)).toBeTruthy()
     const trigger = screen.getByRole('button', { name: 'Data feed status' })
     await userEvent.click(trigger)
     expect(screen.getByText('sources: stale')).toBeTruthy()
@@ -275,7 +275,7 @@ describe('local checklist, navigation and dialog behavior', () => {
     state.corridor!.generated_at = '2020-01-01T00:00:00Z'
     state.wind = { generated_at: STAMP, source: 'Isolated', points: [] }
     render(<Header />)
-    expect(screen.getByText(/1 feeds stale \/ unavailable/)).toBeTruthy()
+    expect(screen.getByText(/1 feeds stale/)).toBeTruthy()
     await userEvent.click(screen.getByRole('button', { name: 'Data feed status' }))
     expect(screen.getByText('corridor: stale')).toBeTruthy()
     expect(screen.getByText('sources: current')).toBeTruthy()

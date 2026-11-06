@@ -21,3 +21,4 @@ export function formatPopNum(n: number | null | undefined): string {
   if (n >= 1_000) return `${Math.round(n / 1_000)}K`
   return String(n)
 }
+

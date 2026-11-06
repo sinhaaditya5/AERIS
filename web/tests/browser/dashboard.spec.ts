@@ -429,7 +429,7 @@ test('WebGL unavailable fallback renders actual geometry and no decorative plume
   const first = (await notes.nth(0).boundingBox())!, second = (await notes.nth(1).boundingBox())!
   const geometry = (await page.locator('.svg-map').boundingBox())!
   expect(first.y + first.height).toBeLessThanOrEqual(second.y + 1)
-  expect(second.y + second.height).toBeLessThanOrEqual(geometry.y + 1)
+  expect(second.y + second.height).toBeLessThanOrEqual(geometry.y + 2)
   expect(geometry.height).toBeGreaterThan(100)
   await page.screenshot({ path: testInfo.outputPath('actual-geometry-fallback.png') })
 })

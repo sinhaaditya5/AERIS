@@ -12,19 +12,40 @@ export function useObservationHeatmap(aqi: AqiFile | null, mapRef: RefObject<Map
   useEffect(() => {
     let cancelled = false
     let attachedMap: Map | null = null
-    const loaded = () => setReady(true)
+    let retryTimer: number | null = null
+    const loaded = () => {
+      setReady(true)
+      if (retryTimer !== null) {
+        window.clearInterval(retryTimer)
+        retryTimer = null
+      }
+    }
     const attach = () => {
       const map = mapRef.current
       if (cancelled || !map || !supported) return
-      attachedMap = map
-      map.on('load', loaded)
-      if (map.loaded()) loaded()
+      if (!attachedMap) {
+        attachedMap = map
+        map.on('load', loaded)
+        map.on('idle', loaded)
+      }
+      if (typeof map.loaded === 'function' && map.loaded()) {
+        loaded()
+      } else if (typeof (map as any).isStyleLoaded === 'function' && (map as any).isStyleLoaded()) {
+        loaded()
+      } else if ((map as any)._loaded) {
+        loaded()
+      }
     }
     // The map's constructor effect may run after this hook's mount effect.
-    // Retry after the mount effects without removing the initial-load guard.
     if (mapRef.current) attach()
     else queueMicrotask(attach)
-    return () => { cancelled = true; attachedMap?.off('load', loaded) }
+    retryTimer = window.setInterval(attach, 100)
+    return () => {
+      cancelled = true
+      if (retryTimer !== null) window.clearInterval(retryTimer)
+      attachedMap?.off('load', loaded)
+      attachedMap?.off('idle', loaded)
+    }
   }, [mapRef, supported])
   useEffect(() => {
     const timer = window.setInterval(() => setNow(Date.now()), 60_000)
